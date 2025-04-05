@@ -33,7 +33,17 @@ public class AuthenticationService {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
+    public User signupAdmin(RegisterAdminDto input) {
+        User user = Admin.builder()
+                .fullName(input.getFullName())
+                .email(input.getEmail())
+                .password(passwordEncoder.encode(input.getPassword()))
+                .phoneNumber(input.getPhoneNumber())
+                .build();
 
+        return userRepository.save(user);
+    }
+    
     public User signupCustomer(RegisterCustomerDto input) {
         User user = Customer.builder()
                 .fullName(input.getFullName())
