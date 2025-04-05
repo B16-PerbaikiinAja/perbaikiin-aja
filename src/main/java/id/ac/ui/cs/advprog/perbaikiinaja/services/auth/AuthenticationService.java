@@ -2,8 +2,15 @@ package id.ac.ui.cs.advprog.perbaikiinaja.services.auth;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.LoginUserDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.RegisterUserDto;
+import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.RegisterAdminDto;
+import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.RegisterCustomerDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Admin;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
+
+import java.beans.Customizer;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,12 +34,13 @@ public class AuthenticationService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User signup(RegisterUserDto input) {
-        User user = User.builder()
+    public User signupCustomer(RegisterCustomerDto input) {
+        User user = Customer.builder()
                 .fullName(input.getFullName())
                 .email(input.getEmail())
                 .password(passwordEncoder.encode(input.getPassword()))
                 .phoneNumber(input.getPhoneNumber())
+                .address(input.getAddress())
                 .build();
 
         return userRepository.save(user);

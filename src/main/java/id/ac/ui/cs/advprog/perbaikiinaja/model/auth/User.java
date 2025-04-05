@@ -10,8 +10,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
+@Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "users")
-public class User implements UserDetails {
+public abstract class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -29,6 +30,7 @@ public class User implements UserDetails {
     @Column(unique = true, length = 100, nullable = false)
     private String email;
 
+    @Setter
     @Column(nullable = false)
     private String password;
 
@@ -37,9 +39,10 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String phoneNumber;
 
-    public static UserBuilder builder() {
-        return new UserBuilder();
-    }
+    @Getter
+    @Setter
+    @Column(nullable = false)
+    private String role;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
