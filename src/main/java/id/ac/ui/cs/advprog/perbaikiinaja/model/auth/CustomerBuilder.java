@@ -1,5 +1,7 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model.auth;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.auth.UserRole;
+
 public class CustomerBuilder extends UserBuilder<CustomerBuilder> {
     private String address;
 
@@ -21,7 +23,7 @@ public class CustomerBuilder extends UserBuilder<CustomerBuilder> {
         customer.setFullName(this.fullName);
         customer.setPassword(this.password);
         customer.setAddress(this.address);
-        customer.setRole("CUSTOMER");
+        customer.setRole(UserRole.CUSTOMER.getValue());
         return customer;
     }
 }
