@@ -7,6 +7,4 @@ import lombok.Setter;
 @Setter
 public class RegisterTechnicianDto extends RegisterUserDto {
     private String address;
-    private int completedJobsCount;
-    private double totalEarnings;
 }
