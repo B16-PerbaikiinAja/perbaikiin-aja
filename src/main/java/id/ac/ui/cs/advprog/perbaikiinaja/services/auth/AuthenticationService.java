@@ -1,12 +1,13 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.services.auth;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.LoginUserDto;
-import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.RegisterUserDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.RegisterAdminDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.RegisterCustomerDto;
+import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.RegisterTechnicianDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Admin;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 
 import java.beans.Customizer;
@@ -46,6 +47,18 @@ public class AuthenticationService {
     
     public User signupCustomer(RegisterCustomerDto input) {
         User user = Customer.builder()
+                .fullName(input.getFullName())
+                .email(input.getEmail())
+                .password(passwordEncoder.encode(input.getPassword()))
+                .phoneNumber(input.getPhoneNumber())
+                .address(input.getAddress())
+                .build();
+
+        return userRepository.save(user);
+    }
+
+    public User signupTechnician(RegisterTechnicianDto input) {
+        User user = Technician.builder()
                 .fullName(input.getFullName())
                 .email(input.getEmail())
                 .password(passwordEncoder.encode(input.getPassword()))
