@@ -1,11 +1,10 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Admin;
 import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.LoginUserDto;
-import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.RegisterUserDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.RegisterAdminDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.RegisterCustomerDto;
+import id.ac.ui.cs.advprog.perbaikiinaja.dto.auth.RegisterTechnicianDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.responses.auth.LoginResponse;
 import id.ac.ui.cs.advprog.perbaikiinaja.services.auth.AuthenticationService;
 import id.ac.ui.cs.advprog.perbaikiinaja.services.auth.JwtService;
@@ -39,6 +38,13 @@ public class AuthenticationController {
         User registeredAdmin = authenticationService.signupAdmin(registerAdminDto);
 
         return ResponseEntity.ok(registeredAdmin);
+    }
+
+    @PostMapping("/signup/technician")
+    public ResponseEntity<User> registerTechnician(@RequestBody RegisterTechnicianDto registerTechnicianDto) {
+        User registeredTechnician = authenticationService.signupTechnician(registerTechnicianDto);
+
+        return ResponseEntity.ok(registeredTechnician);
     }
 
     @PostMapping("/login")
