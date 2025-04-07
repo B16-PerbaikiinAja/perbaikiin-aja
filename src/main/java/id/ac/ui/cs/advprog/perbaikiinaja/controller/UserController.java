@@ -25,26 +25,30 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<User> authenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         User currentUser = (User) authentication.getPrincipal();
-
         return ResponseEntity.ok(currentUser);
     }
 
     @GetMapping("/")
     public ResponseEntity<List<User>> allUsers() {
         List <User> users = userService.allUsers();
-
         return ResponseEntity.ok(users);
+    }
+
+
+    @PreAuthorize("hasRole('TECHNICIAN')")
+    @GetMapping("/only-technician")
+    public ResponseEntity<User> onlyTechnician(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(currentUser); 
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/only-admin")
     public ResponseEntity<User> onlyAdmin(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         User currentUser = (User) authentication.getPrincipal();
-
         return ResponseEntity.ok(currentUser); 
     }
 
@@ -52,9 +56,7 @@ public class UserController {
     @GetMapping("/only-customer")
     public ResponseEntity<User> onlyCustomer(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         User currentUser = (User) authentication.getPrincipal();
-
         return ResponseEntity.ok(currentUser); 
     }
 }
