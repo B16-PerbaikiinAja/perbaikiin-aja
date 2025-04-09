@@ -39,7 +39,7 @@ jobs:
         run: ./gradlew bootJar
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: app-jar
           path: build/libs/*.jar
@@ -57,7 +57,7 @@ jobs:
           echo "Is staging branch: ${{ github.ref == 'refs/heads/staging' }}"
 
       - name: Download artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: app-jar
           path: .
@@ -66,7 +66,7 @@ jobs:
         run: ls -la
 
       - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.7.0
+        uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
