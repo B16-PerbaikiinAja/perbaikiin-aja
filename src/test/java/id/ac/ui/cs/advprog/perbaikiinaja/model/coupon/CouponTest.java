@@ -20,7 +20,7 @@ public class CouponTest {
                 .build();
 
         assertNotNull(c.getCode());
-        assertEquals(15.0, c.getDiscountValue());
+        assertEquals(0.15, c.getDiscountValue());
         assertEquals(20, c.getMaxUsage());
         assertEquals(future, c.getExpiryDate());
     }
