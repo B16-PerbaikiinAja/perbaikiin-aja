@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model.coupon;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Coupon;
 import org.junit.jupiter.api.Test;
 
 import java.security.InvalidParameterException;
@@ -13,7 +14,7 @@ public class CouponTest {
         Date future = new Date(System.currentTimeMillis() + 1000 * 60 * 60);
 
         Coupon c = new Coupon.Builder()
-                .discount(0.15)
+                .discountValue(0.15)
                 .maxUsage(20)
                 .expiryDate(future)
                 .build();
@@ -28,9 +29,9 @@ public class CouponTest {
     void testDefaultConstructorExists() {
         Coupon c = new Coupon();
         assertNotNull(c.getCode());
-        assertEquals(0.10, c.getDiscountValue);
-        assertEquals(5, c.getMaxUsage);
-        assertNotNull(c.getexpiryDate());
+        assertEquals(0.10, c.getDiscountValue());
+        assertEquals(5, c.getMaxUsage());
+        assertNotNull(c.getExpiryDate());
     }
 
     @Test
