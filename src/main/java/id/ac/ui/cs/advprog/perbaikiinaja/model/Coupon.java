@@ -38,7 +38,7 @@ public class Coupon {
 
         public Builder discountValue(double discountValue) {
             if (discountValue <= 0 || discountValue > 1) {
-                throw new InvalidParameterException("Discount must be greater than 0 and  at most 1");
+                throw new InvalidParameterException("Discount must be greater than 0 and at most 1");
             }
 
             this.discountValue = discountValue;
@@ -63,7 +63,16 @@ public class Coupon {
         }
 
         public Coupon build() {
-            return new Coupon(this);
+            Coupon coupon = new Coupon(this);
+
+            this.discountValue = 0.10;
+            this.maxUsage = 5;
+            this.expiryDate = Date.from(LocalDate.now()
+                    .plusMonths(3)
+                    .atStartOfDay(ZoneId.systemDefault())
+                    .toInstant());
+
+            return coupon;
         }
     }
 }
