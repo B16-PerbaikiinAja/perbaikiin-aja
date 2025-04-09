@@ -1,12 +1,20 @@
 plugins {
     java
     id("jacoco")
+    id("org.sonarqube") version "6.0.1.5171"
     id("org.springframework.boot") version "3.4.4"
     id("io.spring.dependency-management") version "1.1.7"
 }
 
 tasks.bootJar{
     mainClass.set("id.ac.ui.cs.advprog.perbaikiinaja.PerbaikiinAjaApplication")
+}
+
+sonar {
+  properties {
+    property("sonar.projectKey", "B16-Perbaikiin-aja")
+    property("sonar.projectName", "B16-Perbaikiin-aja")
+  }
 }
 
 group = "id.ac.ui.cs.advprog"
