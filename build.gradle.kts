@@ -5,7 +5,7 @@ plugins {
 }
 
 tasks.bootJar{
-    mainClass.set("id.ac.ui.cs.advprog.perbaikiinaja.PerbaikiinAjaApplication.java")
+    mainClass.set("id.ac.ui.cs.advprog.perbaikiinaja.PerbaikiinAjaApplication")
 }
 
 group = "id.ac.ui.cs.advprog"
