@@ -1,6 +1,11 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.security.InvalidParameterException;
 import java.time.LocalDate;
@@ -9,16 +14,16 @@ import java.util.Date;
 import java.util.UUID;
 
 @Getter
+@Entity
+@NoArgsConstructor
 public class Coupon {
+    @Id
     private String code;
     private double discountValue;
     private int maxUsage;
     private int usageCount;
+    @Temporal(TemporalType.DATE)
     private Date expiryDate;
-
-    public Coupon() {
-        this(new Builder());
-    }
 
     public Coupon(Builder builder) {
         this.code = UUID.randomUUID().toString();
@@ -29,14 +34,20 @@ public class Coupon {
     }
 
     public static class Builder {
-        private double discountValue = 0.10;
-        private int maxUsage = 5;
-        private Date expiryDate = Date.from(LocalDate.now()
-                .plusMonths(3)
-                .atStartOfDay(ZoneId.systemDefault())
-                .toInstant());
+        private double discountValue;
+        private int maxUsage;
+        private Date expiryDate;
 
-        public Builder discountValue(double discountValue) {
+        public Builder() {
+            this.discountValue = 0.10;
+            this.maxUsage = 5;
+            this.expiryDate = Date.from(LocalDate.now()
+                    .plusMonths(3)
+                    .atStartOfDay(ZoneId.systemDefault())
+                    .toInstant());
+        }
+
+        public Builder setDiscountValue(double discountValue) {
             if (discountValue <= 0 || discountValue > 1) {
                 throw new InvalidParameterException("Discount must be greater than 0 and at most 1");
             }
@@ -45,7 +56,7 @@ public class Coupon {
             return this;
         }
 
-        public Builder maxUsage(int maxUsage) {
+        public Builder setMaxUsage(int maxUsage) {
             if (maxUsage <= 0) {
                 throw new InvalidParameterException("Max usage must be greater than 0");
             }
@@ -54,7 +65,7 @@ public class Coupon {
             return this;
         }
 
-        public Builder expiryDate(Date expiryDate) {
+        public Builder setExpiryDate(Date expiryDate) {
             if (expiryDate == null || !expiryDate.after(new Date())) {
                 throw new InvalidParameterException("Expiry date must be in the future and not null");
             }
@@ -63,16 +74,7 @@ public class Coupon {
         }
 
         public Coupon build() {
-            Coupon coupon = new Coupon(this);
-
-            this.discountValue = 0.10;
-            this.maxUsage = 5;
-            this.expiryDate = Date.from(LocalDate.now()
-                    .plusMonths(3)
-                    .atStartOfDay(ZoneId.systemDefault())
-                    .toInstant());
-
-            return coupon;
+            return new Coupon(this);
         }
     }
 }

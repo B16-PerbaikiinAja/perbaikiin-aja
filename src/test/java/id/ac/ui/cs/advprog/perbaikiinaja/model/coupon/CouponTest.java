@@ -14,30 +14,32 @@ public class CouponTest {
         Date future = new Date(System.currentTimeMillis() + 1000 * 60 * 60);
 
         Coupon c = new Coupon.Builder()
-                .discountValue(0.15)
-                .maxUsage(20)
-                .expiryDate(future)
+                .setDiscountValue(0.15)
+                .setMaxUsage(20)
+                .setExpiryDate(future)
                 .build();
 
         assertNotNull(c.getCode());
         assertEquals(0.15, c.getDiscountValue());
         assertEquals(20, c.getMaxUsage());
         assertEquals(future, c.getExpiryDate());
+        assertEquals(0, c.getUsageCount());
     }
 
     @Test
-    void testDefaultConstructorExists() {
-        Coupon c = new Coupon();
+    void testDefaultValueIsCorrect() {
+        Coupon c = new Coupon.Builder().build();
         assertNotNull(c.getCode());
         assertEquals(0.10, c.getDiscountValue());
         assertEquals(5, c.getMaxUsage());
         assertNotNull(c.getExpiryDate());
+        assertEquals(0, c.getUsageCount());
     }
 
     @Test
     void testCouponCodeIsRandom() {
-        Coupon c1 = new Coupon.Builder().discountValue(0.10).maxUsage(1).build();
-        Coupon c2 = new Coupon.Builder().discountValue(0.10).maxUsage(1).build();
+        Coupon c1 = new Coupon.Builder().setDiscountValue(0.10).setMaxUsage(1).build();
+        Coupon c2 = new Coupon.Builder().setDiscountValue(0.10).setMaxUsage(1).build();
 
         assertNotEquals(c1.getCode(), c2.getCode());
     }
@@ -45,14 +47,14 @@ public class CouponTest {
     @Test
     void testMaxUsageCanNotBeZero() {
         assertThrows(InvalidParameterException.class, () -> {
-            new Coupon.Builder().maxUsage(0).build();
+            new Coupon.Builder().setMaxUsage(0).build();
         });
     }
 
     @Test
     void testDiscountCanNotBeZero() {
         assertThrows(InvalidParameterException.class, () -> {
-            new Coupon.Builder().discountValue(0).build();
+            new Coupon.Builder().setDiscountValue(0).build();
         });
     }
 
@@ -60,7 +62,7 @@ public class CouponTest {
     void testExpiryDateCanNotBePastDate() {
         Date past = new Date(System.currentTimeMillis() - 1000 * 60 * 60);
         assertThrows(InvalidParameterException.class, () -> {
-            new Coupon.Builder().expiryDate(past).build();
+            new Coupon.Builder().setExpiryDate(past).build();
         });
     }
 }
