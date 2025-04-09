@@ -13,6 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Debug branch information
+        run: |
+          echo "GitHub ref: ${{ github.ref }}"
+          echo "GitHub event name: ${{ github.event_name }}"
+          echo "GitHub branch: ${{ github.ref_name }}"
+
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
@@ -44,6 +50,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Debug branch information
+        run: |
+          echo "GitHub ref: ${{ github.ref }}"
+          echo "GitHub event name: ${{ github.event_name }}"
+          echo "Is staging branch: ${{ github.ref == 'refs/heads/staging' }}"
+
       - name: Download artifact
         uses: actions/download-artifact@v3.0.2
         with:
