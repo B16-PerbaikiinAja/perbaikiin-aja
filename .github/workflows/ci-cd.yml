@@ -73,7 +73,11 @@ jobs:
       - name: Setup known hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          echo "Resolving hostname..."
+          getent hosts ${{ secrets.EC2_HOST }} || echo "Could not resolve hostname with getent"
+          echo "Attempting to scan with ssh-keyscan..."
+          ssh-keyscan -v -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts || echo "Warning: ssh-keyscan failed"
+          cat ~/.ssh/known_hosts
 
       - name: Deploy to EC2
         env:
