@@ -4,6 +4,10 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
 }
 
+tasks.bootJar{
+    mainClass.set("id.ac.ui.cs.advprog.perbaikiinaja.PerbaikiinAjaApplication.java")
+}
+
 group = "id.ac.ui.cs.advprog"
 version = "0.0.1-SNAPSHOT"
 

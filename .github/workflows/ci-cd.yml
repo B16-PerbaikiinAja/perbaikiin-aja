@@ -84,10 +84,10 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
         run: |
-          # Find the jar file
-          JAR_FILE=$(find . -name "*.jar" | head -n 1)
+          # Find the executable JAR file (avoid the -plain.jar)
+          JAR_FILE=$(find . -name "*.jar" | grep -v plain | head -n 1)
           echo "Deploying $JAR_FILE to staging server"
-          
+
           # Transfer jar file
           scp $JAR_FILE $EC2_USERNAME@$EC2_HOST:~/perbaikiinaja-backend.jar
           
