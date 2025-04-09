@@ -1,0 +1,92 @@
+name: Spring Boot CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, staging ]
+  pull_request:
+    branches: [ main, staging ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Build and package with Gradle
+        run: ./gradlew bootJar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-jar
+          path: build/libs/*.jar
+
+  deploy-staging:
+    needs: build
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: app-jar
+          path: .
+
+      - name: List downloaded files
+        run: ls -la
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Setup known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
+        run: |
+          # Find the jar file
+          JAR_FILE=$(find . -name "*.jar" | head -n 1)
+          echo "Deploying $JAR_FILE to staging server"
+          
+          # Transfer jar file
+          scp $JAR_FILE $EC2_USERNAME@$EC2_HOST:~/perbaikiinaja-backend.jar
+          
+          # Execute remote commands to restart service
+          ssh $EC2_USERNAME@$EC2_HOST << 'EOF'
+            # Stop existing application if running
+            if pgrep -f "perbaikiinaja-backend.jar"; then
+              sudo kill $(pgrep -f "perbaikiinaja-backend.jar")
+            fi
+          
+            # Wait for process to terminate
+            sleep 5
+          
+            # Start application using the environment script
+            nohup java -jar ~/perbaikiinaja-backend.jar > ~/app.log 2>&1 &
+          
+            echo "Application deployed and started"
+          EOF
