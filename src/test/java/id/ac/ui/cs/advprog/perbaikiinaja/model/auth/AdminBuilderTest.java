@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.auth.UserRole;
 
-public class AdminBuilderTest {
+class AdminBuilderTest {
 
     private AdminBuilder builder;
 
