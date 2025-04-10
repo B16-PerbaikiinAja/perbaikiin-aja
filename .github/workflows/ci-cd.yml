@@ -83,6 +83,11 @@ jobs:
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
+          PG_HOST: ${{ secrets.PG_HOST }}
+          PG_USER: ${{ secrets.PG_USER }}
+          PG_PASS: ${{ secrets.PG_PASS }}
+          PORT: ${{ secrets.PORT || '8080' }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
         run: |
           # Find the executable JAR file (avoid the -plain.jar)
           JAR_FILE=$(find . -name "*.jar" | grep -v plain | head -n 1)
@@ -90,19 +95,25 @@ jobs:
 
           # Transfer jar file
           scp $JAR_FILE $EC2_USERNAME@$EC2_HOST:~/perbaikiinaja-backend.jar
-          
-          # Execute remote commands to restart service
-          ssh $EC2_USERNAME@$EC2_HOST << 'EOF'
+
+          # Create environment file on the server
+          ssh $EC2_USERNAME@$EC2_HOST << EOF
+            echo "PG_HOST=${PG_HOST}" > ~/.env
+            echo "PG_USER=${PG_USER}" >> ~/.env
+            echo "PG_PASS=${PG_PASS}" >> ~/.env
+            echo "PORT=${PORT}" >> ~/.env
+            echo "JWT_SECRET_KEY=${JWT_SECRET_KEY}" >> ~/.env
+
             # Stop existing application if running
             if pgrep -f "perbaikiinaja-backend.jar"; then
-              sudo kill $(pgrep -f "perbaikiinaja-backend.jar")
+              sudo kill \$(pgrep -f "perbaikiinaja-backend.jar")
             fi
-          
+
             # Wait for process to terminate
             sleep 5
-          
-            # Start application using the environment script
+
+            # Start application using the environment file
             nohup java -jar ~/perbaikiinaja-backend.jar > ~/app.log 2>&1 &
-          
+
             echo "Application deployed and started"
           EOF
