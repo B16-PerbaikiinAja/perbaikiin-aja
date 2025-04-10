@@ -200,7 +200,7 @@ class UserBuilderTest {
         builder.password("validpassword")
                 .phoneNumber("1234567890");
 
-        Exception exception = assertThrows(RuntimeException.class, () -> {
+        assertThrows(RuntimeException.class, () -> {
             builder.build();
         }, "Cannot build User: missing required field(s): fullName, email,");
     }
