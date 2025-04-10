@@ -11,7 +11,7 @@ public class TestUserBuilder extends UserBuilder<TestUserBuilder> {
     }
     
     @Override
-    public TestUser buildInternal() {
+    public TestUser build() {
         TestUser user = new TestUser();
         user.setFullName(this.fullName);
         user.setEmail(this.email);

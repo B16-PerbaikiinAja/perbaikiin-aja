@@ -48,24 +48,5 @@ public abstract class UserBuilder<T extends UserBuilder<T>> {
         return self();
     }
 
-    protected void validateRequiredFields() {
-        StringBuilder missingFields = new StringBuilder();
-        
-        if (fullName == null) missingFields.append("fullName, ");
-        if (email == null) missingFields.append("email, ");
-        if (password == null) missingFields.append("password, ");
-        if (phoneNumber == null) missingFields.append("phoneNumber, ");
-        
-        if (missingFields.length() > 0) {
-            missingFields.setLength(missingFields.length() - 2); // Remove trailing comma and space
-            throw new IllegalStateException("Cannot build User: missing required field(s): " + missingFields);
-        }
-    }
-    
-    public final User build() {
-        validateRequiredFields();
-        return buildInternal();
-    }
-
-    protected abstract User buildInternal();
+    protected abstract User build();
 }

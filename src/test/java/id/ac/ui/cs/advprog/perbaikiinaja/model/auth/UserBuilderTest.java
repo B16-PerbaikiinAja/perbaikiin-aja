@@ -194,14 +194,4 @@ class UserBuilderTest {
         assertEquals("password123", secondUser.getPassword());
         assertEquals("1234567890", secondUser.getPhoneNumber());
     }
-
-    @Test
-    void testMissingRequiredFieldsOnBuild() {
-        builder.password("validpassword")
-                .phoneNumber("1234567890");
-
-        assertThrows(RuntimeException.class, () -> {
-            builder.build();
-        }, "Cannot build User: missing required field(s): fullName, email,");
-    }
 }
