@@ -62,5 +62,10 @@ public abstract class UserBuilder<T extends UserBuilder<T>> {
         }
     }
     
-    public abstract User build();
+    public final User build() {
+        validateRequiredFields();
+        return buildInternal();
+    }
+
+    protected abstract User buildInternal();
 }

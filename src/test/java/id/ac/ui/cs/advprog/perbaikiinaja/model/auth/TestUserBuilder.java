@@ -11,8 +11,7 @@ public class TestUserBuilder extends UserBuilder<TestUserBuilder> {
     }
     
     @Override
-    public TestUser build() {
-        validateRequiredFields();
+    public TestUser buildInternal() {
         TestUser user = new TestUser();
         user.setFullName(this.fullName);
         user.setEmail(this.email);
