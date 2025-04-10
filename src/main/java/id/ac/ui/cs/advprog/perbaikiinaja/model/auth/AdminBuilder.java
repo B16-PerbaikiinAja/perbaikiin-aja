@@ -3,11 +3,17 @@ package id.ac.ui.cs.advprog.perbaikiinaja.model.auth;
 public class AdminBuilder extends UserBuilder<AdminBuilder> {
     @Override
     protected AdminBuilder self() {
-        return null;
+        return this;
     }
     
     @Override
     public Admin build() {
-        return null;
+        Admin admin = new Admin();
+        admin.setEmail(this.email);
+        admin.setPhoneNumber(this.phoneNumber);
+        admin.setFullName(this.fullName);
+        admin.setPassword(this.password);
+        admin.setRole("ADMIN");
+        return admin;
     }
 }
