@@ -8,4 +8,8 @@ public class Admin extends User{
     public Admin() {
         super();
     }
+
+    public static AdminBuilder builder() {
+        return new AdminBuilder();
+    }
 }
