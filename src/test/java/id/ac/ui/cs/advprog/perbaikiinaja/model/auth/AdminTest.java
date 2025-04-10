@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.model.auth;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.auth.UserRole;
 
 class AdminTest {
     
@@ -15,6 +16,7 @@ class AdminTest {
         admin.setEmail("test@example.com");
         admin.setPassword("password123");
         admin.setPhoneNumber("1234567890");
+        admin.setRole(UserRole.ADMIN.getValue());
     }
     
     @Test
@@ -23,7 +25,7 @@ class AdminTest {
         assertEquals("test@example.com", admin.getEmail());
         assertEquals("password123", admin.getPassword());
         assertEquals("1234567890", admin.getPhoneNumber());
-        assertEquals("TEST_ROLE", admin.getRole());
+        assertEquals(UserRole.ADMIN.getValue(), admin.getRole());
     }
     
     @Test
