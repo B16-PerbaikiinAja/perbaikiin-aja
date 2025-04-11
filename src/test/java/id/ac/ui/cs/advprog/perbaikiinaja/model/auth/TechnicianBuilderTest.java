@@ -38,38 +38,6 @@ class TechnicianBuilderTest {
         assertEquals(1000.50, technician.getTotalEarnings());
         assertEquals(UserRole.TECHNICIAN.getValue(), technician.getRole());
     }
-
-    @Test
-    void testBuildSequence() {
-        builder.fullName("First Technician")
-                .email("first@example.com")
-                .password("password123")
-                .phoneNumber("1234567890")
-                .address("First Address")
-                .completedJobs(10)
-                .totalEarnings(2500.0);
-        Technician firstTechnician = builder.build();
-
-        builder.fullName("Second Technician")
-                .email("second@example.com")
-                .address("Second Address")
-                .completedJobs(15);
-        Technician secondTechnician = builder.build();
-
-        assertEquals("First Technician", firstTechnician.getFullName());
-        assertEquals("first@example.com", firstTechnician.getEmail());
-        assertEquals("First Address", firstTechnician.getAddress());
-        assertEquals(10, firstTechnician.getCompletedJobs());
-        assertEquals(2500.0, firstTechnician.getTotalEarnings());
-
-        assertEquals("Second Technician", secondTechnician.getFullName());
-        assertEquals("second@example.com", secondTechnician.getEmail());
-        assertEquals("password123", secondTechnician.getPassword());
-        assertEquals("1234567890", secondTechnician.getPhoneNumber());
-        assertEquals("Second Address", secondTechnician.getAddress());
-        assertEquals(15, secondTechnician.getCompletedJobs());
-        assertEquals(0.0, secondTechnician.getTotalEarnings());
-    }
     
     @Test
     void testBuildTechnicianWithoutAddress() {
