@@ -72,7 +72,7 @@ public class CouponRepositoryTest {
     }
 
     @Test
-    void testFindByCodeWithNonExistentCODE() {
+    void testFindByCodeWithNonExistentCode() {
         Optional<Coupon> notFoundCoupon = couponRepository.findByCode("NONEXISTING_CODE");
         assertTrue(notFoundCoupon.isEmpty());
     }
