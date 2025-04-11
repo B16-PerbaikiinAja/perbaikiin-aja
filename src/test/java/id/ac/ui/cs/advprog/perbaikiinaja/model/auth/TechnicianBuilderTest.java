@@ -14,7 +14,7 @@ class TechnicianBuilderTest {
 
     @BeforeEach
     void setUp() {
-        builder = new TechnicianBuilder();
+        builder = Technician.builder();
     }
     
     @Test
