@@ -54,7 +54,9 @@ public class RepairReportBuilder implements ReportBuilder {
 
     @Override
     public Report build() throws IllegalStateException {
-        if (!report.isValid()) {
+        // Debug output to see if isValid is being called and what it returns
+        boolean isReportValid = report.isValid();
+        if (!isReportValid) {
             throw new IllegalStateException("Cannot build an invalid report. Ensure all required fields are set.");
         }
         return report;

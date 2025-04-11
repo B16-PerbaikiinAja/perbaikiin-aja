@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.observer;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 
 /**
@@ -20,10 +21,15 @@ public class CustomerNotifier implements ServiceRequestObserver {
 
     @Override
     public void onEstimateProvided(ServiceRequest request) {
+        RepairEstimate estimate = request.getEstimate();
+        String costInfo = estimate != null ? "Cost: " + estimate.getCost() : "Cost: Not available";
+        String dateInfo = estimate != null && estimate.getCompletionDate() != null ?
+                "Estimated completion: " + estimate.getCompletionDate() :
+                "Estimated completion: Not available";
+
         System.out.println("Notifying customer: " + request.getCustomer().getFullName() +
                 " that an estimate has been provided for their service request #" + request.getId() +
-                ". Cost: " + request.getEstimate().getCost() +
-                ", Estimated completion: " + request.getEstimate().getCompletionDate());
+                ". " + costInfo + ", " + dateInfo);
     }
 
     @Override
@@ -48,8 +54,12 @@ public class CustomerNotifier implements ServiceRequestObserver {
 
     @Override
     public void onReportCreated(ServiceRequest request) {
+        String summary = request.getReport() != null ?
+                "Summary: " + request.getReport().getRepairSummary() :
+                "Summary not available";
+
         System.out.println("Notifying customer: " + request.getCustomer().getFullName() +
                 " that a report has been created for their service request #" + request.getId() +
-                ". Summary: " + request.getReport().getRepairSummary());
+                ". " + summary);
     }
 }

@@ -119,12 +119,24 @@ class ServiceRequestObserverTest {
         // Create a real CustomerNotifier
         CustomerNotifier customerNotifier = new CustomerNotifier();
 
+        // Make sure the service request has an estimate before testing onEstimateProvided
+        RepairEstimate estimate = new RepairEstimate();
+        estimate.setCost(100.0);
+        estimate.setCompletionDate(LocalDate.now().plusDays(3));
+        request.setEstimate(estimate);
+
         // No exceptions should be thrown
         customerNotifier.onStateChange(request, "PENDING", "ESTIMATED");
         customerNotifier.onEstimateProvided(request);
         customerNotifier.onEstimateAccepted(request);
         customerNotifier.onEstimateRejected(request);
         customerNotifier.onServiceCompleted(request);
+
+        // For onReportCreated, make sure there's a report
+        Report report = new Report();
+        report.setRepairSummary("Fixed the screen");
+        request.setReport(report);
+
         customerNotifier.onReportCreated(request);
     }
 

@@ -55,11 +55,7 @@ class ServiceRequestServiceTest {
                 customerRepository,
                 technicianRepository);
 
-        // Setup test data
-        customerId = UUID.randomUUID();
-        technicianId = UUID.randomUUID();
-        requestId = UUID.randomUUID();
-
+        // Create test data
         customer = new Customer();
         customer.setFullName("John Doe");
         customer.setEmail("john.doe@example.com");
@@ -67,6 +63,10 @@ class ServiceRequestServiceTest {
         technician = new Technician();
         technician.setFullName("Tech Smith");
         technician.setEmail("tech.smith@example.com");
+
+        // Get the IDs from the actual objects
+        customerId = customer.getId();
+        technicianId = technician.getId();
 
         Item item = new Item();
         item.setName("Smartphone");
@@ -77,6 +77,8 @@ class ServiceRequestServiceTest {
         serviceRequest.setTechnician(technician);
         serviceRequest.setItem(item);
         serviceRequest.setProblemDescription("Screen is cracked and not responding to touch");
+
+        requestId = serviceRequest.getId();
 
         // Mock repository method behaviors
         when(customerRepository.findById(customerId)).thenReturn(Optional.of(customer));
@@ -280,6 +282,9 @@ class ServiceRequestServiceTest {
         newEstimate.setCost(150.0);
         newEstimate.setCompletionDate(LocalDate.now().plusDays(5));
 
+        // Modify the service implementation to check state first
+        when(serviceRequestRepository.findById(requestId)).thenReturn(Optional.of(serviceRequest));
+
         // Act & Assert
         assertThrows(IllegalStateException.class, () -> {
             serviceRequestService.provideEstimate(requestId, newEstimate, technicianId);
@@ -289,6 +294,8 @@ class ServiceRequestServiceTest {
     @Test
     void testAcceptEstimate_InvalidState() {
         // Arrange - service request in PENDING state (no estimate provided)
+        // Make sure we're using the actual customer
+        when(serviceRequestRepository.findById(requestId)).thenReturn(Optional.of(serviceRequest));
 
         // Act & Assert
         assertThrows(IllegalStateException.class, () -> {

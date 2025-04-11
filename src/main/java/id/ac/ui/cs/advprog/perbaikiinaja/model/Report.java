@@ -58,8 +58,11 @@ public class Report {
      * @return true if the report is valid, false otherwise
      */
     public boolean isValid() {
-        return repairDetails != null && !repairDetails.isEmpty()
-                && repairSummary != null && !repairSummary.isEmpty()
-                && completionDateTime != null;
+        // The issue might be here - let's make sure this actually returns false for invalid reports
+        boolean hasRepairDetails = repairDetails != null && !repairDetails.isEmpty();
+        boolean hasRepairSummary = repairSummary != null && !repairSummary.isEmpty();
+        boolean hasCompletionDateTime = completionDateTime != null;
+
+        return hasRepairDetails && hasRepairSummary && hasCompletionDateTime;
     }
 }

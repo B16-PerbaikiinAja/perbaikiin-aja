@@ -1,10 +1,14 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.state;
 
 import static org.junit.jupiter.api.Assertions.*;
+
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Technician;
 import org.junit.jupiter.api.Test;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
+
+import java.time.LocalDate;
 
 class ServiceRequestStateTest {
 
@@ -50,6 +54,12 @@ class ServiceRequestStateTest {
         EstimatedState estimatedState = new EstimatedState();
         request.setState(estimatedState);
 
+        // Add an estimate to the request
+        RepairEstimate estimate = new RepairEstimate();
+        estimate.setCost(100.0);
+        estimate.setCompletionDate(LocalDate.now().plusDays(3));
+        request.setEstimate(estimate);
+
         // Act
         ServiceRequestState nextState = estimatedState.acceptEstimate(request);
         request.setState(nextState);
@@ -64,6 +74,12 @@ class ServiceRequestStateTest {
         ServiceRequest request = new ServiceRequest();
         EstimatedState estimatedState = new EstimatedState();
         request.setState(estimatedState);
+
+        // Add an estimate to the request
+        RepairEstimate estimate = new RepairEstimate();
+        estimate.setCost(100.0);
+        estimate.setCompletionDate(LocalDate.now().plusDays(3));
+        request.setEstimate(estimate);
 
         // Act
         ServiceRequestState nextState = estimatedState.rejectEstimate(request);
@@ -80,6 +96,11 @@ class ServiceRequestStateTest {
         AcceptedState acceptedState = new AcceptedState();
         request.setState(acceptedState);
 
+        // Assign a technician to the request
+        Technician technician = new Technician();
+        technician.setFullName("Tech Smith");
+        request.setTechnician(technician);
+
         // Act
         ServiceRequestState nextState = acceptedState.startService(request);
         request.setState(nextState);
@@ -94,6 +115,17 @@ class ServiceRequestStateTest {
         ServiceRequest request = new ServiceRequest();
         InProgressState inProgressState = new InProgressState();
         request.setState(inProgressState);
+
+        // Assign a technician to the request
+        Technician technician = new Technician();
+        technician.setFullName("Tech Smith");
+        request.setTechnician(technician);
+
+        // Add an estimate for calculating earnings
+        RepairEstimate estimate = new RepairEstimate();
+        estimate.setCost(100.0);
+        estimate.setCompletionDate(LocalDate.now().plusDays(3));
+        request.setEstimate(estimate);
 
         // Act
         ServiceRequestState nextState = inProgressState.completeService(request);

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.state.EstimatedState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -73,9 +74,15 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     @Override
     public ServiceRequest acceptEstimate(UUID requestId, UUID customerId) {
         ServiceRequest request = getServiceRequest(requestId);
+
+        // First check if the state transition is valid
+        if (!(request.getState() instanceof EstimatedState)) {
+            throw new IllegalStateException("Cannot accept estimate in current state");
+        }
+
         Customer customer = getCustomer(customerId);
 
-        // Ensure the customer owns the request
+        // Then check if the customer owns the request
         if (!request.getCustomer().getId().equals(customerId)) {
             throw new IllegalArgumentException("This customer does not own this service request");
         }
