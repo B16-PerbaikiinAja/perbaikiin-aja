@@ -17,4 +17,8 @@ public class Customer extends User {
         super();
     }
 
+    public CustomerBuilder builder(){
+        return new CustomerBuilder();
+    }
+
 }
