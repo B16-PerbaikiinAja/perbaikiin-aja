@@ -17,7 +17,7 @@ public class Customer extends User {
         super();
     }
 
-    public CustomerBuilder builder(){
+    public static CustomerBuilder builder(){
         return new CustomerBuilder();
     }
 
