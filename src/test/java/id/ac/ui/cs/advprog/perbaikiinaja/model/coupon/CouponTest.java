@@ -1,6 +1,5 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model.coupon;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Coupon;
 import org.junit.jupiter.api.Test;
 
 import java.security.InvalidParameterException;
@@ -9,6 +8,8 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CouponTest {
+    Coupon coupon1 = new Coupon.Builder().build();
+
     @Test
     void testBuilderCreatesCoupon() {
         Date future = new Date(System.currentTimeMillis() + 1000 * 60 * 60);
@@ -45,16 +46,24 @@ public class CouponTest {
     }
 
     @Test
-    void testMaxUsageCanNotBeZero() {
+    void testMaxUsageCanNotBeLessThanOne() {
         assertThrows(InvalidParameterException.class, () -> {
             new Coupon.Builder().setMaxUsage(0).build();
+        });
+
+        assertThrows(InvalidParameterException.class, () -> {
+            new Coupon.Builder().setMaxUsage(-1).build();
         });
     }
 
     @Test
-    void testDiscountCanNotBeZero() {
+    void testDiscountValueCanNotBeZeroOrLess() {
         assertThrows(InvalidParameterException.class, () -> {
             new Coupon.Builder().setDiscountValue(0).build();
+        });
+
+        assertThrows(InvalidParameterException.class, () -> {
+            new Coupon.Builder().setDiscountValue(-1).build();
         });
     }
 
@@ -63,6 +72,48 @@ public class CouponTest {
         Date past = new Date(System.currentTimeMillis() - 1000 * 60 * 60);
         assertThrows(InvalidParameterException.class, () -> {
             new Coupon.Builder().setExpiryDate(past).build();
+        });
+    }
+
+    @Test
+    void testUpdateValidDiscountValue() {
+        coupon1.setDiscountValue(0.5);
+        assertEquals(0.5, coupon1.getDiscountValue());
+    }
+
+    @Test
+    void testUpdateInvalidDiscountValue() {
+        assertThrows(InvalidParameterException.class, () -> {
+            coupon1.setDiscountValue(0);
+        });
+    }
+
+    @Test
+    void testUpdateValidMaxUsage() {
+        coupon1.setMaxUsage(10);
+        assertEquals(10, coupon1.getMaxUsage());
+    }
+
+    @Test
+    void testUpdateInvalidMaxUsage() {
+        assertThrows(InvalidParameterException.class, () -> {
+            coupon1.setMaxUsage(-1);
+        });
+    }
+
+    @Test
+    void testUpdateValidExpiryDate() {
+        Date newDate = new Date(System.currentTimeMillis() + 1000 * 60 * 60);
+        coupon1.setExpiryDate(newDate);
+
+        assertEquals(newDate, coupon1.getExpiryDate());
+    }
+
+    @Test
+    void testUpdateInvalidExpiryDate() {
+        Date invalidDate = new Date(System.currentTimeMillis() - 1000 * 60 * 60);
+        assertThrows(InvalidParameterException.class, () -> {
+            coupon1.setExpiryDate(invalidDate);
         });
     }
 }

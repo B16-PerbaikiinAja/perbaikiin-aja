@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.model;
+package id.ac.ui.cs.advprog.perbaikiinaja.model.coupon;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -33,6 +33,21 @@ public class Coupon {
         this.usageCount = 0;
     }
 
+    public void setDiscountValue(double discountValue){
+        validateDiscountValue(discountValue);
+        this.discountValue = discountValue;
+    }
+
+    public void setMaxUsage(int maxUsage){
+        validateMaxUsage(maxUsage);
+        this.maxUsage = maxUsage;
+    }
+
+    public void setExpiryDate(Date expiryDate){
+        validateExpiryDate(expiryDate);
+        this.expiryDate = expiryDate;
+    }
+
     public static class Builder {
         private double discountValue;
         private int maxUsage;
@@ -48,27 +63,22 @@ public class Coupon {
         }
 
         public Builder setDiscountValue(double discountValue) {
-            if (discountValue <= 0 || discountValue > 1) {
-                throw new InvalidParameterException("Discount must be greater than 0 and at most 1");
-            }
+            Coupon.validateDiscountValue(discountValue);
 
             this.discountValue = discountValue;
             return this;
         }
 
         public Builder setMaxUsage(int maxUsage) {
-            if (maxUsage <= 0) {
-                throw new InvalidParameterException("Max usage must be greater than 0");
-            }
+            Coupon.validateMaxUsage(maxUsage);
 
             this.maxUsage = maxUsage;
             return this;
         }
 
         public Builder setExpiryDate(Date expiryDate) {
-            if (expiryDate == null || !expiryDate.after(new Date())) {
-                throw new InvalidParameterException("Expiry date must be in the future and not null");
-            }
+            Coupon.validateExpiryDate(expiryDate);
+
             this.expiryDate = expiryDate;
             return this;
         }
@@ -77,4 +87,24 @@ public class Coupon {
             return new Coupon(this);
         }
     }
+
+    public static void validateDiscountValue(double discountValue){
+        if (discountValue <= 0 || discountValue > 1) {
+            throw new InvalidParameterException("Discount must be greater than 0 and at most 1");
+        }
+    }
+
+    public static void validateMaxUsage(int maxUsage){
+        if (maxUsage <= 0) {
+            throw new InvalidParameterException("Max usage must be greater than 0");
+        }
+    }
+
+    public static void validateExpiryDate(Date expiryDate) {
+        if (expiryDate == null || !expiryDate.after(new Date())) {
+            throw new InvalidParameterException("Expiry date must be in the future and not null");
+        }
+    }
+
+
 }
