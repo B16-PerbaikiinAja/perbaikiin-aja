@@ -1,5 +1,7 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.builder;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
+
 import java.time.LocalDateTime;
 
 /**
