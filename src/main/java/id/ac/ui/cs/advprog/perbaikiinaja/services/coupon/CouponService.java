@@ -16,22 +16,32 @@ public class CouponService {
     private CouponRepository couponRepository;
 
     public Coupon createCoupon(Coupon coupon) {
-        return null;
+        coupon = new Coupon.Builder().build(); // Generate code on creation
+        return couponRepository.save(coupon);
     }
 
     public List<Coupon> getAllCoupons() {
-        return null;
+        return couponRepository.findAll();
     }
 
     public Optional<Coupon> getCouponByCode(String code) {
-        return null;
+        return couponRepository.findByCode(code);
     }
 
     public Optional<Coupon> updateCoupon(String code, Coupon updatedCouponDetails) {
+        Optional<Coupon> existingCouponOptional = couponRepository.findByCode(code);
+        if (existingCouponOptional.isPresent()) {
+            Coupon existingCoupon = existingCouponOptional.get();
+            existingCoupon.setDiscountValue(updatedCouponDetails.getDiscountValue());
+            existingCoupon.setMaxUsage(updatedCouponDetails.getMaxUsage());
+            existingCoupon.setExpiryDate(updatedCouponDetails.getExpiryDate());
+            return Optional.of(couponRepository.save(existingCoupon));
+        }
         return Optional.empty();
     }
 
     public void deleteCoupon(String code) {
+        Optional<Coupon> couponToDeleteOptional = couponRepository.findByCode(code);
+        couponToDeleteOptional.ifPresent(coupon -> couponRepository.deleteByCode(code));
     }
-
 }
