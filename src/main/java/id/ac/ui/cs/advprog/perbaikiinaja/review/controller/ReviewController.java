@@ -17,15 +17,15 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<Review> createReview(@RequestBody Review review) {
-        Review created = reviewService.createReview(review);
-        return ResponseEntity.ok(created);
+        Review createdReview = reviewService.createReview(review);
+        return ResponseEntity.ok(createdReview);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Review> updateReview(@PathVariable("id") String reviewId,
                                                @RequestBody Review review) {
-        Review updated = reviewService.updateReview(reviewId, review);
-        return ResponseEntity.ok(updated);
+        Review updatedReview = reviewService.updateReview(reviewId, review);
+        return ResponseEntity.ok(updatedReview);
     }
 
     @DeleteMapping("/{id}")
