@@ -9,23 +9,35 @@ public class TechnicianBuilder extends UserBuilder<TechnicianBuilder> {
 
     @Override
     protected TechnicianBuilder self() {
-        return null;
+        return this;
     }
 
     public TechnicianBuilder address(String address) {
-        return null;
+        this.address = address;
+        return self();
     }
     
     public TechnicianBuilder completedJobs(int completedJobs) {
-        return null;
+        this.completedJobs = completedJobs;
+        return self();
     }
     
     public TechnicianBuilder totalEarnings(double totalEarnings) {
-        return null;
+        this.totalEarnings = totalEarnings;
+        return self();
     }
     
     @Override
     public Technician build() {
-        return null;
+        Technician technician = new Technician();
+        technician.setEmail(this.email);
+        technician.setPhoneNumber(this.phoneNumber);
+        technician.setFullName(this.fullName);
+        technician.setPassword(this.password);
+        technician.setAddress(this.address);
+        technician.setCompletedJobs(this.completedJobs);
+        technician.setTotalEarnings(this.totalEarnings);
+        technician.setRole(UserRole.TECHNICIAN.getValue());
+        return technician;
     }
 }
