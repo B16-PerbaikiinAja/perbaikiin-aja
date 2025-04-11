@@ -7,15 +7,23 @@ public class CustomerBuilder extends UserBuilder<CustomerBuilder> {
 
     @Override
     protected CustomerBuilder self() {
-        return null;
+        return this;
     }
 
     public CustomerBuilder address(String address) {
-        return null;
+        this.address = address;
+        return this;
     }
     
     @Override
     public Customer build() {
-        return null;
+        Customer customer = new Customer();
+        customer.setEmail(this.email);
+        customer.setPhoneNumber(this.phoneNumber);
+        customer.setFullName(this.fullName);
+        customer.setPassword(this.password);
+        customer.setAddress(this.address);
+        customer.setRole(UserRole.CUSTOMER.getValue());
+        return customer;
     }
 }
