@@ -1,8 +1,8 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.Review.controller;
+package id.ac.ui.cs.advprog.perbaikiinaja.review.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import id.ac.ui.cs.advprog.perbaikiinaja.Review.model.Review;
-import id.ac.ui.cs.advprog.perbaikiinaja.Review.service.ReviewService;
+import id.ac.ui.cs.advprog.perbaikiinaja.review.model.Review;
+import id.ac.ui.cs.advprog.perbaikiinaja.review.service.ReviewService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
