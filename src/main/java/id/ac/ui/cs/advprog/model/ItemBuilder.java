@@ -6,18 +6,25 @@ public class ItemBuilder {
     private String issueDescription;
     
     public ItemBuilder itemName(String itemName) {
-        return null;
+        this.itemName = itemName;
+        return this;
     }
     
     public ItemBuilder itemCondition(String itemCondition) {
-        return null;
+        this.itemCondition = itemCondition;
+        return this;
     }
     
     public ItemBuilder issueDescription(String issueDescription) {
-        return null;
+        this.issueDescription = issueDescription;
+        return this;
     }
     
     public Item build() {
-        return null;
+        Item item = new Item();
+        item.setItemName(this.itemName);
+        item.setItemCondition(this.itemCondition);
+        item.setIssueDescription(this.issueDescription);
+        return item;
     }
 }
