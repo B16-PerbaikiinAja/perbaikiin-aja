@@ -2,6 +2,8 @@ package id.ac.ui.cs.advprog.perbaikiinaja.review.model;
 
 import org.junit.jupiter.api.Test;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.review.model.Review;
+
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,7 +39,7 @@ class ReviewTest {
         LocalDateTime beforeUpdate = review.getUpdatedAt();
 
         Thread.sleep(1000); 
-        
+
         review.onUpdate();
         LocalDateTime afterUpdate = review.getUpdatedAt();
 
