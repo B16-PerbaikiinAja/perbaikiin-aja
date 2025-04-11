@@ -14,7 +14,7 @@ class CustomerBuilderTest {
 
     @BeforeEach
     void setUp() {
-        builder = new CustomerBuilder();
+        builder = Customer.builder();
     }
     
     @Test
