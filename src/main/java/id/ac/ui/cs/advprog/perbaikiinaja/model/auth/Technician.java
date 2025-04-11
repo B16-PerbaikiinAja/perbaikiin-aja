@@ -27,4 +27,7 @@ public class Technician extends User{
         super();
     }
     
+    public static TechnicianBuilder builder() {
+        return new TechnicianBuilder();
+    }
 }
