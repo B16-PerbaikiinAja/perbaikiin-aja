@@ -2,6 +2,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.review.service;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.review.model.Review;
 import id.ac.ui.cs.advprog.perbaikiinaja.review.repository.ReviewRepository;
+import id.ac.ui.cs.advprog.perbaikiinaja.review.validation.ReviewValidationStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +14,12 @@ import java.util.List;
 public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final ReviewValidationStrategy validationStrategy;
 
     @Override
     public Review createReview(Review review) {
+        validationStrategy.validate(review);
+
         Review existing = reviewRepository.findByUserIdAndTechnicianId(review.getUserId(), review.getTechnicianId());
         if (existing != null) {
             throw new RuntimeException("Review already exists");
@@ -39,6 +43,8 @@ public class ReviewServiceImpl implements ReviewService {
         review.setRating(updatedReview.getRating());
         review.setComment(updatedReview.getComment());
         review.setUpdatedAt(LocalDateTime.now());
+
+        validationStrategy.validate(review);
 
         return reviewRepository.save(review);
     }
