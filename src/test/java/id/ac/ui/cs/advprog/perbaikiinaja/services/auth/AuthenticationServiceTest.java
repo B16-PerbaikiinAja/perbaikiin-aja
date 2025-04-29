@@ -5,7 +5,6 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.*;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
