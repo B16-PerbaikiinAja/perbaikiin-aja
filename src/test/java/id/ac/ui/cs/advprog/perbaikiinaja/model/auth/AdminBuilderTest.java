@@ -13,7 +13,7 @@ class AdminBuilderTest {
 
     @BeforeEach
     void setUp() {
-        builder = new AdminBuilder();
+        builder = Admin.builder();
     }
     
     @Test
