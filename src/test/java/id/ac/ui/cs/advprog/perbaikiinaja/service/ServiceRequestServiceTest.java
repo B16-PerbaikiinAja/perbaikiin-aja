@@ -10,17 +10,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Customer;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Item;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Technician;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.CustomerRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.TechnicianRepository;
@@ -35,6 +36,9 @@ class ServiceRequestServiceTest {
 
     @Mock
     private TechnicianRepository technicianRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     private ServiceRequestService serviceRequestService;
 
@@ -52,8 +56,7 @@ class ServiceRequestServiceTest {
         // Create service with mocked repositories
         serviceRequestService = new ServiceRequestServiceImpl(
                 serviceRequestRepository,
-                customerRepository,
-                technicianRepository);
+                userRepository);
 
         // Create test data
         customer = new Customer();
@@ -81,8 +84,8 @@ class ServiceRequestServiceTest {
         requestId = serviceRequest.getId();
 
         // Mock repository method behaviors
-        when(customerRepository.findById(customerId)).thenReturn(Optional.of(customer));
-        when(technicianRepository.findById(technicianId)).thenReturn(Optional.of(technician));
+        when(userRepository.findById(customerId)).thenReturn(Optional.of(customer));
+        when(userRepository.findById(technicianId)).thenReturn(Optional.of(technician));
         when(serviceRequestRepository.findById(requestId)).thenReturn(Optional.of(serviceRequest));
         when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
     }
