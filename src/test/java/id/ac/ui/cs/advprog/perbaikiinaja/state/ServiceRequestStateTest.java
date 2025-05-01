@@ -2,7 +2,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.state;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Technician;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import org.junit.jupiter.api.Test;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
