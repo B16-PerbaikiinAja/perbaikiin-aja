@@ -167,15 +167,27 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
      * Helper method to get a customer by ID or throw an exception.
      */
     private Customer getCustomer(UUID customerId) {
-        return (Customer) userRepository.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found with ID: " + customerId));
+        var user = userRepository.findById(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + customerId));
+
+        if (!(user instanceof Customer)) {
+            throw new IllegalArgumentException("User with ID: " + customerId + " is not a Customer");
+        }
+
+        return (Customer) user;
     }
 
     /**
      * Helper method to get a technician by ID or throw an exception.
      */
     private Technician getTechnician(UUID technicianId) {
-        return (Technician) userRepository.findById(technicianId)
-                .orElseThrow(() -> new IllegalArgumentException("Technician not found with ID: " + technicianId));
+        var user = userRepository.findById(technicianId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + technicianId));
+
+        if (!(user instanceof Technician)) {
+            throw new IllegalArgumentException("User with ID: " + technicianId + " is not a Technician");
+        }
+
+        return (Technician) user;
     }
 }

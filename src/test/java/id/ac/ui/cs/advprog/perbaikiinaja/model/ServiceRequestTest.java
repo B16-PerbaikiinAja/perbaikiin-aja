@@ -13,6 +13,8 @@ import id.ac.ui.cs.advprog.perbaikiinaja.state.AcceptedState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.RejectedState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.InProgressState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.CompletedState;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 
 class ServiceRequestTest {
 
