@@ -8,14 +8,15 @@ import id.ac.ui.cs.advprog.perbaikiinaja.state.EstimatedState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Customer;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Technician;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.CustomerRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.TechnicianRepository;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 
 /**
  * Implementation of the ServiceRequestService interface.
@@ -27,15 +28,17 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     private final ServiceRequestRepository serviceRequestRepository;
     private final CustomerRepository customerRepository;
     private final TechnicianRepository technicianRepository;
+    private final UserRepository userRepository;
 
     @Autowired
     public ServiceRequestServiceImpl(
             ServiceRequestRepository serviceRequestRepository,
             CustomerRepository customerRepository,
-            TechnicianRepository technicianRepository) {
+            TechnicianRepository technicianRepository, UserRepository userRepository) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.customerRepository = customerRepository;
         this.technicianRepository = technicianRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -169,7 +172,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
      * Helper method to get a customer by ID or throw an exception.
      */
     private Customer getCustomer(UUID customerId) {
-        return customerRepository.findById(customerId)
+        return (Customer) userRepository.findById(customerId)
                 .orElseThrow(() -> new IllegalArgumentException("Customer not found with ID: " + customerId));
     }
 
@@ -177,7 +180,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
      * Helper method to get a technician by ID or throw an exception.
      */
     private Technician getTechnician(UUID technicianId) {
-        return technicianRepository.findById(technicianId)
+        return (Technician) userRepository.findById(technicianId)
                 .orElseThrow(() -> new IllegalArgumentException("Technician not found with ID: " + technicianId));
     }
 }

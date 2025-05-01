@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.ServiceRequestState;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 
 /**
  * Represents a service request in the repair system.
