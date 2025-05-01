@@ -5,7 +5,6 @@ import java.util.UUID;
 import java.util.Optional;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 

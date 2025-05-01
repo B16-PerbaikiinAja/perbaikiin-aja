@@ -13,9 +13,7 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
-import id.ac.ui.cs.advprog.perbaikiinaja.repository.CustomerRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
-import id.ac.ui.cs.advprog.perbaikiinaja.repository.TechnicianRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 
 /**
