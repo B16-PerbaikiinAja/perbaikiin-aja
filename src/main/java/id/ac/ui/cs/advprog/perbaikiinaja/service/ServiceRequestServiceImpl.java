@@ -26,18 +26,13 @@ import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 public class ServiceRequestServiceImpl implements ServiceRequestService {
 
     private final ServiceRequestRepository serviceRequestRepository;
-    private final CustomerRepository customerRepository;
-    private final TechnicianRepository technicianRepository;
     private final UserRepository userRepository;
 
     @Autowired
     public ServiceRequestServiceImpl(
             ServiceRequestRepository serviceRequestRepository,
-            CustomerRepository customerRepository,
-            TechnicianRepository technicianRepository, UserRepository userRepository) {
+            UserRepository userRepository) {
         this.serviceRequestRepository = serviceRequestRepository;
-        this.customerRepository = customerRepository;
-        this.technicianRepository = technicianRepository;
         this.userRepository = userRepository;
     }
 
