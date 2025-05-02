@@ -6,18 +6,24 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.EstimateService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CustomerEstimateController.class)
 public class CustomerEstimateControllerTest {
@@ -61,5 +67,47 @@ public class CustomerEstimateControllerTest {
 
         when(estimateService.findById(estimateId)).thenReturn(Optional.of(estimate));
         when(estimateService.getServiceRequest(estimate)).thenReturn(serviceRequest);
+    }
+
+    @Test
+    void acceptEstimate_ShouldReturnSuccess() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("action", "ACCEPT");
+        requestBody.put("feedback", "Great estimate!");
+
+        when(estimateService.acceptEstimate(estimateId, customerId, "Great estimate!"))
+                .thenReturn(serviceRequest);
+        when(serviceRequest.getStateName()).thenReturn("CONFIRMED");
+
+        mockMvc.perform(put("/customer/estimates/{estimateId}/response", estimateId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estimate.status").value("ACCEPTED"))
+                .andExpect(jsonPath("$.estimate.feedback").value("Great estimate!"))
+                .andExpect(jsonPath("$.serviceRequest.status").value("CONFIRMED"));
+
+        verify(estimateService).acceptEstimate(estimateId, customerId, "Great estimate!");
+    }
+
+    @Test
+    void rejectEstimate_ShouldReturnSuccess() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("action", "REJECT");
+        requestBody.put("feedback", "Too expensive");
+
+        UUID serviceRequestId = serviceRequest.getId();
+        when(estimateService.rejectEstimate(estimateId, customerId, "Too expensive"))
+                .thenReturn(serviceRequestId);
+
+        mockMvc.perform(put("/customer/estimates/{estimateId}/response", estimateId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Estimate rejected and service request deleted successfully"))
+                .andExpect(jsonPath("$.estimateId").value(estimateId.toString()))
+                .andExpect(jsonPath("$.serviceRequestId").value(serviceRequestId.toString()));
+
+        verify(estimateService).rejectEstimate(estimateId, customerId, "Too expensive");
     }
 }
