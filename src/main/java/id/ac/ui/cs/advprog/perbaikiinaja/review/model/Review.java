@@ -3,7 +3,6 @@ package id.ac.ui.cs.advprog.perbaikiinaja.review.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDateTime;
