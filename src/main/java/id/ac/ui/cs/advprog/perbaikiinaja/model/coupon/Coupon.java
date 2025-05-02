@@ -6,6 +6,7 @@ import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.security.InvalidParameterException;
 import java.time.LocalDate;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class Coupon {
 
+    @Setter
     @Id
     private String code;
     private double discountValue;
@@ -33,6 +35,14 @@ public class Coupon {
         this.maxUsage = builder.maxUsage;
         this.expiryDate = builder.expiryDate;
         this.usageCount = 0;
+    }
+
+    public Coupon(String code, double discountValue, int maxUsage, int usageCount, Date expiryDate){
+        this.code = code;
+        this.discountValue = discountValue;
+        this.maxUsage = maxUsage;
+        this.expiryDate = expiryDate;
+        this.usageCount = usageCount;
     }
 
     public void setDiscountValue(double discountValue) {
