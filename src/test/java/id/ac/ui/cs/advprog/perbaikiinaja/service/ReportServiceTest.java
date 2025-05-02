@@ -5,14 +5,19 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -68,5 +73,69 @@ public class ReportServiceTest {
 
         serviceRequestWithoutReport = mock(ServiceRequest.class);
         when(serviceRequestWithoutReport.getReport()).thenReturn(null);
+    }
+
+    @Test
+    void getAllReports_ShouldReturnAllReportsFromServiceRequests() {
+        // Arrange
+        when(serviceRequestRepository.findAll()).thenReturn(
+                Arrays.asList(serviceRequest1, serviceRequest2, serviceRequestWithoutReport)
+        );
+
+        // Act
+        List<Report> reports = reportService.getAllReports();
+
+        // Assert
+        assertEquals(2, reports.size());
+        assertTrue(reports.contains(report1));
+        assertTrue(reports.contains(report2));
+    }
+
+    @Test
+    void getReportById_WithValidId_ShouldReturnReport() {
+        // Arrange
+        when(serviceRequestRepository.findAll()).thenReturn(
+                Arrays.asList(serviceRequest1, serviceRequest2)
+        );
+
+        // Act
+        Report result = reportService.getReportById(reportId);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(reportId, result.getId());
+    }
+
+    @Test
+    void getReportsByTechnician_ShouldReturnTechnicianReports() {
+        // Arrange
+        when(serviceRequestRepository.findByTechnicianId(technicianId))
+                .thenReturn(Arrays.asList(serviceRequest1, serviceRequest2));
+
+        // Act
+        List<Report> reports = reportService.getReportsByTechnician(technicianId);
+
+        // Assert
+        assertEquals(2, reports.size());
+        assertTrue(reports.contains(report1));
+        assertTrue(reports.contains(report2));
+    }
+
+    @Test
+    void getReportsByDateRange_ShouldFilterByDateRange() {
+        // Arrange
+        when(serviceRequestRepository.findAll()).thenReturn(
+                Arrays.asList(serviceRequest1, serviceRequest2)
+        );
+
+        LocalDate startDate = baseDateTime.minusDays(7).toLocalDate();
+        LocalDate endDate = baseDateTime.toLocalDate();
+
+        // Act
+        List<Report> reports = reportService.getReportsByDateRange(startDate, endDate);
+
+        // Assert
+        assertEquals(1, reports.size());
+        assertTrue(reports.contains(report1)); // Only report1 falls within the date range
     }
 }
