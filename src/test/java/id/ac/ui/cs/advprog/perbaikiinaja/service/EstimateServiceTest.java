@@ -112,4 +112,91 @@ public class EstimateServiceTest {
         verify(serviceRequest).rejectEstimate();
         verify(serviceRequestRepository).delete(serviceRequest);
     }
+
+    @Test
+    void findById_WithInvalidId_ShouldReturnEmpty() {
+        // Arrange
+        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
+        UUID invalidId = UUID.randomUUID();
+
+        // Act
+        Optional<RepairEstimate> result = estimateService.findById(invalidId);
+
+        // Assert
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void getServiceRequest_WithInvalidEstimate_ShouldThrowException() {
+        // Arrange
+        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
+        RepairEstimate invalidEstimate = mock(RepairEstimate.class);
+        UUID invalidEstimateId = UUID.randomUUID();
+        when(invalidEstimate.getId()).thenReturn(invalidEstimateId);
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            estimateService.getServiceRequest(invalidEstimate);
+        });
+    }
+
+    @Test
+    void acceptEstimate_WithInvalidEstimateId_ShouldThrowException() {
+        // Arrange
+        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
+        UUID invalidEstimateId = UUID.randomUUID();
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            estimateService.acceptEstimate(invalidEstimateId, customerId, "Great estimate!");
+        });
+    }
+
+    @Test
+    void acceptEstimate_WithInvalidCustomerId_ShouldThrowException() {
+        // Arrange
+        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
+        UUID invalidCustomerId = UUID.randomUUID();
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            estimateService.acceptEstimate(estimateId, invalidCustomerId, "Great estimate!");
+        });
+    }
+
+    @Test
+    void acceptEstimate_WithAlreadyAcceptedEstimate_ShouldThrowException() {
+        // Arrange
+        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
+        when(serviceRequest.getStateName()).thenReturn("ACCEPTED");
+
+        // Act & Assert
+        assertThrows(IllegalStateException.class, () -> {
+            estimateService.acceptEstimate(estimateId, customerId, "Great estimate!");
+        });
+    }
+
+    @Test
+    void rejectEstimate_WithInvalidEstimateId_ShouldThrowException() {
+        // Arrange
+        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
+        UUID invalidEstimateId = UUID.randomUUID();
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            estimateService.rejectEstimate(invalidEstimateId, customerId, "Too expensive");
+        });
+    }
+
+    @Test
+    void rejectEstimate_WithInvalidCustomerId_ShouldThrowException() {
+        // Arrange
+        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
+        UUID invalidCustomerId = UUID.randomUUID();
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            estimateService.rejectEstimate(estimateId, invalidCustomerId, "Too expensive");
+        });
+    }
 }
