@@ -15,21 +15,22 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class Review {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Min(1)
     @Max(5)
     private int rating;
 
-
-    @Column(length = 1000)
+    @Column(nullable = false)
     private String comment;
 
-    private String technicianId;
-    private String userId;
+    @Column(nullable = false)
+    private Long technicianId;
+
+    @Column(nullable = false)
+    private Long userId;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
