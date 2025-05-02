@@ -33,9 +33,9 @@ public class ReviewControllerTest {
     @Test
     void testCreateReview() throws Exception {
         Review review = Review.builder()
-                .id("1")
-                .userId("user1")
-                .technicianId("tech1")
+                .id(1L)
+                .userId(100L)
+                .technicianId(200L)
                 .rating(5)
                 .comment("Good job")
                 .createdAt(LocalDateTime.now())
@@ -48,23 +48,24 @@ public class ReviewControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(review)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.comment").value("Good job"));
     }
 
     @Test
     void testUpdateReview() throws Exception {
         Review review = Review.builder()
-                .id("1")
-                .userId("user1")
-                .technicianId("tech1")
+                .id(1L)
+                .userId(100L)
+                .technicianId(200L)
                 .rating(4)
                 .comment("Updated")
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        Mockito.when(reviewService.updateReview(any(), any(Review.class))).thenReturn(review);
+        Mockito.when(reviewService.updateReview(any(Long.class), any(Review.class)))
+                .thenReturn(review);
 
         mockMvc.perform(put("/api/reviews/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -75,28 +76,30 @@ public class ReviewControllerTest {
 
     @Test
     void testDeleteReview() throws Exception {
+        Mockito.doNothing().when(reviewService).deleteReview(1L, 100L);
+
         mockMvc.perform(delete("/api/reviews/1")
-                        .param("userId", "user1"))
+                        .param("userId", "100"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void testGetReviewsForTechnician() throws Exception {
         Review review = Review.builder()
-                .id("1")
-                .userId("user1")
-                .technicianId("tech1")
+                .id(1L)
+                .userId(100L)
+                .technicianId(200L)
                 .rating(5)
                 .comment("Great!")
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        Mockito.when(reviewService.getReviewsForTechnician("tech1"))
+        Mockito.when(reviewService.getReviewsForTechnician(200L))
                 .thenReturn(List.of(review));
 
-        mockMvc.perform(get("/api/reviews/technician/tech1"))
+        mockMvc.perform(get("/api/reviews/technician/200"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].technicianId").value("tech1"));
+                .andExpect(jsonPath("$[0].technicianId").value(200));
     }
 }
