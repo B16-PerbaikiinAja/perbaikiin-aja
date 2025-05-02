@@ -110,4 +110,57 @@ public class CustomerEstimateControllerTest {
 
         verify(estimateService).rejectEstimate(estimateId, customerId, "Too expensive");
     }
+
+    @Test
+    void respondToEstimate_WithInvalidAction_ShouldReturnBadRequest() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("action", "INVALID_ACTION");
+
+        mockMvc.perform(put("/customer/estimates/{estimateId}/response", estimateId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value(4000));
+    }
+
+    @Test
+    void respondToEstimate_WithEstimateNotFound_ShouldReturnNotFound() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("action", "ACCEPT");
+
+        UUID nonExistentId = UUID.randomUUID();
+        when(estimateService.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/customer/estimates/{estimateId}/response", nonExistentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value(4040));
+    }
+
+    @Test
+    void respondToEstimate_WithUnauthorizedCustomer_ShouldReturnForbidden() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("action", "ACCEPT");
+
+        Customer differentCustomer = mock(Customer.class);
+        UUID differentCustomerId = UUID.randomUUID();
+        when(differentCustomer.getId()).thenReturn(differentCustomerId);
+
+        ServiceRequest serviceRequestWithDifferentCustomer = mock(ServiceRequest.class);
+        when(serviceRequestWithDifferentCustomer.getCustomer()).thenReturn(differentCustomer);
+
+        RepairEstimate estimateForDifferentCustomer = mock(RepairEstimate.class);
+        UUID estimateForDifferentCustomerId = UUID.randomUUID();
+        when(estimateForDifferentCustomer.getId()).thenReturn(estimateForDifferentCustomerId);
+
+        when(estimateService.findById(estimateForDifferentCustomerId)).thenReturn(Optional.of(estimateForDifferentCustomer));
+        when(estimateService.getServiceRequest(estimateForDifferentCustomer)).thenReturn(serviceRequestWithDifferentCustomer);
+
+        mockMvc.perform(put("/customer/estimates/{estimateId}/response", estimateForDifferentCustomerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value(4030));
+    }
 }
