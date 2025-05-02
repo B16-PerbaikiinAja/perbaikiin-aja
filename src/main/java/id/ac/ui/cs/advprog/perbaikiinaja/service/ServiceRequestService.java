@@ -21,6 +21,8 @@ public interface ServiceRequestService {
      */
     List<ServiceRequest> findByTechnician(UUID technicianId);
 
+    List<ServiceRequest> findByTechnicianAndStatus(UUID technicianId, String status);
+
     /**
      * Retrieves all service requests from a customer.
      * @param customerId The ID of the customer

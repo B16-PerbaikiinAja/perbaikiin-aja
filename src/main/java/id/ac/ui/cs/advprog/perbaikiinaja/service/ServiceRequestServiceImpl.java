@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.state.EstimatedState;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,14 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     @Override
     public List<ServiceRequest> findByTechnician(UUID technicianId) {
         return serviceRequestRepository.findByTechnicianId(technicianId);
+    }
+
+    @Override
+    public List<ServiceRequest> findByTechnicianAndStatus(UUID technicianId, String status) {
+        List<ServiceRequest> requests = findByTechnician(technicianId);
+        return requests.stream()
+                .filter(request -> request.getStateName().equalsIgnoreCase(status))
+                .collect(Collectors.toList());
     }
 
     @Override
