@@ -6,7 +6,6 @@ import id.ac.ui.cs.advprog.perbaikiinaja.review.validation.ReviewValidationStrat
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -19,50 +18,34 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public Review createReview(Review review) {
         validationStrategy.validate(review);
-
-        Review existing = reviewRepository.findByUserIdAndTechnicianId(review.getUserId(), review.getTechnicianId());
-        if (existing != null) {
-            throw new RuntimeException("Review already exists");
-        }
-
-        review.setCreatedAt(LocalDateTime.now());
-        review.setUpdatedAt(LocalDateTime.now());
-
         return reviewRepository.save(review);
     }
 
     @Override
-    public Review updateReview(String reviewId, Review updatedReview) {
-        Review review = reviewRepository.findById(reviewId)
+    public Review updateReview(Long reviewId, Review updatedReview) {
+        Review existing = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found"));
-
-        if (!review.getUserId().equals(updatedReview.getUserId())) {
+        if (!existing.getUserId().equals(updatedReview.getUserId())) {
             throw new RuntimeException("Invalid authorization to update review");
         }
-
-        review.setRating(updatedReview.getRating());
-        review.setComment(updatedReview.getComment());
-        review.setUpdatedAt(LocalDateTime.now());
-
-        validationStrategy.validate(review);
-
-        return reviewRepository.save(review);
+        existing.setComment(updatedReview.getComment());
+        existing.setRating(updatedReview.getRating());
+        validationStrategy.validate(existing);
+        return reviewRepository.save(existing);
     }
 
     @Override
-    public void deleteReview(String reviewId, String userId) {
-        Review review = reviewRepository.findById(reviewId)
+    public void deleteReview(Long reviewId, Long userId) {
+        Review existing = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found"));
-
-        if (!review.getUserId().equals(userId)) {
+        if (!existing.getUserId().equals(userId)) {
             throw new RuntimeException("Invalid authorization to delete review");
         }
-
-        reviewRepository.delete(review);
+        reviewRepository.delete(existing);
     }
 
     @Override
-    public List<Review> getReviewsForTechnician(String technicianId) {
+    public List<Review> getReviewsForTechnician(Long technicianId) {
         return reviewRepository.findByTechnicianId(technicianId);
     }
 }
