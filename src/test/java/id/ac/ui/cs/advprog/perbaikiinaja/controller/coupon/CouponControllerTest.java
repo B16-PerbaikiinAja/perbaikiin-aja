@@ -46,8 +46,7 @@ public class CouponControllerTest {
 
     @Test
     public void testCreateCouponSuccess() throws Exception {
-        // Arrange
-        Date expiryDate = new Date(System.currentTimeMillis() + 100000); // Expiry in the future
+        Date expiryDate = new Date(System.currentTimeMillis() + 100000);
         String couponCode = "unique-code";
         Coupon validCoupon = new Coupon();
         validCoupon.setCode(couponCode);
@@ -57,7 +56,6 @@ public class CouponControllerTest {
 
         when(couponService.createCoupon(any(Coupon.class))).thenReturn(validCoupon);
 
-        // Correct way to create the request JSON
         CouponDto request = new CouponDto();
         request.setCode(couponCode);
         request.setDiscountValue(0.2);
@@ -65,8 +63,7 @@ public class CouponControllerTest {
         request.setExpiryDate(expiryDate);
         String requestJson = objectMapper.writeValueAsString(request);
 
-        // Act & Assert
-        mockMvc.perform(post("/api/admin/coupons/") // Use the correct URL
+        mockMvc.perform(post("/api/admin/coupons/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isCreated())
@@ -77,18 +74,16 @@ public class CouponControllerTest {
 
     @Test
     public void testCreateCouponInvalidDiscountValue() throws Exception {
-        // Arrange
         Date expiryDate = new Date(System.currentTimeMillis() + 100000);
         String couponCode = "unique-code";
-        // Correct way to create the request JSON
+
         CouponDto request = new CouponDto();
         request.setCode(couponCode);
-        request.setDiscountValue(1.1); // Invalid value
+        request.setDiscountValue(1.1);
         request.setMaxUsage(10);
         request.setExpiryDate(expiryDate);
         String requestJson = objectMapper.writeValueAsString(request);
 
-        // Act & Assert
         mockMvc.perform(post("/api/admin/coupons/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
@@ -97,18 +92,17 @@ public class CouponControllerTest {
 
     @Test
     public void testCreateCouponInvalidMaxUsage() throws Exception {
-        // Arrange
+
         Date expiryDate = new Date(System.currentTimeMillis() + 100000);
         String couponCode = "unique-code";
-        // Correct way to create the request JSON
+
         CouponDto request = new CouponDto();
         request.setCode(couponCode);
         request.setDiscountValue(0.2);
-        request.setMaxUsage(0); // Invalid value
+        request.setMaxUsage(0);
         request.setExpiryDate(expiryDate);
         String requestJson = objectMapper.writeValueAsString(request);
 
-        // Act & Assert
         mockMvc.perform(post("/api/admin/coupons/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
@@ -117,18 +111,17 @@ public class CouponControllerTest {
 
     @Test
     public void testCreateCouponInvalidExpiryDate() throws Exception {
-        // Arrange
         Date pastDate = new Date(System.currentTimeMillis() - 100000);
         String couponCode = "unique-code";
-        // Correct way to create the request JSON
+
         CouponDto request = new CouponDto();
         request.setCode(couponCode);
         request.setDiscountValue(0.2);
         request.setMaxUsage(10);
-        request.setExpiryDate(pastDate); // Invalid value
+        request.setExpiryDate(pastDate);
         String requestJson = objectMapper.writeValueAsString(request);
 
-        // Act & Assert
+
         mockMvc.perform(post("/api/admin/coupons/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
