@@ -16,7 +16,7 @@ public class CouponService {
     private CouponRepository couponRepository;
 
     public Coupon createCoupon(Coupon coupon) {
-        coupon = new Coupon.Builder().build(); // Generate code on creation
+        coupon = new Coupon.Builder().build();
         return couponRepository.save(coupon);
     }
 
