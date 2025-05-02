@@ -83,6 +83,70 @@ public class TechnicianStatusControllerTest {
     }
 
     @Test
+    void updateStatus_WithInvalidStatus_ShouldReturnBadRequest() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("status", "INVALID_STATUS");
+
+        mockMvc.perform(put("/technician/service-requests/{serviceRequestId}/status", serviceRequestId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value(4000));
+    }
+
+    @Test
+    void updateStatus_WithoutFinalPriceForCompleted_ShouldReturnBadRequest() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("status", "COMPLETED");
+
+        mockMvc.perform(put("/technician/service-requests/{serviceRequestId}/status", serviceRequestId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value(4001));
+    }
+
+    @Test
+    void updateStatus_WithServiceRequestNotFound_ShouldReturnNotFound() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("status", "COMPLETED");
+        requestBody.put("finalPrice", 250000);
+
+        UUID nonExistentId = UUID.randomUUID();
+        when(serviceRequestService.findById(nonExistentId)).thenReturn(java.util.Optional.empty());
+
+        mockMvc.perform(put("/technician/service-requests/{serviceRequestId}/status", nonExistentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value(4040));
+    }
+
+    @Test
+    void updateStatus_WithUnauthorizedTechnician_ShouldReturnForbidden() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("status", "COMPLETED");
+        requestBody.put("finalPrice", 250000);
+
+        UUID anotherTechnicianId = UUID.randomUUID();
+        Technician anotherTechnician = mock(Technician.class);
+        when(anotherTechnician.getId()).thenReturn(anotherTechnicianId);
+
+        ServiceRequest serviceRequestWithDifferentTechnician = mock(ServiceRequest.class);
+        when(serviceRequestWithDifferentTechnician.getTechnician()).thenReturn(anotherTechnician);
+
+        UUID serviceRequestWithDifferentTechnicianId = UUID.randomUUID();
+        when(serviceRequestService.findById(serviceRequestWithDifferentTechnicianId))
+                .thenReturn(java.util.Optional.of(serviceRequestWithDifferentTechnician));
+
+        mockMvc.perform(put("/technician/service-requests/{serviceRequestId}/status", serviceRequestWithDifferentTechnicianId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value(4030));
+    }
+
+    @Test
     void startService_ShouldReturnSuccess() throws Exception {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("status", "IN_PROGRESS");
