@@ -14,6 +14,7 @@ public class Report {
     private String repairSummary;
     private LocalDateTime completionDateTime;
     private LocalDateTime createdDateTime;
+    private ServiceRequest serviceRequest;
 
     public Report() {
         this.id = UUID.randomUUID();
@@ -51,6 +52,14 @@ public class Report {
 
     public LocalDateTime getCreatedDateTime() {
         return createdDateTime;
+    }
+
+    public ServiceRequest getServiceRequest() {
+        return serviceRequest;
+    }
+
+    public void setServiceRequest(ServiceRequest serviceRequest) {
+        this.serviceRequest = serviceRequest;
     }
 
     /**
