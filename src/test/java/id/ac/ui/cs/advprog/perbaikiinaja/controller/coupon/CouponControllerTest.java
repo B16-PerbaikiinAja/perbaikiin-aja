@@ -16,11 +16,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.hamcrest.Matchers.is;
@@ -171,5 +174,52 @@ public class CouponControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    public void testUpdateCouponSuccess() throws Exception {
+        String couponCode = "existing-code";
+        Date expiryDate = new Date(System.currentTimeMillis() + 100000);
+        Coupon updatedCoupon = new Coupon();
+        updatedCoupon.setCode(couponCode);
+        updatedCoupon.setDiscountValue(0.3);
+        updatedCoupon.setMaxUsage(15);
+        updatedCoupon.setExpiryDate(expiryDate);
+
+        when(couponService.updateCoupon(eq(couponCode), any(Coupon.class))).thenReturn(Optional.of(updatedCoupon));
+
+        CouponDto requestDto = new CouponDto();
+        requestDto.setDiscountValue(0.3);
+        requestDto.setMaxUsage(15);
+        requestDto.setExpiryDate(expiryDate);
+        String requestJson = objectMapper.writeValueAsString(requestDto);
+
+        mockMvc.perform(put("/api/admin/coupons/" + couponCode)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code", is(couponCode)))
+                .andExpect(jsonPath("$.discountValue", is(0.3)))
+                .andExpect(jsonPath("$.maxUsage", is(15)));
+    }
+
+    @Test
+    public void testUpdateCouponInvalidDiscountValue() throws Exception {
+        String couponCode = "existing-code";
+        Date expiryDate = new Date(System.currentTimeMillis() + 100000);
+
+        CouponDto requestDto = new CouponDto();
+        requestDto.setDiscountValue(1.2);
+        requestDto.setMaxUsage(15);
+        requestDto.setExpiryDate(expiryDate);
+        String requestJson = objectMapper.writeValueAsString(requestDto);
+
+        when(couponService.updateCoupon(eq(couponCode), any(Coupon.class)))
+                .thenThrow(new IllegalArgumentException("Discount must be greater than 0 and at most 1"));
+
+        mockMvc.perform(put("/api/admin/coupons/" + couponCode)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andExpect(status().isBadRequest());
     }
 }
