@@ -6,20 +6,26 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TechnicianEstimateController.class)
 public class TechnicianEstimateControllerTest {
@@ -62,5 +68,29 @@ public class TechnicianEstimateControllerTest {
 
         when(serviceRequestService.provideEstimate(eq(serviceRequestId), any(RepairEstimate.class), eq(technicianId)))
                 .thenReturn(serviceRequest);
+    }
+
+    @Test
+    void createEstimate_ShouldReturnCreated() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("estimatedCost", 250000);
+        requestBody.put("estimatedCompletionTime", LocalDate.now().plusDays(7).toString());
+        requestBody.put("notes", "Needs new parts");
+
+        // Set up the mock for getEstimate
+        when(serviceRequest.getEstimate()).thenReturn(estimate);
+
+        mockMvc.perform(post("/technician/service-requests/{serviceRequestId}/estimate", serviceRequestId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.estimate.estimatedCost").value(250000))
+                .andExpect(jsonPath("$.estimate.status").value("PENDING"));
+
+        verify(serviceRequestService).provideEstimate(
+                eq(serviceRequestId),
+                any(RepairEstimate.class),
+                eq(technicianId)
+        );
     }
 }
