@@ -4,9 +4,11 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -15,8 +17,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TechnicianServiceRequestController.class)
 public class TechnicianServiceRequestControllerTest {
@@ -48,5 +52,36 @@ public class TechnicianServiceRequestControllerTest {
         );
 
         when(serviceRequestService.findByTechnician(technicianId)).thenReturn(serviceRequests);
+    }
+
+    @Test
+    void getServiceRequests_ShouldReturnServiceRequests() throws Exception {
+        mockMvc.perform(get("/technician/service-requests/{technicianId}", technicianId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("SUCCESS"))
+                .andExpect(jsonPath("$.serviceRequests").isArray());
+
+        verify(serviceRequestService).findByTechnician(technicianId);
+    }
+
+    @Test
+    void getServiceRequests_WithStatusParam_ShouldFilterRequests() throws Exception {
+        String status = "PENDING";
+        List<ServiceRequest> filteredRequests = Arrays.asList(mock(ServiceRequest.class));
+
+        when(serviceRequestService.findByTechnicianAndStatus(technicianId, status))
+                .thenReturn(filteredRequests);
+
+        mockMvc.perform(get("/technician/service-requests/{technicianId}", technicianId)
+                        .param("status", status)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("SUCCESS"))
+                .andExpect(jsonPath("$.serviceRequests").isArray());
+
+        verify(serviceRequestService).findByTechnicianAndStatus(technicianId, status);
     }
 }
