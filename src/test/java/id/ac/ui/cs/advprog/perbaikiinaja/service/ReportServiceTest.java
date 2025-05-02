@@ -18,8 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ReportServiceTest {
@@ -49,30 +48,30 @@ public class ReportServiceTest {
 
         // Set up technician
         technician = mock(Technician.class);
-        when(technician.getId()).thenReturn(technicianId);
+        lenient().when(technician.getId()).thenReturn(technicianId);
 
         // Set up reports
         report1 = mock(Report.class);
-        when(report1.getId()).thenReturn(reportId);
-        when(report1.getCompletionDateTime()).thenReturn(baseDateTime.minusDays(5));
+        lenient().when(report1.getId()).thenReturn(reportId);
+        lenient().when(report1.getCompletionDateTime()).thenReturn(baseDateTime.minusDays(5));
 
         report2 = mock(Report.class);
-        when(report2.getId()).thenReturn(UUID.randomUUID());
-        when(report2.getCompletionDateTime()).thenReturn(baseDateTime.minusDays(10));
+        lenient().when(report2.getId()).thenReturn(UUID.randomUUID());
+        lenient().when(report2.getCompletionDateTime()).thenReturn(baseDateTime.minusDays(10));
 
         // Set up service requests
         serviceRequest1 = mock(ServiceRequest.class);
         when(serviceRequest1.getReport()).thenReturn(report1);
-        when(serviceRequest1.getTechnician()).thenReturn(technician);
-//        when(report1.getServiceRequest()).thenReturn(serviceRequest1);
+        lenient().when(serviceRequest1.getTechnician()).thenReturn(technician);
+        lenient().when(report1.getServiceRequest()).thenReturn(serviceRequest1);
 
         serviceRequest2 = mock(ServiceRequest.class);
         when(serviceRequest2.getReport()).thenReturn(report2);
-        when(serviceRequest2.getTechnician()).thenReturn(technician);
-//        when(report2.getServiceRequest()).thenReturn(serviceRequest2);
+        lenient().when(serviceRequest2.getTechnician()).thenReturn(technician);
+        lenient().when(report2.getServiceRequest()).thenReturn(serviceRequest2);
 
         serviceRequestWithoutReport = mock(ServiceRequest.class);
-        when(serviceRequestWithoutReport.getReport()).thenReturn(null);
+        lenient().when(serviceRequestWithoutReport.getReport()).thenReturn(null);
     }
 
     @Test
