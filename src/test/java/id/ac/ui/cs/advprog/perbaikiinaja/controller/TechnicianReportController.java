@@ -7,20 +7,26 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TechnicianReportController.class)
 public class TechnicianReportControllerTest {
@@ -70,5 +76,29 @@ public class TechnicianReportControllerTest {
         when(serviceRequestService.createReport(eq(serviceRequestId), any(Report.class), eq(technicianId)))
                 .thenReturn(serviceRequest);
         when(serviceRequest.getReport()).thenReturn(report);
+    }
+
+    @Test
+    void createReport_ShouldReturnCreated() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("serviceRequestId", serviceRequestId.toString());
+        requestBody.put("repairDetails", "Replaced the broken parts");
+        requestBody.put("resolutionSummary", "Fixed the device");
+        requestBody.put("completionDate", LocalDateTime.now().toString());
+
+        mockMvc.perform(post("/technician/report")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.report.id").exists())
+                .andExpect(jsonPath("$.report.serviceRequestId").value(serviceRequestId.toString()))
+                .andExpect(jsonPath("$.report.repairDetails").value("Replaced the broken parts"))
+                .andExpect(jsonPath("$.report.resolutionSummary").value("Fixed the device"));
+
+        verify(serviceRequestService).createReport(
+                eq(serviceRequestId),
+                any(Report.class),
+                eq(technicianId)
+        );
     }
 }
