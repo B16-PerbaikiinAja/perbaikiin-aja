@@ -129,4 +129,29 @@ public class AdminReportControllerTest {
 
         verify(reportService).getReportById(reportId);
     }
+
+    @Test
+    void getReports_WithInvalidDateFormat_ShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/admin/report")
+                        .param("date_start", "invalid-date")
+                        .param("date_end", LocalDate.now().toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value(4000));
+    }
+
+    @Test
+    void getReports_WithNonAdminUser_ShouldReturnForbidden() throws Exception {
+        Technician technician = mock(Technician.class);
+        when(technician.getRole()).thenReturn("TECHNICIAN");
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(technician, null)
+        );
+
+        mockMvc.perform(get("/admin/report")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value(4030));
+    }
 }
