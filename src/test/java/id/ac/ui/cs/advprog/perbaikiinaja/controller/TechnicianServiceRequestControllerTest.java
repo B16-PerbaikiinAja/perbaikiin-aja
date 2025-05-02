@@ -1,13 +1,16 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.config.TestSecurityConfig;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
+import id.ac.ui.cs.advprog.perbaikiinaja.services.auth.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,11 +24,16 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 @WebMvcTest(TechnicianServiceRequestController.class)
+@Import(TestSecurityConfig.class)
 public class TechnicianServiceRequestControllerTest {
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private JwtService jwtService;
 
     @MockBean
     private ServiceRequestService serviceRequestService;
@@ -57,7 +65,8 @@ public class TechnicianServiceRequestControllerTest {
     @Test
     void getServiceRequests_ShouldReturnServiceRequests() throws Exception {
         mockMvc.perform(get("/technician/service-requests/{technicianId}", technicianId)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(user(technician)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("SUCCESS"))
@@ -76,7 +85,8 @@ public class TechnicianServiceRequestControllerTest {
 
         mockMvc.perform(get("/technician/service-requests/{technicianId}", technicianId)
                         .param("status", status)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(user(technician)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("SUCCESS"))
@@ -89,7 +99,8 @@ public class TechnicianServiceRequestControllerTest {
     void getServiceRequests_WithInvalidStatus_ShouldReturnBadRequest() throws Exception {
         mockMvc.perform(get("/technician/service-requests/{technicianId}", technicianId)
                         .param("status", "INVALID_STATUS")
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(user(technician)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("INVALID_STATUS_PARAMETER"));
@@ -100,7 +111,8 @@ public class TechnicianServiceRequestControllerTest {
         UUID differentTechnicianId = UUID.randomUUID();
 
         mockMvc.perform(get("/technician/service-requests/{technicianId}", differentTechnicianId)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(user(technician)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.message").value("ACCESS_DENIED"));
