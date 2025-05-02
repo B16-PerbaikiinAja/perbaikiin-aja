@@ -1,14 +1,17 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import id.ac.ui.cs.advprog.perbaikiinaja.config.TestSecurityConfig;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
+import id.ac.ui.cs.advprog.perbaikiinaja.services.auth.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,12 +25,17 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 @WebMvcTest(TechnicianStatusController.class)
+@Import(TestSecurityConfig.class)
 public class TechnicianStatusControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private JwtService jwtService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -72,7 +80,8 @@ public class TechnicianStatusControllerTest {
 
         mockMvc.perform(put("/technician/service-requests/{serviceRequestId}/status", serviceRequestId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(requestBody))
+                        .with(user(technician)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.serviceRequest.status").value("COMPLETED"))
                 .andExpect(jsonPath("$.serviceRequest.finalPrice").value(250000))
@@ -89,7 +98,8 @@ public class TechnicianStatusControllerTest {
 
         mockMvc.perform(put("/technician/service-requests/{serviceRequestId}/status", serviceRequestId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(requestBody))
+                        .with(user(technician)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value(4000));
     }
@@ -101,7 +111,8 @@ public class TechnicianStatusControllerTest {
 
         mockMvc.perform(put("/technician/service-requests/{serviceRequestId}/status", serviceRequestId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(requestBody))
+                        .with(user(technician)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value(4001));
     }
@@ -117,7 +128,8 @@ public class TechnicianStatusControllerTest {
 
         mockMvc.perform(put("/technician/service-requests/{serviceRequestId}/status", nonExistentId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(requestBody))
+                        .with(user(technician)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value(4040));
     }
@@ -141,7 +153,8 @@ public class TechnicianStatusControllerTest {
 
         mockMvc.perform(put("/technician/service-requests/{serviceRequestId}/status", serviceRequestWithDifferentTechnicianId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(requestBody))
+                        .with(user(technician)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.errorCode").value(4030));
     }
@@ -156,7 +169,8 @@ public class TechnicianStatusControllerTest {
 
         mockMvc.perform(put("/technician/service-requests/{serviceRequestId}/status", serviceRequestId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(requestBody))
+                        .with(user(technician)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.serviceRequest.status").value("IN_PROGRESS"));
 
