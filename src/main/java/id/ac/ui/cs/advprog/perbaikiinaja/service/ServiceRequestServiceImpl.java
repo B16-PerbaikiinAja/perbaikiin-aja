@@ -157,6 +157,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         }
 
         // Create the report
+        report.setServiceRequest(request);
         request.createReport(report);
 
         return serviceRequestRepository.save(request);
