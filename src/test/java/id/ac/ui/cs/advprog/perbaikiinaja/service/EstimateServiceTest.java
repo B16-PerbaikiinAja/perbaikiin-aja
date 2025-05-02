@@ -43,7 +43,7 @@ public class EstimateServiceTest {
 
         // Set up customer
         customer = mock(Customer.class);
-        when(customer.getId()).thenReturn(customerId);
+        lenient().when(customer.getId()).thenReturn(customerId);
 
         // Set up estimate
         estimate = mock(RepairEstimate.class);
@@ -51,9 +51,9 @@ public class EstimateServiceTest {
 
         // Set up service request
         serviceRequest = mock(ServiceRequest.class);
-        when(serviceRequest.getId()).thenReturn(serviceRequestId);
+        lenient().when(serviceRequest.getId()).thenReturn(serviceRequestId);
         when(serviceRequest.getEstimate()).thenReturn(estimate);
-        when(serviceRequest.getCustomer()).thenReturn(customer);
+        lenient().when(serviceRequest.getCustomer()).thenReturn(customer);
     }
 
     @Test
