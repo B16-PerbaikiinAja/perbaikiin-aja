@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.model;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import jakarta.persistence.*;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.ServiceRequestState;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
@@ -13,16 +14,43 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
  * Contains information about the item to be repaired,
  * the customer, technician, and the current state of the request.
  */
+
+@Entity
+@Table(name = "service_requests")
 public class ServiceRequest {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
     private Customer customer;
+
+    @ManyToOne
+    @JoinColumn(name = "technician_id")
     private Technician technician;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "item_id")
     private Item item;
+
     private LocalDate requestDate;
     private String problemDescription;
+
+    @ManyToOne
+    @JoinColumn(name = "payment_method_id")
     private PaymentMethod paymentMethod;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "estimate_id")
     private RepairEstimate estimate;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "report_id")
     private Report report;
+
+    @Transient
     private ServiceRequestState state;
 
     public ServiceRequest() {
