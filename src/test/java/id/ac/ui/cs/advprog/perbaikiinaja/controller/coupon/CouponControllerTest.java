@@ -12,18 +12,19 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doThrow;
+import static org.hamcrest.Matchers.hasSize;
 
 public class CouponControllerTest {
 
@@ -128,4 +129,47 @@ public class CouponControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    public void testGetAllCouponsSuccess() throws Exception {
+        List<Coupon> coupons = new ArrayList<>();
+        Date expiry1 = new Date(System.currentTimeMillis() + 100000);
+        Date expiry2 = new Date(System.currentTimeMillis() + 200000);
+        Coupon coupon1 = new Coupon();
+        coupon1.setCode("code1");
+        coupon1.setDiscountValue(0.1);
+        coupon1.setMaxUsage(5);
+        coupon1.setExpiryDate(expiry1);
+
+        Coupon coupon2 = new Coupon();
+        coupon2.setCode("code2");
+        coupon2.setDiscountValue(0.2);
+        coupon2.setMaxUsage(10);
+        coupon2.setExpiryDate(expiry2);
+
+        coupons.add(coupon1);
+        coupons.add(coupon2);
+
+        when(couponService.getAllCoupons()).thenReturn(coupons);
+
+        mockMvc.perform(get("/api/admin/coupons/")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].code", is("code1")))
+                .andExpect(jsonPath("$[0].discountValue", is(0.1)))
+                .andExpect(jsonPath("$[0].maxUsage", is(5)))
+                .andExpect(jsonPath("$[1].code", is("code2")))
+                .andExpect(jsonPath("$[1].discountValue", is(0.2)))
+                .andExpect(jsonPath("$[1].maxUsage", is(10)));
+    }
+
+    @Test
+    public void testGetAllCouponsEmptyList() throws Exception {
+        when(couponService.getAllCoupons()).thenReturn(new ArrayList<>());
+
+        mockMvc.perform(get("/api/admin/coupons/")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
 }
