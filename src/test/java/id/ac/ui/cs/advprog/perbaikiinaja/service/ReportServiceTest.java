@@ -64,12 +64,12 @@ public class ReportServiceTest {
         serviceRequest1 = mock(ServiceRequest.class);
         when(serviceRequest1.getReport()).thenReturn(report1);
         when(serviceRequest1.getTechnician()).thenReturn(technician);
-        when(report1.getServiceRequest()).thenReturn(serviceRequest1);
+//        when(report1.getServiceRequest()).thenReturn(serviceRequest1);
 
         serviceRequest2 = mock(ServiceRequest.class);
         when(serviceRequest2.getReport()).thenReturn(report2);
         when(serviceRequest2.getTechnician()).thenReturn(technician);
-        when(report2.getServiceRequest()).thenReturn(serviceRequest2);
+//        when(report2.getServiceRequest()).thenReturn(serviceRequest2);
 
         serviceRequestWithoutReport = mock(ServiceRequest.class);
         when(serviceRequestWithoutReport.getReport()).thenReturn(null);
