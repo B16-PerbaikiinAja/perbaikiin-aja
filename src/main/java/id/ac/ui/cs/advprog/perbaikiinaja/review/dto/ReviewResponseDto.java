@@ -1,7 +1,10 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.review.dto;
 
 import java.time.LocalDateTime;
+import lombok.*;
 
+@Getter
+@Setter
 public class ReviewResponseDto {
 
     private Long id;
