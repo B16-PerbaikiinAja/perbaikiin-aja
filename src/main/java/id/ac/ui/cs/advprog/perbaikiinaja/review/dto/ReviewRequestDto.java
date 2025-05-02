@@ -1,7 +1,10 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.review.dto;
 
 import jakarta.validation.constraints.*;
+import lombok.*;
 
+@Getter
+@Setter
 public class ReviewRequestDto {
 
     @NotNull
