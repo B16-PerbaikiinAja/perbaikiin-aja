@@ -93,4 +93,62 @@ public class TechnicianEstimateControllerTest {
                 eq(technicianId)
         );
     }
+
+    @Test
+    void createEstimate_WithNegativeCost_ShouldReturnBadRequest() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("estimatedCost", -100);
+        requestBody.put("estimatedCompletionTime", LocalDate.now().plusDays(7).toString());
+
+        mockMvc.perform(post("/technician/service-requests/{serviceRequestId}/estimate", serviceRequestId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value(4000));
+    }
+
+    @Test
+    void createEstimate_WithPastDate_ShouldReturnBadRequest() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("estimatedCost", 250000);
+        requestBody.put("estimatedCompletionTime", LocalDate.now().minusDays(1).toString());
+
+        mockMvc.perform(post("/technician/service-requests/{serviceRequestId}/estimate", serviceRequestId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value(4001));
+    }
+
+    @Test
+    void createEstimate_WithServiceRequestNotFound_ShouldReturnNotFound() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("estimatedCost", 250000);
+        requestBody.put("estimatedCompletionTime", LocalDate.now().plusDays(7).toString());
+
+        when(serviceRequestService.provideEstimate(eq(serviceRequestId), any(RepairEstimate.class), eq(technicianId)))
+                .thenThrow(new IllegalArgumentException("Service request not found"));
+
+        mockMvc.perform(post("/technician/service-requests/{serviceRequestId}/estimate", serviceRequestId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value(4040));
+    }
+
+    @Test
+    void createEstimate_WithExistingEstimate_ShouldReturnConflict() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("estimatedCost", 250000);
+        requestBody.put("estimatedCompletionTime", LocalDate.now().plusDays(7).toString());
+
+        when(serviceRequestService.provideEstimate(eq(serviceRequestId), any(RepairEstimate.class), eq(technicianId)))
+                .thenThrow(new IllegalStateException("Estimate already exists"));
+
+        mockMvc.perform(post("/technician/service-requests/{serviceRequestId}/estimate", serviceRequestId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value(4090));
+    }
 }
