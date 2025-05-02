@@ -2,8 +2,6 @@ package id.ac.ui.cs.advprog.perbaikiinaja.review.model;
 
 import org.junit.jupiter.api.Test;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.review.model.Review;
-
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,8 +13,8 @@ class ReviewTest {
         Review review = Review.builder()
                 .rating(5)
                 .comment("Keren!")
-                .technicianId("1")
-                .userId("2")
+                .technicianId(1L)
+                .userId(2L)
                 .build();
 
         review.onCreate();
@@ -31,14 +29,14 @@ class ReviewTest {
         Review review = Review.builder()
                 .rating(4)
                 .comment("Kerja Bagus!")
-                .technicianId("1")
-                .userId("2")
+                .technicianId(1L)
+                .userId(2L)
                 .build();
 
         review.onCreate();
         LocalDateTime beforeUpdate = review.getUpdatedAt();
 
-        Thread.sleep(1000); 
+        Thread.sleep(1000); // Simulasi delay waktu
 
         review.onUpdate();
         LocalDateTime afterUpdate = review.getUpdatedAt();
