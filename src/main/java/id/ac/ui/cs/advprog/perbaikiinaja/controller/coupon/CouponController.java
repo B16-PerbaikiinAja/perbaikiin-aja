@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/admin/coupons")
@@ -40,6 +41,21 @@ public class CouponController {
     public ResponseEntity<List<Coupon>> getAllCoupons() {
         List<Coupon> coupons = couponService.getAllCoupons();
         return new ResponseEntity<>(coupons, HttpStatus.OK);
+    }
+
+    @PutMapping("/{code}")
+    public ResponseEntity<Optional<Coupon>> updateCoupon(@PathVariable String code, @RequestBody CouponDto request) {
+        try {
+            Coupon updatedCoupon = new Coupon();
+            updatedCoupon.setDiscountValue(request.getDiscountValue());
+            updatedCoupon.setMaxUsage(request.getMaxUsage());
+            updatedCoupon.setExpiryDate(request.getExpiryDate());
+
+            Optional<Coupon> updated = couponService.updateCoupon(code, updatedCoupon);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
 
