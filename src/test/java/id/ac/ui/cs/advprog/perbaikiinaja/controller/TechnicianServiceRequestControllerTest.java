@@ -84,4 +84,25 @@ public class TechnicianServiceRequestControllerTest {
 
         verify(serviceRequestService).findByTechnicianAndStatus(technicianId, status);
     }
+
+    @Test
+    void getServiceRequests_WithInvalidStatus_ShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/technician/service-requests/{technicianId}", technicianId)
+                        .param("status", "INVALID_STATUS")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("INVALID_STATUS_PARAMETER"));
+    }
+
+    @Test
+    void getServiceRequests_WithDifferentTechnician_ShouldReturnForbidden() throws Exception {
+        UUID differentTechnicianId = UUID.randomUUID();
+
+        mockMvc.perform(get("/technician/service-requests/{technicianId}", differentTechnicianId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("ACCESS_DENIED"));
+    }
 }
