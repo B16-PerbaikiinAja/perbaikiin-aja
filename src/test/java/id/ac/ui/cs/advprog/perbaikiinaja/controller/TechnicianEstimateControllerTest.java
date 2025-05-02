@@ -1,15 +1,18 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import id.ac.ui.cs.advprog.perbaikiinaja.config.TestSecurityConfig;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
+import id.ac.ui.cs.advprog.perbaikiinaja.services.auth.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,8 +29,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 @WebMvcTest(TechnicianEstimateController.class)
+@Import(TestSecurityConfig.class)
 public class TechnicianEstimateControllerTest {
 
     @Autowired
@@ -35,6 +40,9 @@ public class TechnicianEstimateControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockBean
+    private JwtService jwtService;
 
     @MockBean
     private ServiceRequestService serviceRequestService;
@@ -82,7 +90,8 @@ public class TechnicianEstimateControllerTest {
 
         mockMvc.perform(post("/technician/service-requests/{serviceRequestId}/estimate", serviceRequestId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(requestBody))
+                        .with(user(technician)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.estimate.estimatedCost").value(250000))
                 .andExpect(jsonPath("$.estimate.status").value("PENDING"));
@@ -102,7 +111,8 @@ public class TechnicianEstimateControllerTest {
 
         mockMvc.perform(post("/technician/service-requests/{serviceRequestId}/estimate", serviceRequestId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(requestBody))
+                        .with(user(technician)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value(4000));
     }
@@ -115,7 +125,8 @@ public class TechnicianEstimateControllerTest {
 
         mockMvc.perform(post("/technician/service-requests/{serviceRequestId}/estimate", serviceRequestId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(requestBody))
+                        .with(user(technician)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value(4001));
     }
@@ -131,7 +142,8 @@ public class TechnicianEstimateControllerTest {
 
         mockMvc.perform(post("/technician/service-requests/{serviceRequestId}/estimate", serviceRequestId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(requestBody))
+                        .with(user(technician)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value(4040));
     }
@@ -147,7 +159,8 @@ public class TechnicianEstimateControllerTest {
 
         mockMvc.perform(post("/technician/service-requests/{serviceRequestId}/estimate", serviceRequestId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(requestBody))
+                        .with(user(technician)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errorCode").value(4090));
     }
