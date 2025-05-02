@@ -138,4 +138,35 @@ public class ReportServiceTest {
         assertEquals(1, reports.size());
         assertTrue(reports.contains(report1)); // Only report1 falls within the date range
     }
+
+    @Test
+    void getReportsByDateRange_WithEmptyDateRange_ShouldReturnEmptyList() {
+        // Arrange
+        when(serviceRequestRepository.findAll()).thenReturn(
+                Arrays.asList(serviceRequest1, serviceRequest2)
+        );
+
+        LocalDate futureStartDate = baseDateTime.plusDays(1).toLocalDate();
+        LocalDate futureEndDate = baseDateTime.plusDays(7).toLocalDate();
+
+        // Act
+        List<Report> reports = reportService.getReportsByDateRange(futureStartDate, futureEndDate);
+
+        // Assert
+        assertTrue(reports.isEmpty());
+    }
+
+    @Test
+    void getReportById_WithInvalidId_ShouldThrowException() {
+        // Arrange
+        when(serviceRequestRepository.findAll()).thenReturn(
+                Arrays.asList(serviceRequest1, serviceRequest2)
+        );
+        UUID invalidId = UUID.randomUUID();
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            reportService.getReportById(invalidId);
+        });
+    }
 }
