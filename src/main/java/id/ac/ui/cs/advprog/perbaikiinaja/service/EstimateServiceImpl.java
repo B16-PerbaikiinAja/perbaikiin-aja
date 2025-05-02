@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 
 @Service
 public class EstimateServiceImpl implements EstimateService {
@@ -24,7 +25,7 @@ public class EstimateServiceImpl implements EstimateService {
     public Optional<RepairEstimate> findById(UUID estimateId) {
         // In a real implementation, there would be an EstimateRepository
         // For now, we'll search through all service requests to find the estimate
-        return serviceRequestRepository.findAll().stream()
+        return StreamSupport.stream(serviceRequestRepository.findAll().spliterator(), false)
                 .filter(request -> request.getEstimate() != null)
                 .filter(request -> request.getEstimate().getId().equals(estimateId))
                 .map(ServiceRequest::getEstimate)
@@ -35,7 +36,7 @@ public class EstimateServiceImpl implements EstimateService {
     public ServiceRequest getServiceRequest(RepairEstimate estimate) {
         // In a real implementation, the RepairEstimate would have a reference to its ServiceRequest
         // For now, we'll search through all service requests to find the one with this estimate
-        return serviceRequestRepository.findAll().stream()
+        return StreamSupport.stream(serviceRequestRepository.findAll().spliterator(), false)
                 .filter(request -> request.getEstimate() != null)
                 .filter(request -> request.getEstimate().getId().equals(estimate.getId()))
                 .findFirst()
