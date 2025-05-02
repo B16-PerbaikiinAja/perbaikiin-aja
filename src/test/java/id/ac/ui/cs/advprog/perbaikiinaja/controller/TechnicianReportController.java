@@ -101,4 +101,52 @@ public class TechnicianReportControllerTest {
                 eq(technicianId)
         );
     }
+
+    @Test
+    void createReport_WithMissingRequiredFields_ShouldReturnBadRequest() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("serviceRequestId", serviceRequestId.toString());
+        // Missing repairDetails, resolutionSummary, and completionDate
+
+        mockMvc.perform(post("/technician/report")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createReport_WithServiceRequestNotFound_ShouldReturnNotFound() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("serviceRequestId", UUID.randomUUID().toString());
+        requestBody.put("repairDetails", "Replaced the broken parts");
+        requestBody.put("resolutionSummary", "Fixed the device");
+        requestBody.put("completionDate", LocalDateTime.now().toString());
+
+        when(serviceRequestService.createReport(any(), any(), eq(technicianId)))
+                .thenThrow(new IllegalArgumentException("Service request not found"));
+
+        mockMvc.perform(post("/technician/report")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value(4040));
+    }
+
+    @Test
+    void createReport_WithIncompleteServiceRequest_ShouldReturnConflict() throws Exception {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("serviceRequestId", serviceRequestId.toString());
+        requestBody.put("repairDetails", "Replaced the broken parts");
+        requestBody.put("resolutionSummary", "Fixed the device");
+        requestBody.put("completionDate", LocalDateTime.now().toString());
+
+        when(serviceRequestService.createReport(eq(serviceRequestId), any(Report.class), eq(technicianId)))
+                .thenThrow(new IllegalStateException("Service request is not completed yet"));
+
+        mockMvc.perform(post("/technician/report")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value(4090));
+    }
 }
