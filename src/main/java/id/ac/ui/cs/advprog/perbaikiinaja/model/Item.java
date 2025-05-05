@@ -28,4 +28,8 @@ public class Item {
     @Setter
     @Column(nullable = false)
     private String issueDescription;
+
+    public static ItemBuilder builder() {
+        return new ItemBuilder();
+    }
 }
