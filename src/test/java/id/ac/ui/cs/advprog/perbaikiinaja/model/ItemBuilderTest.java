@@ -1,7 +1,5 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model;
 
-import id.ac.ui.cs.advprog.model.Item;
-import id.ac.ui.cs.advprog.model.ItemBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
