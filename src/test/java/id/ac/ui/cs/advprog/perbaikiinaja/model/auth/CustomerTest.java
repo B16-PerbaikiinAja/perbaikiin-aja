@@ -37,7 +37,7 @@ class CustomerTest {
         assertTrue(customer.isAccountNonLocked());
         assertTrue(customer.isCredentialsNonExpired());
         assertTrue(customer.isEnabled());
-        assertTrue(customer.getAuthorities().isEmpty());
+        assertFalse(customer.getAuthorities().isEmpty());
     }
     
     @Test

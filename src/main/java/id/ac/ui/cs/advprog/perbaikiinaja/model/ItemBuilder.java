@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.model;
+package id.ac.ui.cs.advprog.perbaikiinaja.model;
 
 public class ItemBuilder {
     private String itemName;
