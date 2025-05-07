@@ -3,11 +3,14 @@ package id.ac.ui.cs.advprog.perbaikiinaja.model;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.model.payment.PaymentMethod;
+
 import jakarta.persistence.*;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.ServiceRequestState;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.payment.PaymentMethod;
 
 /**
  * Represents a service request in the repair system.
