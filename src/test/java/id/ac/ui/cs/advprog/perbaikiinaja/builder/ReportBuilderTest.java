@@ -60,6 +60,8 @@ class ReportBuilderTest {
         });
         assertTrue(exception.getMessage().contains("Cannot build an invalid report"));
 
+        // Reset builder before next test
+        builder = new RepairReportBuilder();
         // Act & Assert - Missing repair summary
         exception = assertThrows(IllegalStateException.class, () -> {
             builder
@@ -69,6 +71,8 @@ class ReportBuilderTest {
         });
         assertTrue(exception.getMessage().contains("Cannot build an invalid report"));
 
+        // Reset builder before next test
+        builder = new RepairReportBuilder();
         // Act & Assert - Missing repair details
         exception = assertThrows(IllegalStateException.class, () -> {
             builder
@@ -78,6 +82,8 @@ class ReportBuilderTest {
         });
         assertTrue(exception.getMessage().contains("Cannot build an invalid report"));
 
+        // Reset builder before next test
+        builder = new RepairReportBuilder();
         // Act & Assert - Missing completion date/time
         exception = assertThrows(IllegalStateException.class, () -> {
             builder
