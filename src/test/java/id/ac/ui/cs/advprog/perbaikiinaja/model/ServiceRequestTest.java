@@ -47,6 +47,7 @@ class ServiceRequestTest {
         request.setTechnician(technician);
         request.setItem(item);
         request.setProblemDescription("Phone screen is cracked and doesn't respond to touch");
+        request.setServiceDate(LocalDate.of(2024, 5, 1));
     }
 
     @Test

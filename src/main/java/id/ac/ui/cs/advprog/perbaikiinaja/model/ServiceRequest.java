@@ -19,6 +19,7 @@ public class ServiceRequest {
     private Technician technician;
     private Item item;
     private LocalDate requestDate;
+    private LocalDate serviceDate;
     private String problemDescription;
     private PaymentMethod paymentMethod;
     private RepairEstimate estimate;
@@ -62,6 +63,14 @@ public class ServiceRequest {
 
     public LocalDate getRequestDate() {
         return requestDate;
+    }
+
+    public LocalDate getServiceDate() {
+        return serviceDate;
+    }
+
+    public void setServiceDate(LocalDate serviceDate) {
+        this.serviceDate = serviceDate;
     }
 
     public String getProblemDescription() {
