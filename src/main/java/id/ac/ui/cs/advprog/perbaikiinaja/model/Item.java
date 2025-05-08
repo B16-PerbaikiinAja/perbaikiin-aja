@@ -17,12 +17,12 @@ public class Item {
     @Getter
     @Setter
     @Column(nullable = false)
-    private String itemName;
+    private String name;
 
     @Getter
     @Setter
     @Column(nullable = false)
-    private String itemCondition;
+    private String condition;
 
     @Getter
     @Setter

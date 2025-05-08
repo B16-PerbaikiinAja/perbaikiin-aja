@@ -1,17 +1,17 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model;
 
 public class ItemBuilder {
-    private String itemName;
-    private String itemCondition;
+    private String name;
+    private String condition;
     private String issueDescription;
     
-    public ItemBuilder itemName(String itemName) {
-        this.itemName = itemName;
+    public ItemBuilder name(String name) {
+        this.name = name;
         return this;
     }
     
-    public ItemBuilder itemCondition(String itemCondition) {
-        this.itemCondition = itemCondition;
+    public ItemBuilder condition(String condition) {
+        this.condition = condition;
         return this;
     }
     
@@ -22,8 +22,8 @@ public class ItemBuilder {
     
     public Item build() {
         Item item = new Item();
-        item.setItemName(this.itemName);
-        item.setItemCondition(this.itemCondition);
+        item.setName(this.name);
+        item.setCondition(this.condition);
         item.setIssueDescription(this.issueDescription);
         return item;
     }
