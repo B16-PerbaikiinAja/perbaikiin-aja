@@ -1,46 +1,35 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model;
 
-import java.util.UUID;
+import lombok.Getter;
+import lombok.Setter;
 
-/**
- * Represents an item to be repaired.
- */
+import java.util.*;
+
+import jakarta.persistence.*;
+
 public class Item {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(nullable = false)
+    @Getter
     private UUID id;
-    private String name;
-    private String condition;
+
+    @Getter
+    @Setter
+    @Column(nullable = false)
+    private String itemName;
+
+    @Getter
+    @Setter
+    @Column(nullable = false)
+    private String itemCondition;
+
+    @Getter
+    @Setter
+    @Column(nullable = false)
     private String issueDescription;
 
-    public Item() {
-        this.id = UUID.randomUUID();
-    }
-
-    // Getters and setters
-    public UUID getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getCondition() {
-        return condition;
-    }
-
-    public void setCondition(String condition) {
-        this.condition = condition;
-    }
-
-    public String getIssueDescription() {
-        return issueDescription;
-    }
-
-    public void setIssueDescription(String issueDescription) {
-        this.issueDescription = issueDescription;
+    public static ItemBuilder builder() {
+        return new ItemBuilder();
     }
 }
