@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class CouponService {
@@ -40,8 +39,9 @@ public class CouponService {
         return Optional.empty();
     }
 
-    public void deleteCoupon(String code) {
+    public Optional<Coupon> deleteCoupon(String code) {
         Optional<Coupon> couponToDeleteOptional = couponRepository.findByCode(code);
         couponToDeleteOptional.ifPresent(coupon -> couponRepository.deleteByCode(code));
+        return couponToDeleteOptional;
     }
 }
