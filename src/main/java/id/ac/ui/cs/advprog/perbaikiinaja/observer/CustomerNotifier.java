@@ -7,7 +7,8 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
  * Observer that notifies customers of service request state changes.
  * Implements the Observer design pattern.
  */
-public class CustomerNotifier implements ServiceRequestObserver {
+public class CustomerNotifier implements StateChangeObserver, EstimateObserver,
+        ServiceCompletionObserver, ReportObserver {
 
     // This could be injected with a NotificationService in a real application
 
