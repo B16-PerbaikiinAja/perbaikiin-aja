@@ -20,10 +20,8 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.hamcrest.Matchers.is;
@@ -222,4 +220,34 @@ public class CouponControllerTest {
                         .content(requestJson))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    public void testDeleteCouponSuccess() throws Exception{
+        String couponCode = "existing-code";
+        Date expiryDate = new Date(System.currentTimeMillis() + 100000);
+        Coupon deletedCoupon = new Coupon();
+        deletedCoupon.setCode(couponCode);
+        deletedCoupon.setDiscountValue(0.3);
+        deletedCoupon.setMaxUsage(15);
+        deletedCoupon.setExpiryDate(expiryDate);
+
+        when(couponService.deleteCoupon(eq(couponCode))).thenReturn(Optional.of(deletedCoupon));
+
+        mockMvc.perform(delete("/api/admin/coupons/" + couponCode)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testDeleteCouponNotFound() throws Exception {
+        String couponCode = "nonexistent-code";
+
+        when(couponService.deleteCoupon(couponCode))
+                .thenThrow(new IllegalArgumentException("Coupon code not found."));
+
+        mockMvc.perform(delete("/api/admin/coupons/" + couponCode)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
 }
+
