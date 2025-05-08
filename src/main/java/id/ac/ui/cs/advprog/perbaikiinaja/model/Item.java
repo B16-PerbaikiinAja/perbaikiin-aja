@@ -7,6 +7,7 @@ import java.util.*;
 
 import jakarta.persistence.*;
 
+@Entity
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
