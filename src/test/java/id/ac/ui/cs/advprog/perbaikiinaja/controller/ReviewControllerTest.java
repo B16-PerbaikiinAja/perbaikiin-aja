@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import id.ac.ui.cs.advprog.perbaikiinaja.controller.auth.ReviewController;
+import id.ac.ui.cs.advprog.perbaikiinaja.controller.ReviewController;
 import id.ac.ui.cs.advprog.perbaikiinaja.dtos.ReviewRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.dtos.ReviewResponseDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;

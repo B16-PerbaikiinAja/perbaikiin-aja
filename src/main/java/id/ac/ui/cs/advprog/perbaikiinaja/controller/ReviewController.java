@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.controller.auth;
+package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.dtos.ReviewRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.dtos.ReviewResponseDto;
