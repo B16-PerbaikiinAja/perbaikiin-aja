@@ -1,7 +1,22 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import id.ac.ui.cs.advprog.perbaikiinaja.dto.CustomerServiceRequestDto;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Item;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
+import id.ac.ui.cs.advprog.perbaikiinaja.state.AcceptedState;
+import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
+import id.ac.ui.cs.advprog.perbaikiinaja.state.RejectedState;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -10,47 +25,30 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Item;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
-import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
-import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class ServiceRequestServiceTest {
 
-    @Mock
     private ServiceRequestRepository serviceRequestRepository;
-
-    @Mock
     private UserRepository userRepository;
-
     private ServiceRequestService serviceRequestService;
 
+    private Customer customer;
+    private Technician technician;
     private UUID customerId;
     private UUID technicianId;
     private UUID requestId;
-    private Customer customer;
-    private Technician technician;
     private ServiceRequest serviceRequest;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        // Create service with mocked repositories
-        serviceRequestService = new ServiceRequestServiceImpl(
-                serviceRequestRepository,
-                userRepository);
+        serviceRequestRepository = mock(ServiceRequestRepository.class);
+        userRepository = mock(UserRepository.class);
+        serviceRequestService = new ServiceRequestServiceImpl(serviceRequestRepository, userRepository);
 
-        // Create test data with pre-defined UUIDs
         customerId = UUID.randomUUID();
         technicianId = UUID.randomUUID();
 
@@ -63,8 +61,8 @@ class ServiceRequestServiceTest {
         when(technician.getId()).thenReturn(technicianId);
         when(technician.getFullName()).thenReturn("Tech Smith");
         when(technician.getEmail()).thenReturn("tech.smith@example.com");
-        when(technician.getCompletedJobCount()).thenReturn(0); // Initial value
-        when(technician.getTotalEarnings()).thenReturn(0.0); // Initial value
+        when(technician.getCompletedJobCount()).thenReturn(0);
+        when(technician.getTotalEarnings()).thenReturn(0.0);
 
         Item item = new Item();
         item.setName("Smartphone");
@@ -78,11 +76,162 @@ class ServiceRequestServiceTest {
 
         requestId = serviceRequest.getId();
 
-        // Mock repository method behaviors
         when(userRepository.findById(customerId)).thenReturn(Optional.of(customer));
         when(userRepository.findById(technicianId)).thenReturn(Optional.of(technician));
         when(serviceRequestRepository.findById(requestId)).thenReturn(Optional.of(serviceRequest));
         when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+    }
+
+    @Test
+    void testCreateFromDto() {
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Laptop");
+        dto.setCondition("Broken");
+        dto.setIssueDescription("Screen cracked");
+        dto.setServiceDate(LocalDate.now());
+
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        ServiceRequest created = serviceRequestService.createFromDto(dto, customer);
+
+        assertNotNull(created);
+        assertEquals("Laptop", created.getItem().getName());
+        assertEquals("Broken", created.getItem().getCondition());
+        assertEquals("Screen cracked", created.getItem().getIssueDescription());
+        assertEquals(customer, created.getCustomer());
+        verify(serviceRequestRepository, times(1)).save(any(ServiceRequest.class));
+    }
+
+    @Test
+    void testUpdateFromDto_PendingState() {
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new PendingState());
+
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Phone");
+        dto.setCondition("New");
+        dto.setIssueDescription("Battery issue");
+        dto.setServiceDate(LocalDate.now().plusDays(1));
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        ServiceRequest updated = serviceRequestService.updateFromDto(reqId, dto, customer);
+
+        assertEquals("Phone", updated.getItem().getName());
+        assertTrue(updated.getState() instanceof PendingState);
+        verify(serviceRequestRepository, times(1)).save(existing);
+    }
+
+    @Test
+    void testUpdateFromDto_RejectedState() {
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new RejectedState());
+
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Tablet");
+        dto.setCondition("Used");
+        dto.setIssueDescription("Screen flicker");
+        dto.setServiceDate(LocalDate.now().plusDays(2));
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        ServiceRequest updated = serviceRequestService.updateFromDto(reqId, dto, customer);
+
+        assertEquals("Tablet", updated.getItem().getName());
+        assertTrue(updated.getState() instanceof PendingState);
+        verify(serviceRequestRepository, times(1)).save(existing);
+    }
+
+    @Test
+    void testDelete_PendingState() {
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new PendingState());
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+
+        serviceRequestService.delete(reqId, customer);
+
+        verify(serviceRequestRepository, times(1)).deleteById(reqId);
+    }
+
+    @Test
+    void testDelete_RejectedState() {
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new RejectedState());
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+
+        serviceRequestService.delete(reqId, customer);
+
+        verify(serviceRequestRepository, times(1)).deleteById(reqId);
+    }
+
+    @Test
+    void testUpdateFromDto_NotOwner_ThrowsException() {
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new PendingState());
+
+        User otherUser = mock(User.class);
+        when(otherUser.getId()).thenReturn(UUID.randomUUID());
+
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+
+        assertThrows(IllegalArgumentException.class, () -> serviceRequestService.updateFromDto(reqId, dto, otherUser));
+    }
+
+    @Test
+    void testDelete_NotOwner_ThrowsException() {
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new PendingState());
+
+        User otherUser = mock(User.class);
+        when(otherUser.getId()).thenReturn(UUID.randomUUID());
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+
+        assertThrows(IllegalArgumentException.class, () -> serviceRequestService.delete(reqId, otherUser));
+    }
+
+    @Test
+    void testUpdateFromDto_InvalidState_ThrowsException() {
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new AcceptedState());
+
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+
+        assertThrows(IllegalStateException.class, () -> serviceRequestService.updateFromDto(reqId, dto, customer));
+    }
+
+    @Test
+    void testDelete_InvalidState_ThrowsException() {
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new AcceptedState());
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+
+        assertThrows(IllegalStateException.class, () -> serviceRequestService.delete(reqId, customer));
     }
 
     @Test
