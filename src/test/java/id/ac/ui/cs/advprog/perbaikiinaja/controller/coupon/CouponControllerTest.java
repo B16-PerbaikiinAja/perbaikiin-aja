@@ -17,10 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -286,5 +283,33 @@ public class CouponControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void testUseCouponSuccess() throws Exception {
+        Coupon coupon = new Coupon();
+        coupon.setCode("Use-Coupon");
+        // usageCount has default value of 0 (Zero)
+
+        when(couponService.useCoupon("Use-Coupon")).thenReturn(coupon.incrementUsageCount());
+
+        mockMvc.perform(put("/coupons/use/Use-Coupon"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.usageCount").value(1));
+    }
+
+    @Test
+    void testUseCouponNotFound() throws Exception {
+        when(couponService.useCoupon("nonexisting-code")).thenThrow(new NoSuchElementException());
+
+        mockMvc.perform(put("/coupons/use/nonexisting-code"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testUseCouponOverusedOrExpired() throws Exception {
+        when(couponService.useCoupon("expired-coupon")).thenThrow(new IllegalStateException());
+
+        mockMvc.perform(put("/coupons/use/expired-coupon"))
+                .andExpect(status().isBadRequest());
+    }
 }
 
