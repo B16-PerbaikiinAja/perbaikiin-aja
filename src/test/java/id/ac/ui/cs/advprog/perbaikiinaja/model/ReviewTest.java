@@ -1,6 +1,8 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.review.model;
+package id.ac.ui.cs.advprog.perbaikiinaja.model;
 
 import org.junit.jupiter.api.Test;
+
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
 
 import java.time.LocalDateTime;
 

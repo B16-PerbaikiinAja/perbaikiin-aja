@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.review.model;
+package id.ac.ui.cs.advprog.perbaikiinaja.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;

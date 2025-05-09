@@ -1,6 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.review.service;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.review.model.Review;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
 import id.ac.ui.cs.advprog.perbaikiinaja.review.repository.ReviewRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.review.validation.ReviewValidationStrategy;
 import lombok.RequiredArgsConstructor;

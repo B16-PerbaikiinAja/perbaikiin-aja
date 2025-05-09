@@ -1,7 +1,9 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.review.service;
+package id.ac.ui.cs.advprog.perbaikiinaja.service;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.review.model.Review;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
 import id.ac.ui.cs.advprog.perbaikiinaja.review.repository.ReviewRepository;
+import id.ac.ui.cs.advprog.perbaikiinaja.review.service.ReviewService;
+import id.ac.ui.cs.advprog.perbaikiinaja.review.service.ReviewServiceImpl;
 import id.ac.ui.cs.advprog.perbaikiinaja.review.validation.ReviewValidationStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

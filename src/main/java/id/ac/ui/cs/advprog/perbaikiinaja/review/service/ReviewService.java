@@ -1,8 +1,8 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.review.service;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.review.model.Review;
-
 import java.util.List;
+
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
 
 public interface ReviewService {
     Review createReview(Review review);

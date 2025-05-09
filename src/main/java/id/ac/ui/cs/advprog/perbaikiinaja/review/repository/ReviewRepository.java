@@ -1,7 +1,8 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.review.repository;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.review.model.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
 
 import java.util.List;
 

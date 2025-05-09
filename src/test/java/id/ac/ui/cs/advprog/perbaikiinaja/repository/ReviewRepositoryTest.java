@@ -1,10 +1,12 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.review.repository;
+package id.ac.ui.cs.advprog.perbaikiinaja.repository;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.review.model.Review;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
+import id.ac.ui.cs.advprog.perbaikiinaja.review.repository.ReviewRepository;
 
 import java.util.List;
 

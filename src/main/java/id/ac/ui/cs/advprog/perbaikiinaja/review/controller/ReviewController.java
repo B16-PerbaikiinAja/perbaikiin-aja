@@ -1,8 +1,8 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.review.controller;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
 import id.ac.ui.cs.advprog.perbaikiinaja.review.dto.ReviewRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.review.dto.ReviewResponseDto;
-import id.ac.ui.cs.advprog.perbaikiinaja.review.model.Review;
 import id.ac.ui.cs.advprog.perbaikiinaja.review.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
