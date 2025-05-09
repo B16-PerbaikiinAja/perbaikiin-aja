@@ -32,6 +32,9 @@ public class Review {
     @Column(nullable = false)
     private Long userId;
 
+    @Column(nullable = false)
+    private Long orderId;  // Tambahkan ini
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
