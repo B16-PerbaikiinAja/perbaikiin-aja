@@ -1,11 +1,11 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import id.ac.ui.cs.advprog.perbaikiinaja.controller.auth.ReviewController;
+import id.ac.ui.cs.advprog.perbaikiinaja.dtos.ReviewRequestDto;
+import id.ac.ui.cs.advprog.perbaikiinaja.dtos.ReviewResponseDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ReviewService;
-
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,21 +35,30 @@ public class ReviewControllerTest {
 
     @Test
     void testCreateReview() throws Exception {
-        Review review = Review.builder()
+        // Preparing ReviewRequestDto for the test
+        ReviewRequestDto dto = new ReviewRequestDto();
+        dto.setUserId(100L);
+        dto.setTechnicianId(200L);
+        dto.setOrderId(1L);
+        dto.setComment("Good job");
+        dto.setRating(5);
+
+        Review savedReview = Review.builder()
                 .id(1L)
                 .userId(100L)
                 .technicianId(200L)
-                .rating(5)
+                .orderId(1L)
                 .comment("Good job")
+                .rating(5)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        Mockito.when(reviewService.createReview(any(Review.class))).thenReturn(review);
+        Mockito.when(reviewService.createReview(any(Long.class), any(Long.class), any(Review.class))).thenReturn(savedReview);
 
-        mockMvc.perform(post("/api/reviews")
+        mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(review)))
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.comment").value("Good job"));
@@ -57,31 +66,41 @@ public class ReviewControllerTest {
 
     @Test
     void testUpdateReview() throws Exception {
-        Review review = Review.builder()
+        // Preparing ReviewRequestDto for the test
+        ReviewRequestDto dto = new ReviewRequestDto();
+        dto.setUserId(100L);
+        dto.setTechnicianId(200L);
+        dto.setOrderId(1L);
+        dto.setComment("Updated");
+        dto.setRating(4);
+
+        Review updatedReview = Review.builder()
                 .id(1L)
                 .userId(100L)
                 .technicianId(200L)
-                .rating(4)
+                .orderId(1L)
                 .comment("Updated")
+                .rating(4)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        Mockito.when(reviewService.updateReview(any(Long.class), any(Review.class)))
-                .thenReturn(review);
+        Mockito.when(reviewService.updateReview(any(Long.class), any(Long.class), any(Review.class)))
+                .thenReturn(updatedReview);
 
-        mockMvc.perform(put("/api/reviews/1")
+        mockMvc.perform(put("/reviews/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(review)))
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.comment").value("Updated"));
     }
 
     @Test
     void testDeleteReview() throws Exception {
+        // Simulating deletion with mock service call
         Mockito.doNothing().when(reviewService).deleteReview(1L, 100L);
 
-        mockMvc.perform(delete("/api/reviews/1")
+        mockMvc.perform(delete("/reviews/1")
                         .param("userId", "100"))
                 .andExpect(status().isNoContent());
     }
@@ -92,6 +111,7 @@ public class ReviewControllerTest {
                 .id(1L)
                 .userId(100L)
                 .technicianId(200L)
+                .orderId(1L)
                 .rating(5)
                 .comment("Great!")
                 .createdAt(LocalDateTime.now())
@@ -101,8 +121,9 @@ public class ReviewControllerTest {
         Mockito.when(reviewService.getReviewsForTechnician(200L))
                 .thenReturn(List.of(review));
 
-        mockMvc.perform(get("/api/reviews/technician/200"))
+        mockMvc.perform(get("/reviews/technicians/200"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].technicianId").value(200));
+                .andExpect(jsonPath("$[0].technicianId").value(200))
+                .andExpect(jsonPath("$[0].comment").value("Great!"));
     }
 }
