@@ -2,7 +2,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.dtos.coupon;
 
 import java.util.Date;
 
-public class CouponDto {
+public class CouponRequestDto {
     private String code;
     private double discountValue;
     private int maxUsage;
