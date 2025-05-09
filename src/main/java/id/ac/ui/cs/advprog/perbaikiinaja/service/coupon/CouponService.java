@@ -12,6 +12,8 @@ public interface CouponService {
 
     Optional<Coupon> getCouponByCode(String code);
 
+    Coupon useCoupon(String code);
+
     Optional<Coupon> updateCoupon(String code, Coupon UpdatedCouponDetails);
 
     Optional<Coupon> deleteCoupon(String code);

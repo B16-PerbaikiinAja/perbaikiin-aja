@@ -6,7 +6,9 @@ import id.ac.ui.cs.advprog.perbaikiinaja.validation.coupon.CouponValidation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -29,6 +31,28 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public Optional<Coupon> getCouponByCode(String code) {
         return couponRepository.findByCode(code);
+    }
+
+    /**
+     * Tries to use coupon with the given code.
+     * If coupon is expired, throw exception.
+     * If usage exceeds maxUsage, throw exception.
+     * Otherwise, increment usage count and save it
+     */
+    @Override
+    public Coupon useCoupon(String code) {
+            Coupon coupon = couponRepository.findByCode(code)
+                    .orElseThrow(() -> new NoSuchElementException("Coupon not found"));
+
+            if (coupon.getExpiryDate().before(new Date())) {
+                throw new IllegalStateException("Coupon is expired");
+            }
+
+            if (coupon.getUsageCount() >= coupon.getMaxUsage()) {
+                throw new IllegalStateException("Coupon usage limit reached");
+            }
+            coupon.incrementUsageCount();
+            return couponRepository.save(coupon);
     }
 
     @Override
