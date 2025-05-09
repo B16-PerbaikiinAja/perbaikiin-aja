@@ -20,13 +20,19 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<ReviewResponseDto> createReview(@Valid @RequestBody ReviewRequestDto dto) {
+        Long userId = dto.getUserId();
+        Long orderId = dto.getOrderId();
+
         Review review = Review.builder()
-                .userId(dto.getUserId())
+                .userId(userId)
                 .technicianId(dto.getTechnicianId())
+                .orderId(orderId)
                 .comment(dto.getComment())
                 .rating(dto.getRating())
                 .build();
-        Review saved = reviewService.createReview(review);
+
+        Review saved = reviewService.createReview(userId, orderId, review);
+
         return ResponseEntity.ok(toDto(saved));
     }
 
@@ -34,15 +40,21 @@ public class ReviewController {
     public ResponseEntity<ReviewResponseDto> updateReview(
             @PathVariable Long id,
             @Valid @RequestBody ReviewRequestDto dto) {
+        Long userId = dto.getUserId();
+
         Review review = Review.builder()
-                .userId(dto.getUserId())
+                .userId(userId)
                 .technicianId(dto.getTechnicianId())
+                .orderId(dto.getOrderId())
                 .comment(dto.getComment())
                 .rating(dto.getRating())
                 .build();
-        Review updated = reviewService.updateReview(id, review);
+
+        Review updated = reviewService.updateReview(userId, id, review);
+
         return ResponseEntity.ok(toDto(updated));
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReview(
@@ -67,6 +79,7 @@ public class ReviewController {
                 review.getId(),
                 review.getUserId(),
                 review.getTechnicianId(),
+                review.getOrderId(),
                 review.getComment(),
                 review.getRating(),
                 review.getCreatedAt()
