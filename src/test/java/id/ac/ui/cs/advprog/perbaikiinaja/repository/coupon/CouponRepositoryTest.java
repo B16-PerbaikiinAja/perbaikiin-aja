@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.repository.coupon;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.CouponBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,13 +31,13 @@ public class CouponRepositoryTest {
         Date future1 = new Date(System.currentTimeMillis() + 86400000);
         Date future2 = new Date(System.currentTimeMillis() + 172800000);
 
-        coupon1 = new Coupon.Builder()
+        coupon1 = new CouponBuilder()
                 .setDiscountValue(0.15)
                 .setMaxUsage(10)
                 .setExpiryDate(future1)
                 .build();
 
-        coupon2 = new Coupon.Builder()
+        coupon2 = new CouponBuilder()
                 .setDiscountValue(0.25)
                 .setMaxUsage(20)
                 .setExpiryDate(future2)
@@ -50,7 +51,7 @@ public class CouponRepositoryTest {
     @Test
     void testCreateCoupon_whenSaved_thenCouponExistsInDatabase() {
         Date future = new Date(System.currentTimeMillis() + 259200000);
-        Coupon newCoupon = new Coupon.Builder()
+        Coupon newCoupon = new CouponBuilder()
                 .setDiscountValue(0.30)
                 .setMaxUsage(5)
                 .setExpiryDate(future)

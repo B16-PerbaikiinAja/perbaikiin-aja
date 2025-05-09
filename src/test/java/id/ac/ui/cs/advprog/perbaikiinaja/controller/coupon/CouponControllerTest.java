@@ -65,7 +65,7 @@ public class CouponControllerTest {
         request.setExpiryDate(expiryDate);
         String requestJson = objectMapper.writeValueAsString(request);
 
-        mockMvc.perform(post("/api/admin/coupons/")
+        mockMvc.perform(post("/coupons/admin/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isCreated())
@@ -86,7 +86,7 @@ public class CouponControllerTest {
         request.setExpiryDate(expiryDate);
         String requestJson = objectMapper.writeValueAsString(request);
 
-        mockMvc.perform(post("/api/admin/coupons/")
+        mockMvc.perform(post("/coupons/admin/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isBadRequest());
@@ -105,7 +105,7 @@ public class CouponControllerTest {
         request.setExpiryDate(expiryDate);
         String requestJson = objectMapper.writeValueAsString(request);
 
-        mockMvc.perform(post("/api/admin/coupons/")
+        mockMvc.perform(post("/coupons/admin/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isBadRequest());
@@ -124,7 +124,7 @@ public class CouponControllerTest {
         String requestJson = objectMapper.writeValueAsString(request);
 
 
-        mockMvc.perform(post("/api/admin/coupons/")
+        mockMvc.perform(post("/coupons/admin/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isBadRequest());
@@ -152,7 +152,7 @@ public class CouponControllerTest {
 
         when(couponService.getAllCoupons()).thenReturn(coupons);
 
-        mockMvc.perform(get("/api/admin/coupons/")
+        mockMvc.perform(get("/coupons/admin/")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -168,7 +168,7 @@ public class CouponControllerTest {
     public void testGetAllCouponsEmptyList() throws Exception {
         when(couponService.getAllCoupons()).thenReturn(new ArrayList<>());
 
-        mockMvc.perform(get("/api/admin/coupons/")
+        mockMvc.perform(get("/coupons/admin/")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
@@ -192,7 +192,7 @@ public class CouponControllerTest {
         requestDto.setExpiryDate(expiryDate);
         String requestJson = objectMapper.writeValueAsString(requestDto);
 
-        mockMvc.perform(put("/api/admin/coupons/" + couponCode)
+        mockMvc.perform(put("/coupons/admin/" + couponCode)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isOk())
@@ -215,7 +215,7 @@ public class CouponControllerTest {
         when(couponService.updateCoupon(eq(couponCode), any(Coupon.class)))
                 .thenThrow(new IllegalArgumentException("Discount must be greater than 0 and at most 1"));
 
-        mockMvc.perform(put("/api/admin/coupons/" + couponCode)
+        mockMvc.perform(put("/coupons/admin/" + couponCode)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isBadRequest());
@@ -233,7 +233,7 @@ public class CouponControllerTest {
 
         when(couponService.deleteCoupon(eq(couponCode))).thenReturn(Optional.of(deletedCoupon));
 
-        mockMvc.perform(delete("/api/admin/coupons/" + couponCode)
+        mockMvc.perform(delete("/coupons/admin/" + couponCode)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
@@ -245,7 +245,7 @@ public class CouponControllerTest {
         when(couponService.deleteCoupon(couponCode))
                 .thenThrow(new IllegalArgumentException("Coupon code not found."));
 
-        mockMvc.perform(delete("/api/admin/coupons/" + couponCode)
+        mockMvc.perform(delete("/coupons/admin/" + couponCode)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }

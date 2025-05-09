@@ -8,13 +8,13 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CouponTest {
-    Coupon coupon1 = new Coupon.Builder().build();
+    Coupon coupon1 = new CouponBuilder().build();
 
     @Test
     void testBuilderCreatesCoupon() {
         Date future = new Date(System.currentTimeMillis() + 1000 * 60 * 60);
 
-        Coupon c = new Coupon.Builder()
+        Coupon c = new CouponBuilder()
                 .setDiscountValue(0.15)
                 .setMaxUsage(20)
                 .setExpiryDate(future)
@@ -29,7 +29,7 @@ public class CouponTest {
 
     @Test
     void testDefaultValueIsCorrect() {
-        Coupon c = new Coupon.Builder().build();
+        Coupon c = new CouponBuilder().build();
         assertNotNull(c.getCode());
         assertEquals(0.10, c.getDiscountValue());
         assertEquals(5, c.getMaxUsage());
@@ -39,8 +39,8 @@ public class CouponTest {
 
     @Test
     void testCouponCodeIsRandom() {
-        Coupon c1 = new Coupon.Builder().setDiscountValue(0.10).setMaxUsage(1).build();
-        Coupon c2 = new Coupon.Builder().setDiscountValue(0.10).setMaxUsage(1).build();
+        Coupon c1 = new CouponBuilder().setDiscountValue(0.10).setMaxUsage(1).build();
+        Coupon c2 = new CouponBuilder().setDiscountValue(0.10).setMaxUsage(1).build();
 
         assertNotEquals(c1.getCode(), c2.getCode());
     }
@@ -48,22 +48,22 @@ public class CouponTest {
     @Test
     void testMaxUsageCanNotBeLessThanOne() {
         assertThrows(InvalidParameterException.class, () -> {
-            new Coupon.Builder().setMaxUsage(0).build();
+            new CouponBuilder().setMaxUsage(0).build();
         });
 
         assertThrows(InvalidParameterException.class, () -> {
-            new Coupon.Builder().setMaxUsage(-1).build();
+            new CouponBuilder().setMaxUsage(-1).build();
         });
     }
 
     @Test
     void testDiscountValueCanNotBeZeroOrLess() {
         assertThrows(InvalidParameterException.class, () -> {
-            new Coupon.Builder().setDiscountValue(0).build();
+            new CouponBuilder().setDiscountValue(0).build();
         });
 
         assertThrows(InvalidParameterException.class, () -> {
-            new Coupon.Builder().setDiscountValue(-1).build();
+            new CouponBuilder().setDiscountValue(-1).build();
         });
     }
 
@@ -71,7 +71,7 @@ public class CouponTest {
     void testExpiryDateCanNotBePastDate() {
         Date past = new Date(System.currentTimeMillis() - 1000 * 60 * 60);
         assertThrows(InvalidParameterException.class, () -> {
-            new Coupon.Builder().setExpiryDate(past).build();
+            new CouponBuilder().setExpiryDate(past).build();
         });
     }
 

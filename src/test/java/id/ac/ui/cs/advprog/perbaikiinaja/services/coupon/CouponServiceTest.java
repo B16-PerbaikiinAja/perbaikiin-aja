@@ -1,8 +1,8 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.services.coupon;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.CouponBuilder;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.coupon.CouponRepository;
-import id.ac.ui.cs.advprog.perbaikiinaja.services.coupon.CouponService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,12 +38,12 @@ public class CouponServiceTest {
         Date future1 = new Date(System.currentTimeMillis() + 86400000);
         Date future2 = new Date(System.currentTimeMillis() + 172800000);
 
-        coupon1 = new Coupon(new Coupon.Builder()
+        coupon1 = new Coupon(new CouponBuilder()
                 .setDiscountValue(0.15)
                 .setMaxUsage(10)
                 .setExpiryDate(future1));
 
-        coupon2 = new Coupon(new Coupon.Builder()
+        coupon2 = new Coupon(new CouponBuilder()
                 .setDiscountValue(0.25)
                 .setMaxUsage(20)
                 .setExpiryDate(future2));
@@ -52,13 +52,13 @@ public class CouponServiceTest {
     @Test
     void testCreateCoupon() {
         ArgumentCaptor<Coupon> couponCaptor = ArgumentCaptor.forClass(Coupon.class);
-        Coupon couponToCreate = new Coupon.Builder()
+        Coupon couponToCreate = new CouponBuilder()
                 .setDiscountValue(0.30)
                 .setMaxUsage(5)
                 .setExpiryDate(future)
                 .build();
 
-        Coupon savedCoupon = new Coupon.Builder()
+        Coupon savedCoupon = new CouponBuilder()
                 .setDiscountValue(couponToCreate.getDiscountValue())
                 .setMaxUsage(couponToCreate.getMaxUsage())
                 .setExpiryDate(couponToCreate.getExpiryDate())
@@ -112,7 +112,7 @@ public class CouponServiceTest {
 
     @Test
     void testUpdateExistingCoupon() {
-        Coupon updatedDetails = new Coupon.Builder()
+        Coupon updatedDetails = new CouponBuilder()
                 .setDiscountValue(0.4)
                 .setMaxUsage(40)
                 .setExpiryDate(future)
@@ -134,7 +134,7 @@ public class CouponServiceTest {
     @Test
     void testUpdateNonExistentCoupon() {
         String nonExistingCode = UUID.randomUUID().toString();
-        Coupon updatedDetails = new Coupon.Builder()
+        Coupon updatedDetails = new CouponBuilder()
                 .setDiscountValue(0.4)
                 .setMaxUsage(40)
                 .setExpiryDate(future)

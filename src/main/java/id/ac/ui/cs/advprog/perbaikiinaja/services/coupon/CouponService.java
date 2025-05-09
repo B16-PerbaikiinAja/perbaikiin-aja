@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.services.coupon;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.CouponBuilder;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.coupon.CouponRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,6 @@ public class CouponService {
     private CouponRepository couponRepository;
 
     public Coupon createCoupon(Coupon coupon) {
-        coupon = new Coupon.Builder().build();
         return couponRepository.save(coupon);
     }
 
