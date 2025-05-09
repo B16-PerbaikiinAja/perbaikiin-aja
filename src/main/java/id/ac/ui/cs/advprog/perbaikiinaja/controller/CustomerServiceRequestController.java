@@ -3,7 +3,6 @@ package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 import id.ac.ui.cs.advprog.perbaikiinaja.dto.CustomerServiceRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
-import id.ac.ui.cs.advprog.perbaikiinaja.services.coupon.CouponService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
