@@ -15,17 +15,17 @@ public class ItemTest {
     }
     
     @Test
-    void testSetAndGetItemName() {
-        String itemName = "Headphone";
-        item.setItemName(itemName);
-        assertEquals(itemName, item.getItemName());
+    void testSetAndGetName() {
+        String Name = "Headphone";
+        item.setName(Name);
+        assertEquals(Name, item.getName());
     }
     
     @Test
-    void testSetAndGetItemCondition() {
+    void testSetAndGetCondition() {
         String condition = "Good";
-        item.setItemCondition(condition);
-        assertEquals(condition, item.getItemCondition());
+        item.setCondition(condition);
+        assertEquals(condition, item.getCondition());
     }
     
     @Test

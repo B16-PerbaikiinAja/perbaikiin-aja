@@ -17,13 +17,13 @@ public class ItemBuilderTest {
     @Test
     void testBuildItemWithChainedCalls() {
         Item item = builder
-                .itemName("Phone")
-                .itemCondition("Poor")
+                .name("Phone")
+                .condition("Poor")
                 .issueDescription("Cracked screen")
                 .build();
 
-        assertEquals("Phone", item.getItemName());
-        assertEquals("Poor", item.getItemCondition());
+        assertEquals("Phone", item.getName());
+        assertEquals("Poor", item.getCondition());
         assertEquals("Cracked screen", item.getIssueDescription());
     }
 }
