@@ -11,10 +11,10 @@ import java.util.Optional;
 
 @Repository
 public interface CouponRepository extends JpaRepository<Coupon, String> {
+
     Optional<Coupon> findByCode(String code);
 
     @Transactional
     @Modifying
-    @Query("DELETE FROM Coupon c WHERE c.code = :code")
     void deleteByCode(String code);
 }
