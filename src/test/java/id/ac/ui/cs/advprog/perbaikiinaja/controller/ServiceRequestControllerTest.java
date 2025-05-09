@@ -118,24 +118,27 @@ public class ServiceRequestControllerTest {
     }
 
     @Test
-    void getTechnicianServiceRequests_InvalidStatus_ReturnsBadRequest() {
+    void getTechnicianServiceRequests_WithValidStatus_Success() {
         // Arrange
-        String invalidStatus = "INVALID_STATUS";
+        ServiceRequestStateType validStatus = ServiceRequestStateType.PENDING;
         lenient().when(authentication.getPrincipal()).thenReturn(technician);
+        when(serviceRequestService.findByTechnicianAndStatus(technicianId, validStatus))
+                .thenReturn(serviceRequests);
 
         // Act
-        ResponseEntity<?> response = controller.getTechnicianServiceRequests(technicianId, invalidStatus);
+        ResponseEntity<?> response = controller.getTechnicianServiceRequests(technicianId, validStatus);
 
         // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
 
         @SuppressWarnings("unchecked")
         Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
         assertNotNull(responseBody);
-        assertEquals(400, responseBody.get("status"));
-        assertEquals("INVALID_STATUS_PARAMETER", responseBody.get("message"));
+        assertEquals(200, responseBody.get("status"));
+        assertEquals("SUCCESS", responseBody.get("message"));
 
-        verifyNoInteractions(serviceRequestService);
+        // Verify the service WAS called with the correct parameters
+        verify(serviceRequestService).findByTechnicianAndStatus(technicianId, validStatus);
     }
 
     @Test

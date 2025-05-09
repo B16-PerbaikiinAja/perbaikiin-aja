@@ -111,8 +111,25 @@ public class ServiceRequestController {
         }
 
         // Validate status
-        ServiceRequestStateType status = (ServiceRequestStateType) requestBody.get("status");
-        Set<ServiceRequestStateType> validTechnicianStatusValues = new HashSet<>(Arrays.asList(ServiceRequestStateType.IN_PROGRESS, ServiceRequestStateType.COMPLETED));
+        ServiceRequestStateType status = null;
+        try {
+            if (requestBody.get("status") instanceof String) {
+                // Convert String to enum
+                status = ServiceRequestStateType.valueOf((String) requestBody.get("status"));
+            } else {
+                // Try direct cast (for test cases that may pass the actual enum)
+                status = (ServiceRequestStateType) requestBody.get("status");
+            }
+        } catch (IllegalArgumentException | ClassCastException e) {
+            // Handles both invalid enum strings and casting errors
+            Map<String, Object> response = new HashMap<>();
+            response.put("errorCode", 4000);
+            response.put("message", "Invalid status. Valid values are: " + Arrays.toString(ServiceRequestStateType.values()));
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+
+        Set<ServiceRequestStateType> validTechnicianStatusValues =
+                new HashSet<>(Arrays.asList(ServiceRequestStateType.IN_PROGRESS, ServiceRequestStateType.COMPLETED));
         if (status == null || !validTechnicianStatusValues.contains(status)) {
             Map<String, Object> response = new HashMap<>();
             response.put("errorCode", 4000);
