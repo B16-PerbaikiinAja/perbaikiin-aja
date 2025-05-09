@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.review.repository;
+package id.ac.ui.cs.advprog.perbaikiinaja.repository.review;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

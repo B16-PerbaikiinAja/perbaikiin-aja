@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.review.dto;
+package id.ac.ui.cs.advprog.perbaikiinaja.dtos;
 
 import jakarta.validation.constraints.*;
 import lombok.*;

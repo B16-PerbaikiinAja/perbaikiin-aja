@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
-import id.ac.ui.cs.advprog.perbaikiinaja.review.repository.ReviewRepository;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.review.ReviewRepository;
 
 import java.util.List;
 

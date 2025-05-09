@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.review.validation;
+package id.ac.ui.cs.advprog.perbaikiinaja.validation;
 
 import org.springframework.stereotype.Component;
 

@@ -1,9 +1,9 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.review.controller;
+package id.ac.ui.cs.advprog.perbaikiinaja.controller.auth;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.dtos.ReviewRequestDto;
+import id.ac.ui.cs.advprog.perbaikiinaja.dtos.ReviewResponseDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
-import id.ac.ui.cs.advprog.perbaikiinaja.review.dto.ReviewRequestDto;
-import id.ac.ui.cs.advprog.perbaikiinaja.review.dto.ReviewResponseDto;
-import id.ac.ui.cs.advprog.perbaikiinaja.review.service.ReviewService;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

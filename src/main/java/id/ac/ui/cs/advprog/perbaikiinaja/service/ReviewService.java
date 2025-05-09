@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.review.service;
+package id.ac.ui.cs.advprog.perbaikiinaja.service;
 
 import java.util.List;
 
