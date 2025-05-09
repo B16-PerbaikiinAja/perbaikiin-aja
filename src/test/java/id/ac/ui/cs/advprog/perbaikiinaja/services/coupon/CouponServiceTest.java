@@ -27,7 +27,7 @@ public class CouponServiceTest {
     private CouponRepository couponRepository;
 
     @InjectMocks
-    private CouponService couponService;
+    private CouponServiceImpl couponService ;
 
     private Coupon coupon1;
     private Coupon coupon2;
