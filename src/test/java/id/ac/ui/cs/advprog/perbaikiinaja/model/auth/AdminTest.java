@@ -35,7 +35,7 @@ class AdminTest {
         assertTrue(admin.isAccountNonLocked());
         assertTrue(admin.isCredentialsNonExpired());
         assertTrue(admin.isEnabled());
-        assertTrue(admin.getAuthorities().isEmpty());
+        assertFalse(admin.getAuthorities().isEmpty());
     }
     
     @Test
