@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
@@ -64,7 +65,7 @@ public class ServiceRequestControllerTest {
         lenient().when(serviceRequest.getId()).thenReturn(serviceRequestId);
         lenient().when(serviceRequest.getTechnician()).thenReturn(technician);
         lenient().when(serviceRequest.getCustomer()).thenReturn(customer);
-        lenient().when(serviceRequest.getStateName()).thenReturn("PENDING");
+        lenient().when(serviceRequest.getStateType()).thenReturn(ServiceRequestStateType.PENDING);
 
         // Create list of service requests
         serviceRequests = Arrays.asList(serviceRequest);
@@ -98,7 +99,7 @@ public class ServiceRequestControllerTest {
     @Test
     void getTechnicianServiceRequests_WithStatusFilter_Success() {
         // Arrange
-        String status = "PENDING";
+        ServiceRequestStateType status = ServiceRequestStateType.PENDING;
         lenient().when(authentication.getPrincipal()).thenReturn(technician);
         when(serviceRequestService.findByTechnicianAndStatus(technicianId, status)).thenReturn(serviceRequests);
 
@@ -166,7 +167,7 @@ public class ServiceRequestControllerTest {
         when(serviceRequestService.startService(serviceRequestId, technicianId)).thenReturn(serviceRequest);
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("status", "IN_PROGRESS");
+        requestBody.put("status", ServiceRequestStateType.IN_PROGRESS);
 
         // Act
         ResponseEntity<?> response = controller.updateServiceRequestStatus(serviceRequestId, requestBody, authentication);
@@ -185,7 +186,7 @@ public class ServiceRequestControllerTest {
         when(serviceRequestService.completeService(serviceRequestId, technicianId)).thenReturn(serviceRequest);
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("status", "COMPLETED");
+        requestBody.put("status", ServiceRequestStateType.COMPLETED);
         requestBody.put("finalPrice", 500.0);
 
         // Act
@@ -204,7 +205,7 @@ public class ServiceRequestControllerTest {
         when(serviceRequestService.findById(serviceRequestId)).thenReturn(Optional.empty());
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("status", "IN_PROGRESS");
+        requestBody.put("status", ServiceRequestStateType.IN_PROGRESS);
 
         // Act
         ResponseEntity<?> response = controller.updateServiceRequestStatus(serviceRequestId, requestBody, authentication);
@@ -233,7 +234,7 @@ public class ServiceRequestControllerTest {
         when(serviceRequestService.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("status", "IN_PROGRESS");
+        requestBody.put("status", ServiceRequestStateType.IN_PROGRESS);
 
         // Act
         ResponseEntity<?> response = controller.updateServiceRequestStatus(serviceRequestId, requestBody, authentication);
@@ -279,7 +280,7 @@ public class ServiceRequestControllerTest {
         when(serviceRequestService.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("status", "COMPLETED");
+        requestBody.put("status", ServiceRequestStateType.COMPLETED);
         // Missing finalPrice
 
         // Act
@@ -305,7 +306,7 @@ public class ServiceRequestControllerTest {
                 .thenThrow(new IllegalStateException("Cannot transition to IN_PROGRESS from current state"));
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("status", "IN_PROGRESS");
+        requestBody.put("status", ServiceRequestStateType.IN_PROGRESS);
 
         // Act
         ResponseEntity<?> response = controller.updateServiceRequestStatus(serviceRequestId, requestBody, authentication);

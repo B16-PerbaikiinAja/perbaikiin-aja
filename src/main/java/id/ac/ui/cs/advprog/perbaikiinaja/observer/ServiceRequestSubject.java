@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.observer;
 import java.util.ArrayList;
 import java.util.List;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 
 /**
@@ -70,7 +71,7 @@ public class ServiceRequestSubject {
      * @param previousState The name of the previous state
      * @param newState The name of the new state
      */
-    public void notifyStateChange(ServiceRequest request, String previousState, String newState) {
+    public void notifyStateChange(ServiceRequest request, ServiceRequestStateType previousState, ServiceRequestStateType newState) {
         for (StateChangeObserver observer : stateObservers) {
             observer.onStateChange(request, previousState, newState);
         }

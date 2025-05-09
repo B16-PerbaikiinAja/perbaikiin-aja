@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.service;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
@@ -168,7 +169,7 @@ public class EstimateServiceTest {
     void acceptEstimate_WithAlreadyAcceptedEstimate_ShouldThrowException() {
         // Arrange
         when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
-        when(serviceRequest.getStateName()).thenReturn("ACCEPTED");
+        when(serviceRequest.getStateType()).thenReturn(ServiceRequestStateType.ACCEPTED);
 
         // Act & Assert
         assertThrows(IllegalStateException.class, () -> {

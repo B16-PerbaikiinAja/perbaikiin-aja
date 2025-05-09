@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
@@ -21,7 +22,7 @@ public interface ServiceRequestService {
      */
     List<ServiceRequest> findByTechnician(UUID technicianId);
 
-    List<ServiceRequest> findByTechnicianAndStatus(UUID technicianId, String status);
+    List<ServiceRequest> findByTechnicianAndStatus(UUID technicianId, ServiceRequestStateType status);
 
     /**
      * Retrieves all service requests from a customer.

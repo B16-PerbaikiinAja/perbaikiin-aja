@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
@@ -78,7 +79,7 @@ public class EstimateControllerTest {
         lenient().when(serviceRequest.getTechnician()).thenReturn(technician);
         lenient().when(serviceRequest.getCustomer()).thenReturn(customer);
         lenient().when(serviceRequest.getEstimate()).thenReturn(estimate);
-        lenient().when(serviceRequest.getStateName()).thenReturn("ESTIMATED");
+        lenient().when(serviceRequest.getStateType()).thenReturn(ServiceRequestStateType.ESTIMATED);
     }
 
     @Test
@@ -109,7 +110,7 @@ public class EstimateControllerTest {
         assertEquals(estimateId, estimateResponse.get("id"));
         assertEquals(serviceRequestId, estimateResponse.get("serviceRequestId"));
         assertEquals(100.0, estimateResponse.get("estimatedCost"));
-        assertEquals("PENDING", estimateResponse.get("status"));
+        assertEquals(ServiceRequestStateType.PENDING, estimateResponse.get("status"));
 
         verify(serviceRequestService).provideEstimate(eq(serviceRequestId), any(RepairEstimate.class), eq(technicianId));
     }
@@ -231,7 +232,7 @@ public class EstimateControllerTest {
         @SuppressWarnings("unchecked")
         Map<String, Object> estimateResponse = (Map<String, Object>) responseBody.get("estimate");
         assertNotNull(estimateResponse);
-        assertEquals("ACCEPTED", estimateResponse.get("status"));
+        assertEquals(ServiceRequestStateType.ACCEPTED, estimateResponse.get("status"));
         assertEquals("Great estimate!", estimateResponse.get("feedback"));
 
         verify(estimateService).acceptEstimate(estimateId, customerId, "Great estimate!");

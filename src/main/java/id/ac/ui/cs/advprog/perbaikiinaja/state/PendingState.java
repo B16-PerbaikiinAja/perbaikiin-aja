@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.state;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
@@ -46,7 +47,7 @@ public class PendingState implements ServiceRequestState {
     }
 
     @Override
-    public String getStateName() {
-        return "PENDING";
+    public ServiceRequestStateType getStateType() {
+        return ServiceRequestStateType.PENDING;
     }
 }

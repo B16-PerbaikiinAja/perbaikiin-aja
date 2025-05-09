@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.observer;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 
 /**
@@ -12,5 +13,5 @@ public interface StateChangeObserver extends ServiceRequestObserver {
      * @param previousState The name of the previous state
      * @param newState The name of the new state
      */
-    void onStateChange(ServiceRequest request, String previousState, String newState);
+    void onStateChange(ServiceRequest request, ServiceRequestStateType previousState, ServiceRequestStateType newState);
 }

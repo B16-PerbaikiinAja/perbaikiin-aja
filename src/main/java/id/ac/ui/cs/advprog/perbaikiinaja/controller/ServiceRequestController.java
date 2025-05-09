@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
@@ -19,9 +20,8 @@ import java.util.*;
 public class ServiceRequestController {
 
     private final ServiceRequestService serviceRequestService;
-    private final Set<String> validStatusValues = new HashSet<>(Arrays.asList(
-            "PENDING", "ESTIMATED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "REJECTED"
-    ));
+    private final Set<ServiceRequestStateType> validStatusValues =
+            EnumSet.allOf(ServiceRequestStateType.class);
 
     @Autowired
     public ServiceRequestController(ServiceRequestService serviceRequestService) {
@@ -35,10 +35,10 @@ public class ServiceRequestController {
     @PreAuthorize("hasRole('TECHNICIAN') and authentication.principal.id == #technicianId")
     public ResponseEntity<?> getTechnicianServiceRequests(
             @PathVariable UUID technicianId,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) ServiceRequestStateType status) {
 
         // Validate status parameter if provided
-        if (status != null && !validStatusValues.contains(status.toUpperCase())) {
+        if (status != null && !validStatusValues.contains(status)) {
             Map<String, Object> response = new HashMap<>();
             response.put("status", 400);
             response.put("message", "INVALID_STATUS_PARAMETER");
@@ -48,7 +48,7 @@ public class ServiceRequestController {
         // Get service requests (filtered by status if provided)
         List<ServiceRequest> serviceRequests;
         if (status != null) {
-            serviceRequests = serviceRequestService.findByTechnicianAndStatus(technicianId, status.toUpperCase());
+            serviceRequests = serviceRequestService.findByTechnicianAndStatus(technicianId, status);
         } else {
             serviceRequests = serviceRequestService.findByTechnician(technicianId);
         }
@@ -111,17 +111,17 @@ public class ServiceRequestController {
         }
 
         // Validate status
-        String status = (String) requestBody.get("status");
-        Set<String> validTechnicianStatusValues = new HashSet<>(Arrays.asList("IN_PROGRESS", "COMPLETED"));
+        ServiceRequestStateType status = (ServiceRequestStateType) requestBody.get("status");
+        Set<ServiceRequestStateType> validTechnicianStatusValues = new HashSet<>(Arrays.asList(ServiceRequestStateType.IN_PROGRESS, ServiceRequestStateType.COMPLETED));
         if (status == null || !validTechnicianStatusValues.contains(status)) {
             Map<String, Object> response = new HashMap<>();
             response.put("errorCode", 4000);
-            response.put("message", "Invalid status. Valid values are: " + String.join(", ", validTechnicianStatusValues));
+            response.put("message", "Invalid status. Valid values are: " + validTechnicianStatusValues);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
         // If status is COMPLETED, finalPrice is required
-        if ("COMPLETED".equals(status) && !requestBody.containsKey("finalPrice")) {
+        if (ServiceRequestStateType.COMPLETED.equals(status) && !requestBody.containsKey("finalPrice")) {
             Map<String, Object> response = new HashMap<>();
             response.put("errorCode", 4001);
             response.put("message", "Final price is required when status is COMPLETED");
@@ -130,9 +130,9 @@ public class ServiceRequestController {
 
         try {
             ServiceRequest updatedRequest;
-            if ("COMPLETED".equals(status)) {
+            if (ServiceRequestStateType.COMPLETED.equals(status)) {
                 updatedRequest = serviceRequestService.completeService(serviceRequestId, technicianId);
-            } else { // "IN_PROGRESS"
+            } else { // ServiceRequestStateType.IN_PROGRESS
                 updatedRequest = serviceRequestService.startService(serviceRequestId, technicianId);
             }
 
@@ -142,8 +142,8 @@ public class ServiceRequestController {
             // Service request info
             Map<String, Object> serviceRequestResponse = new HashMap<>();
             serviceRequestResponse.put("id", updatedRequest.getId());
-            serviceRequestResponse.put("status", updatedRequest.getStateName());
-            if ("COMPLETED".equals(status)) {
+            serviceRequestResponse.put("status", updatedRequest.getStateType());
+            if (ServiceRequestStateType.COMPLETED.equals(status)) {
                 Number finalPrice = (Number) requestBody.get("finalPrice");
                 serviceRequestResponse.put("finalPrice", finalPrice);
             }

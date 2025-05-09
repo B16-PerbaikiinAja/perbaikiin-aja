@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.service;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
@@ -56,9 +57,9 @@ public class EstimateServiceImpl implements EstimateService {
         }
 
         // Check if estimate is already accepted
-        if ("ACCEPTED".equals(serviceRequest.getStateName()) ||
-                "IN_PROGRESS".equals(serviceRequest.getStateName()) ||
-                "COMPLETED".equals(serviceRequest.getStateName())) {
+        if (ServiceRequestStateType.ACCEPTED.equals(serviceRequest.getStateType()) ||
+                ServiceRequestStateType.IN_PROGRESS.equals(serviceRequest.getStateType()) ||
+                ServiceRequestStateType.COMPLETED.equals(serviceRequest.getStateType())) {
             throw new IllegalStateException("Estimate is already accepted");
         }
 

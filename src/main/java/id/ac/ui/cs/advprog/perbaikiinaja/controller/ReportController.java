@@ -191,7 +191,7 @@ public class ReportController {
                 // Service request info
                 Map<String, Object> serviceRequestMap = new HashMap<>();
                 serviceRequestMap.put("id", report.getServiceRequest().getId());
-                serviceRequestMap.put("status", report.getServiceRequest().getStateName());
+                serviceRequestMap.put("status", report.getServiceRequest().getStateType());
 
                 // Customer info
                 Map<String, Object> customerMap = new HashMap<>();

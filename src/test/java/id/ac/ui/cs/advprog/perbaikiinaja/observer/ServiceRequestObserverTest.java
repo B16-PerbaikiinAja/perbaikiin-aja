@@ -1,6 +1,8 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.observer;
 
 import static org.junit.jupiter.api.Assertions.*;
+
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
@@ -79,8 +81,8 @@ class ServiceRequestObserverTest {
     @Test
     void testObserverNotifications() {
         // Test state change notification
-        subject.notifyStateChange(request, "PENDING", "ESTIMATED");
-        Mockito.verify(mockStateObserver).onStateChange(request, "PENDING", "ESTIMATED");
+        subject.notifyStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
+        Mockito.verify(mockStateObserver).onStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
 
         // Test estimate provided notification
         request.setEstimate(estimate);
@@ -108,11 +110,11 @@ class ServiceRequestObserverTest {
         subject.addObserver(mockStateObserver2);
 
         // Notify all observers
-        subject.notifyStateChange(request, "PENDING", "ESTIMATED");
+        subject.notifyStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
 
         // Verify both observers were notified
-        Mockito.verify(mockStateObserver).onStateChange(request, "PENDING", "ESTIMATED");
-        Mockito.verify(mockStateObserver2).onStateChange(request, "PENDING", "ESTIMATED");
+        Mockito.verify(mockStateObserver).onStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
+        Mockito.verify(mockStateObserver2).onStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
     }
 
     @Test
@@ -121,10 +123,10 @@ class ServiceRequestObserverTest {
         subject.removeObserver(mockStateObserver);
 
         // Notify observers
-        subject.notifyStateChange(request, "PENDING", "ESTIMATED");
+        subject.notifyStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
 
         // Verify the removed observer was not notified
-        Mockito.verify(mockStateObserver, Mockito.never()).onStateChange(request, "PENDING", "ESTIMATED");
+        Mockito.verify(mockStateObserver, Mockito.never()).onStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
     }
 
     @Test
@@ -142,7 +144,7 @@ class ServiceRequestObserverTest {
         request.setEstimate(estimate);
 
         // Test all notification methods - no exceptions should be thrown
-        subject.notifyStateChange(request, "PENDING", "ESTIMATED");
+        subject.notifyStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
         subject.notifyEstimateProvided(request);
         subject.notifyEstimateAccepted(request);
         subject.notifyEstimateRejected(request);
@@ -181,11 +183,11 @@ class ServiceRequestObserverTest {
         subject.addObserver(mockMultiObserver);
 
         // Notify different types of events
-        subject.notifyStateChange(request, "PENDING", "ESTIMATED");
+        subject.notifyStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
         subject.notifyServiceCompleted(request);
 
         // Verify the observer received both notifications
-        Mockito.verify(mockMultiObserver).onStateChange(request, "PENDING", "ESTIMATED");
+        Mockito.verify(mockMultiObserver).onStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
         Mockito.verify(mockMultiObserver).onServiceCompleted(request);
     }
 

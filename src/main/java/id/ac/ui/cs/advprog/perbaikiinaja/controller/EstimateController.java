@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
@@ -86,7 +87,7 @@ public class EstimateController {
             estimateResponse.put("estimatedCost", createdEstimate.getCost());
             estimateResponse.put("estimatedCompletionTime", createdEstimate.getCompletionDate());
             estimateResponse.put("notes", createdEstimate.getNotes());
-            estimateResponse.put("status", "PENDING");
+            estimateResponse.put("status", ServiceRequestStateType.PENDING);
             estimateResponse.put("createdAt", createdEstimate.getCreatedDate());
 
             response.put("estimate", estimateResponse);
@@ -173,14 +174,14 @@ public class EstimateController {
                 estimateResponse.put("serviceRequestId", serviceRequest.getId());
                 estimateResponse.put("estimatedCost", estimate.getCost());
                 estimateResponse.put("estimatedCompletionTime", estimate.getCompletionDate());
-                estimateResponse.put("status", "ACCEPTED");
+                estimateResponse.put("status", ServiceRequestStateType.ACCEPTED);
                 estimateResponse.put("feedback", feedback);
                 estimateResponse.put("updatedAt", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
                 // Service request info
                 Map<String, Object> serviceRequestResponse = new HashMap<>();
                 serviceRequestResponse.put("id", serviceRequest.getId());
-                serviceRequestResponse.put("status", serviceRequest.getStateName());
+                serviceRequestResponse.put("status", serviceRequest.getStateType());
 
                 response.put("estimate", estimateResponse);
                 response.put("serviceRequest", serviceRequestResponse);

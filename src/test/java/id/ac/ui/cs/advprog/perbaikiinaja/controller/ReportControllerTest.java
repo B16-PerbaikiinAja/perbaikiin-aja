@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.builder.ReportBuilder;
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Item;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
@@ -99,7 +100,7 @@ public class ReportControllerTest {
         lenient().when(serviceRequest.getTechnician()).thenReturn(technician);
         lenient().when(serviceRequest.getCustomer()).thenReturn(customer);
         lenient().when(serviceRequest.getItem()).thenReturn(item);
-        lenient().when(serviceRequest.getStateName()).thenReturn("COMPLETED");
+        lenient().when(serviceRequest.getStateType()).thenReturn(ServiceRequestStateType.COMPLETED);
         lenient().when(serviceRequest.getReport()).thenReturn(report);
 
         lenient().when(report.getServiceRequest()).thenReturn(serviceRequest);

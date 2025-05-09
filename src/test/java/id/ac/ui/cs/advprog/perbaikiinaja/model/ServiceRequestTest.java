@@ -1,6 +1,8 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model;
 
 import static org.junit.jupiter.api.Assertions.*;
+
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -53,7 +55,7 @@ class ServiceRequestTest {
     void testInitialState() {
         // Assert
         assertTrue(request.getState() instanceof PendingState);
-        assertEquals("PENDING", request.getStateName());
+        assertEquals(ServiceRequestStateType.PENDING, request.getStateType());
     }
 
     @Test
@@ -74,18 +76,18 @@ class ServiceRequestTest {
         // Step 1: Provide estimate (PENDING -> ESTIMATED)
         request.provideEstimate(estimate);
         assertTrue(request.getState() instanceof EstimatedState);
-        assertEquals("ESTIMATED", request.getStateName());
+        assertEquals(ServiceRequestStateType.ESTIMATED, request.getStateType());
         assertEquals(estimate, request.getEstimate());
 
         // Step 2: Accept estimate (ESTIMATED -> ACCEPTED)
         request.acceptEstimate();
         assertTrue(request.getState() instanceof AcceptedState);
-        assertEquals("ACCEPTED", request.getStateName());
+        assertEquals(ServiceRequestStateType.ACCEPTED, request.getStateType());
 
         // Step 3: Start service (ACCEPTED -> IN_PROGRESS)
         request.startService();
         assertTrue(request.getState() instanceof InProgressState);
-        assertEquals("IN_PROGRESS", request.getStateName());
+        assertEquals(ServiceRequestStateType.IN_PROGRESS, request.getStateType());
 
         // Record technician stats before completion
         int initialCompletedJobCount = technician.getCompletedJobCount();
@@ -94,7 +96,7 @@ class ServiceRequestTest {
         // Step 4: Complete service (IN_PROGRESS -> COMPLETED)
         request.completeService();
         assertTrue(request.getState() instanceof CompletedState);
-        assertEquals("COMPLETED", request.getStateName());
+        assertEquals(ServiceRequestStateType.COMPLETED, request.getStateType());
 
         // Verify technician stats were updated
         assertEquals(initialCompletedJobCount + 1, technician.getCompletedJobCount());
@@ -103,7 +105,7 @@ class ServiceRequestTest {
         // Step 5: Create report (still in COMPLETED state)
         request.createReport(report);
         assertTrue(request.getState() instanceof CompletedState); // State doesn't change
-        assertEquals("COMPLETED", request.getStateName());
+        assertEquals(ServiceRequestStateType.COMPLETED, request.getStateType());
         assertEquals(report, request.getReport());
     }
 
@@ -120,7 +122,7 @@ class ServiceRequestTest {
 
         request.rejectEstimate();
         assertTrue(request.getState() instanceof RejectedState);
-        assertEquals("REJECTED", request.getStateName());
+        assertEquals(ServiceRequestStateType.REJECTED, request.getStateType());
 
         // Assert - Cannot do anything with a rejected request
         assertThrows(IllegalStateException.class, () -> request.provideEstimate(estimate));
