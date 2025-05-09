@@ -49,8 +49,9 @@ public class Coupon {
         this.maxUsage = maxUsage;
     }
 
-    public void incrementUsageCount() {
+    public Coupon incrementUsageCount() {
         this.usageCount++;
+        return this;
     }
 
     public void setExpiryDate(Date expiryDate) {
