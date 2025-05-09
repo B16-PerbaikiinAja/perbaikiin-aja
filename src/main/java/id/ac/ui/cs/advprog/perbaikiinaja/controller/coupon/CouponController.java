@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/coupons/admin")
+@RequestMapping("/coupons")
 public class CouponController {
 
     @Autowired
@@ -26,7 +26,7 @@ public class CouponController {
     /**
      * Create a coupon as an admin
      */
-    @PostMapping("/")
+    @PostMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Coupon> createCoupon(@RequestBody CouponRequestDto request) {
         try {
@@ -48,14 +48,28 @@ public class CouponController {
     /**
      * Get coupons (admin only)
      */
-    @GetMapping("/")
+    @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Coupon>> getCoupons() {
         List<Coupon> coupons = couponService.getAllCoupons();
         return new ResponseEntity<>(coupons, HttpStatus.OK);
     }
 
-    @PutMapping("/{code}")
+    /**
+     * Get coupon detail
+     */
+    @GetMapping("/{code}")
+    public ResponseEntity<Coupon> getCouponByCode(@PathVariable String code) {
+        Optional<Coupon> coupon = couponService.getCouponByCode(code);
+        return coupon
+                .map(ResponseEntity::ok)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coupon not found"));
+    }
+
+    /**
+     * Update coupon detail (admin only)
+     */
+    @PutMapping("/admin/{code}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Coupon> updateCoupon(@PathVariable String code, @RequestBody CouponRequestDto dto) {
         try {
@@ -73,7 +87,10 @@ public class CouponController {
         }
     }
 
-    @DeleteMapping("/{code}")
+    /**
+     * Delete coupon (admin only)
+     */
+    @DeleteMapping("/admin/{code}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> deleteCoupon(@PathVariable String code) {
         Optional<Coupon> deletedCoupon = couponService.deleteCoupon(code);

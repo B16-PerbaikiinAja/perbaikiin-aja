@@ -8,16 +8,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -65,7 +70,7 @@ public class CouponControllerTest {
         request.setExpiryDate(expiryDate);
         String requestJson = objectMapper.writeValueAsString(request);
 
-        mockMvc.perform(post("/coupons/admin/")
+        mockMvc.perform(post("/coupons/admin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isCreated())
@@ -86,7 +91,7 @@ public class CouponControllerTest {
         request.setExpiryDate(expiryDate);
         String requestJson = objectMapper.writeValueAsString(request);
 
-        mockMvc.perform(post("/coupons/admin/")
+        mockMvc.perform(post("/coupons/admin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isBadRequest());
@@ -105,7 +110,7 @@ public class CouponControllerTest {
         request.setExpiryDate(expiryDate);
         String requestJson = objectMapper.writeValueAsString(request);
 
-        mockMvc.perform(post("/coupons/admin/")
+        mockMvc.perform(post("/coupons/admin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isBadRequest());
@@ -124,7 +129,7 @@ public class CouponControllerTest {
         String requestJson = objectMapper.writeValueAsString(request);
 
 
-        mockMvc.perform(post("/coupons/admin/")
+        mockMvc.perform(post("/coupons/admin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isBadRequest());
@@ -152,7 +157,7 @@ public class CouponControllerTest {
 
         when(couponService.getAllCoupons()).thenReturn(coupons);
 
-        mockMvc.perform(get("/coupons/admin/")
+        mockMvc.perform(get("/coupons/admin")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -168,10 +173,39 @@ public class CouponControllerTest {
     public void testGetAllCouponsEmptyList() throws Exception {
         when(couponService.getAllCoupons()).thenReturn(new ArrayList<>());
 
-        mockMvc.perform(get("/coupons/admin/")
+        mockMvc.perform(get("/coupons/admin")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void testGetCouponByCodeFound() {
+        String code = "existing-code";
+        Coupon mockCoupon = new Coupon();
+        mockCoupon.setCode(code);
+        mockCoupon.setDiscountValue(0.2);
+
+        Mockito.when(couponService.getCouponByCode(code)).thenReturn(Optional.of(mockCoupon));
+
+        ResponseEntity<Coupon> response = couponController.getCouponByCode(code);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(mockCoupon, response.getBody());
+    }
+
+    @Test
+    void testGetCouponByCodeNotFound() {
+        String code = "INVALID";
+        Mockito.when(couponService.getCouponByCode(code)).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> couponController.getCouponByCode(code)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertTrue(exception.getReason().contains("Coupon not found"));
     }
 
     @Test
