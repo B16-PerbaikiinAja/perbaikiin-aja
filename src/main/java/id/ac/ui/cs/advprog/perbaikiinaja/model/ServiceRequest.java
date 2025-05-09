@@ -39,6 +39,7 @@ public class ServiceRequest {
     private Item item;
 
     private LocalDate requestDate;
+    private LocalDate serviceDate;
     private String problemDescription;
 
     @ManyToOne
@@ -59,10 +60,9 @@ public class ServiceRequest {
     public ServiceRequest() {
         this.id = UUID.randomUUID();
         this.requestDate = LocalDate.now();
-        this.state = new PendingState(); // Initial state is always PendingState
+        this.state = new PendingState();
     }
 
-    // Getters and setters
     public UUID getId() {
         return id;
     }
@@ -98,6 +98,10 @@ public class ServiceRequest {
     public String getProblemDescription() {
         return problemDescription;
     }
+
+    public LocalDate getServiceDate() {return serviceDate;}
+
+    public void setServiceDate(LocalDate serviceDate) {this.serviceDate = serviceDate;}
 
     public void setProblemDescription(String problemDescription) {
         this.problemDescription = problemDescription;
