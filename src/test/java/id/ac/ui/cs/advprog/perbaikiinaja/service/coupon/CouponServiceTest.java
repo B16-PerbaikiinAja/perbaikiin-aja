@@ -82,9 +82,7 @@ public class CouponServiceTest {
         Date future = new Date(System.currentTimeMillis() + 172800000);
         Coupon couponToCreate = new Coupon("valid-code", 1.5, 5, 0, future);
 
-        assertThrows(InvalidParameterException.class, () -> {
-            couponService.createCoupon(couponToCreate);
-        });
+        assertThrows(InvalidParameterException.class, () -> couponService.createCoupon(couponToCreate));
 
         verify(couponRepository, never()).save(any(Coupon.class));
     }
@@ -169,9 +167,8 @@ public class CouponServiceTest {
         String couponCode ="valid-code";
         Coupon updatedCoupon = new Coupon(couponCode, 1.5, 5, 0, future);
 
-        assertThrows(InvalidParameterException.class, () -> {
-            couponService.updateCoupon(couponCode, updatedCoupon);
-        });
+        assertThrows(InvalidParameterException.class, () ->
+                couponService.updateCoupon(couponCode, updatedCoupon));
 
         verify(couponRepository, never()).save(any(Coupon.class));
     }
@@ -182,9 +179,8 @@ public class CouponServiceTest {
         String couponCode ="valid-code";
         Coupon updatedCoupon = new Coupon(couponCode, 0.5, -1, 0, future);
 
-        assertThrows(InvalidParameterException.class, () -> {
-            couponService.updateCoupon(couponCode, updatedCoupon);
-        });
+        assertThrows(InvalidParameterException.class, () ->
+                couponService.updateCoupon(couponCode, updatedCoupon));
 
         verify(couponRepository, never()).save(any(Coupon.class));
     }
@@ -194,9 +190,8 @@ public class CouponServiceTest {
         String couponCode ="valid-code";
         Coupon updatedCoupon = new Coupon(couponCode, 0.5, 5, 0, pastDate);
 
-        assertThrows(InvalidParameterException.class, () -> {
-            couponService.updateCoupon(couponCode, updatedCoupon);
-        });
+        assertThrows(InvalidParameterException.class, () ->
+                couponService.updateCoupon(couponCode, updatedCoupon));
 
         verify(couponRepository, never()).save(any(Coupon.class));
     }

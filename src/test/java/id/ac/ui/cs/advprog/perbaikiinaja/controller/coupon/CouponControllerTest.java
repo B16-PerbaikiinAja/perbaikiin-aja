@@ -245,7 +245,7 @@ public class CouponControllerTest {
         String couponCode = "nonexistent-code";
 
         when(couponService.deleteCoupon(couponCode))
-                .thenReturn(Optional.empty()); // Service returns empty if not found
+                .thenReturn(Optional.empty());
 
         mockMvc.perform(delete("/coupons/admin/" + couponCode)
                         .contentType(MediaType.APPLICATION_JSON))

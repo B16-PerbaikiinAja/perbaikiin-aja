@@ -3,10 +3,6 @@ package id.ac.ui.cs.advprog.perbaikiinaja.model.coupon;
 import id.ac.ui.cs.advprog.perbaikiinaja.validation.coupon.CouponValidation;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.security.InvalidParameterException;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Date;
 import java.util.UUID;
 

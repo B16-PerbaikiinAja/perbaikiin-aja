@@ -49,7 +49,7 @@ public class CouponRepositoryTest {
     }
 
     @Test
-    void testCreateCoupon_whenSaved_thenCouponExistsInDatabase() {
+    void testCreateCoupon() {
         Date future = new Date(System.currentTimeMillis() + 259200000);
         Coupon newCoupon = new CouponBuilder()
                 .discountValue(0.30)
@@ -100,7 +100,7 @@ public class CouponRepositoryTest {
         couponToUpdate.setMaxUsage(newMaxUsage);
         couponToUpdate.setExpiryDate(newExpiryDate);
 
-        Coupon updatedCoupon = couponRepository.save(couponToUpdate);
+        couponRepository.save(couponToUpdate);
         Optional<Coupon> retrievedCoupon = couponRepository.findByCode(coupon1.getCode());
 
         assertTrue(retrievedCoupon.isPresent());
