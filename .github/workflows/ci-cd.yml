@@ -1,0 +1,232 @@
+name: Spring Boot CI/CD Pipeline with Docker
+
+on:
+  push:
+    branches: [ main, staging ]
+  pull_request:
+    branches: [ main, staging ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Debug branch information
+        run: |
+          echo "GitHub ref: ${{ github.ref }}"
+          echo "GitHub event name: ${{ github.event_name }}"
+          echo "GitHub branch: ${{ github.ref_name }}"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Build and package with Gradle
+        run: ./gradlew bootJar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/*.jar
+
+  build-and-push-docker:
+    needs: build
+    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/perbaikiinaja-backend:${{ env.BRANCH_NAME }},${{ secrets.DOCKERHUB_USERNAME }}/perbaikiinaja-backend:latest
+
+  deploy-staging:
+    needs: build-and-push-docker
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Debug branch information
+        run: |
+          echo "GitHub ref: ${{ github.ref }}"
+          echo "GitHub event name: ${{ github.event_name }}"
+          echo "Is staging branch: ${{ github.ref == 'refs/heads/staging' }}"
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Setup known hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "Resolving hostname..."
+          getent hosts ${{ secrets.EC2_HOST }} || echo "Could not resolve hostname with getent"
+          echo "Attempting to scan with ssh-keyscan..."
+          ssh-keyscan -v -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts || echo "Warning: ssh-keyscan failed"
+          cat ~/.ssh/known_hosts
+
+      - name: Deploy to EC2 with Docker (Amazon Linux)
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
+          PG_HOST: ${{ secrets.PG_HOST }}
+          PG_USER: ${{ secrets.PG_USER }}
+          PG_PASS: ${{ secrets.PG_PASS }}
+          PORT: ${{ secrets.PORT || '8080' }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          ssh $EC2_USERNAME@$EC2_HOST << EOF
+            # Check which Linux distribution we're working with
+            echo "Linux distribution information:"
+            cat /etc/*release*
+          
+            # Install Docker for Amazon Linux 2
+            if grep -q "Amazon Linux" /etc/*release*; then
+              echo "Installing Docker on Amazon Linux..."
+              if ! command -v docker &> /dev/null; then
+                sudo yum update -y
+                sudo yum install -y docker
+                sudo service docker start
+                sudo usermod -a -G docker ec2-user
+                sudo chkconfig docker on
+                echo "Docker installed successfully"
+              else
+                echo "Docker already installed"
+              fi
+          
+              # Install Docker Compose for Amazon Linux 2
+              if ! command -v docker-compose &> /dev/null; then
+                echo "Installing Docker Compose on Amazon Linux..."
+                sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
+                sudo chmod +x /usr/local/bin/docker-compose
+                echo "Docker Compose installed successfully"
+              else
+                echo "Docker Compose already installed"
+              fi
+            else
+              # For other distributions, use apt (Ubuntu/Debian)
+              echo "Installing Docker on non-Amazon Linux distribution..."
+              if ! command -v docker &> /dev/null; then
+                sudo apt-get update
+                sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+                curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+                sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable"
+                sudo apt-get update
+                sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+                sudo usermod -aG docker \$USER
+                echo "Docker installed successfully"
+              else
+                echo "Docker already installed"
+              fi
+
+              # Install Docker Compose for Ubuntu/Debian
+              if ! command -v docker-compose &> /dev/null; then
+                echo "Installing Docker Compose..."
+                sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
+                sudo chmod +x /usr/local/bin/docker-compose
+                echo "Docker Compose installed successfully"
+              else
+                echo "Docker Compose already installed"
+              fi
+            fi
+
+            # Create a folder for the application if it doesn't exist
+            mkdir -p ~/perbaikiinaja
+
+            # Create or update docker-compose.yml in that folder
+            cat > ~/perbaikiinaja/docker-compose.yml << 'EOL'
+            version: '3'
+            services:
+              perbaikiinaja-backend:
+                image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging
+                container_name: perbaikiinaja-backend
+                restart: always
+                ports:
+                  - "${PORT}:8080"
+                environment:
+                  - PG_HOST=${PG_HOST}
+                  - PG_USER=${PG_USER}
+                  - PG_PASS=${PG_PASS}
+                  - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+                  - PORT=8080
+            EOL
+
+            # Export environment variables
+            export PG_HOST="${PG_HOST}"
+            export PG_USER="${PG_USER}"
+            export PG_PASS="${PG_PASS}"
+            export JWT_SECRET_KEY="${JWT_SECRET_KEY}"
+            export PORT="${PORT}"
+            export DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}"
+          
+            # Substitute environment variables in docker-compose.yml
+            cd ~/perbaikiinaja
+            envsubst < docker-compose.yml > docker-compose-updated.yml
+            mv docker-compose-updated.yml docker-compose.yml
+          
+            # Ensure Docker is running
+            sudo service docker status || sudo service docker start
+          
+            # Pull the latest image
+            docker pull ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging
+
+            # Stop and remove existing container if running
+            if docker ps -q --filter "name=perbaikiinaja-backend" | grep -q .; then
+              echo "Stopping existing container..."
+              docker stop perbaikiinaja-backend
+              docker rm perbaikiinaja-backend
+            fi
+
+            # Start the container with docker-compose
+            cd ~/perbaikiinaja && docker-compose up -d
+
+            # Check if container is running
+            if docker ps --filter "name=perbaikiinaja-backend" --format "{{.Names}}" | grep -q perbaikiinaja-backend; then
+              echo "Container is running successfully"
+              echo "Application should be accessible at http://${EC2_HOST}:${PORT}"
+            else
+              echo "Error: Container failed to start"
+              docker logs perbaikiinaja-backend
+              exit 1
+            fi
+          EOF
