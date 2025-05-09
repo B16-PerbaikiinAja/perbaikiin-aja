@@ -49,6 +49,10 @@ public class Coupon {
         this.maxUsage = maxUsage;
     }
 
+    public void incrementUsageCount() {
+        this.usageCount++;
+    }
+
     public void setExpiryDate(Date expiryDate) {
         CouponValidation.validateExpiryDate(expiryDate);
         this.expiryDate = expiryDate;
