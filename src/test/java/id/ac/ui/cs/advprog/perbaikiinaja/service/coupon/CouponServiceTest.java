@@ -12,11 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.security.InvalidParameterException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -216,5 +212,44 @@ public class CouponServiceTest {
 
         verify(couponRepository, times(1)).findByCode(nonExistingCode);
         verify(couponRepository, never()).deleteByCode(anyString());
+    }
+
+    @Test
+    void testUseCouponSuccess() {
+        Coupon coupon = new Coupon("Use-Coupon", 0.5, 2, 0,new Date(System.currentTimeMillis() + 86400000));
+
+        when(couponRepository.findByCode("Use-Coupon")).thenReturn(Optional.of(coupon));
+        when(couponRepository.save(any(Coupon.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Coupon updated = couponService.useCoupon("Use-Coupon");
+
+        assertEquals(1, updated.getUsageCount());
+    }
+
+    @Test
+    void testUseCouponExpired() {
+        Date pastDate = new Date(System.currentTimeMillis() - 1000);
+        Coupon coupon = new Coupon("Expired-Coupon", 0.5, 2, 0, pastDate);
+
+
+        when(couponRepository.findByCode("Expired-Coupon")).thenReturn(Optional.of(coupon));
+
+        assertThrows(IllegalStateException.class, () -> couponService.useCoupon("Expired-Coupon"));
+    }
+
+    @Test
+    void testUseCouponUsageLimitReached() {
+        Coupon coupon = new Coupon("Used-Coupon", 0.5, 2, 2,new Date(System.currentTimeMillis() + 86400000));
+
+        when(couponRepository.findByCode("Used-Coupon")).thenReturn(Optional.of(coupon));
+
+        assertThrows(IllegalStateException.class, () -> couponService.useCoupon("Used-Coupon"));
+    }
+
+    @Test
+    void testUseCouponNotFound() {
+        when(couponRepository.findByCode("Nonexisting-Coupon")).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchElementException.class, () -> couponService.useCoupon("Nonexisting-Coupon"));
     }
 }
