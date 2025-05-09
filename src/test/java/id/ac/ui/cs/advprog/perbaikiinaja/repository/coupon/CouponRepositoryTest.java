@@ -5,8 +5,11 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.CouponBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import java.util.Date;
 import java.util.List;
@@ -17,8 +20,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataJpaTest
 public class CouponRepositoryTest {
 
-    @Autowired
-    private TestEntityManager entityManager;
+    @TestConfiguration
+    @EntityScan(basePackages = "id.ac.ui.cs.advprog.perbaikiinaja.model.coupon")
+    @EnableJpaRepositories(basePackages = "id.ac.ui.cs.advprog.perbaikiinaja.repository.coupon")
+    static class Config {}
 
     @Autowired
     private CouponRepository couponRepository;
