@@ -3,7 +3,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.controller.coupon;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
 import id.ac.ui.cs.advprog.perbaikiinaja.dtos.coupon.CouponDto;
-import id.ac.ui.cs.advprog.perbaikiinaja.services.coupon.CouponService;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.coupon.CouponService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

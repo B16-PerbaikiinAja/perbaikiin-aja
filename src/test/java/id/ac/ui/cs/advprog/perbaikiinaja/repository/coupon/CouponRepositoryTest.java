@@ -32,15 +32,15 @@ public class CouponRepositoryTest {
         Date future2 = new Date(System.currentTimeMillis() + 172800000);
 
         coupon1 = new CouponBuilder()
-                .setDiscountValue(0.15)
-                .setMaxUsage(10)
-                .setExpiryDate(future1)
+                .discountValue(0.15)
+                .maxUsage(10)
+                .expiryDate(future1)
                 .build();
 
         coupon2 = new CouponBuilder()
-                .setDiscountValue(0.25)
-                .setMaxUsage(20)
-                .setExpiryDate(future2)
+                .discountValue(0.25)
+                .maxUsage(20)
+                .expiryDate(future2)
                 .build();
 
         entityManager.persist(coupon1);
@@ -52,9 +52,9 @@ public class CouponRepositoryTest {
     void testCreateCoupon_whenSaved_thenCouponExistsInDatabase() {
         Date future = new Date(System.currentTimeMillis() + 259200000);
         Coupon newCoupon = new CouponBuilder()
-                .setDiscountValue(0.30)
-                .setMaxUsage(5)
-                .setExpiryDate(future)
+                .discountValue(0.30)
+                .maxUsage(5)
+                .expiryDate(future)
                 .build();
 
         Coupon savedCoupon = couponRepository.save(newCoupon);

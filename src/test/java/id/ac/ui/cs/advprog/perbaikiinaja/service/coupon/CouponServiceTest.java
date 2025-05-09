@@ -40,29 +40,29 @@ public class CouponServiceTest {
         Date future2 = new Date(System.currentTimeMillis() + 172800000);
 
         coupon1 = new Coupon(new CouponBuilder()
-                .setDiscountValue(0.15)
-                .setMaxUsage(10)
-                .setExpiryDate(future1));
+                .discountValue(0.15)
+                .maxUsage(10)
+                .expiryDate(future1));
 
         coupon2 = new Coupon(new CouponBuilder()
-                .setDiscountValue(0.25)
-                .setMaxUsage(20)
-                .setExpiryDate(future2));
+                .discountValue(0.25)
+                .maxUsage(20)
+                .expiryDate(future2));
     }
 
     @Test
     void testCreateCoupon() {
         ArgumentCaptor<Coupon> couponCaptor = ArgumentCaptor.forClass(Coupon.class);
         Coupon couponToCreate = new CouponBuilder()
-                .setDiscountValue(0.30)
-                .setMaxUsage(5)
-                .setExpiryDate(future)
+                .discountValue(0.30)
+                .maxUsage(5)
+                .expiryDate(future)
                 .build();
 
         Coupon savedCoupon = new CouponBuilder()
-                .setDiscountValue(couponToCreate.getDiscountValue())
-                .setMaxUsage(couponToCreate.getMaxUsage())
-                .setExpiryDate(couponToCreate.getExpiryDate())
+                .discountValue(couponToCreate.getDiscountValue())
+                .maxUsage(couponToCreate.getMaxUsage())
+                .expiryDate(couponToCreate.getExpiryDate())
                 .build();
 
         when(couponRepository.save(couponCaptor.capture())).thenReturn(savedCoupon);
@@ -127,9 +127,9 @@ public class CouponServiceTest {
     @Test
     void testUpdateExistingCoupon() {
         Coupon updatedDetails = new CouponBuilder()
-                .setDiscountValue(0.4)
-                .setMaxUsage(40)
-                .setExpiryDate(future)
+                .discountValue(0.4)
+                .maxUsage(40)
+                .expiryDate(future)
                 .build();
 
         when(couponRepository.findByCode(coupon1.getCode())).thenReturn(Optional.of(coupon1));
@@ -149,9 +149,9 @@ public class CouponServiceTest {
     void testUpdateNonExistentCoupon() {
         String nonExistingCode = UUID.randomUUID().toString();
         Coupon updatedDetails = new CouponBuilder()
-                .setDiscountValue(0.4)
-                .setMaxUsage(40)
-                .setExpiryDate(future)
+                .discountValue(0.4)
+                .maxUsage(40)
+                .expiryDate(future)
                 .build();
 
         when(couponRepository.findByCode(nonExistingCode)).thenReturn(Optional.empty());

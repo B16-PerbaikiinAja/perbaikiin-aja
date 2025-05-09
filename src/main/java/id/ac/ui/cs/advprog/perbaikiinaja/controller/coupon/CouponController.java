@@ -3,8 +3,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.controller.coupon;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
 import id.ac.ui.cs.advprog.perbaikiinaja.dtos.coupon.CouponDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.CouponBuilder;
-import id.ac.ui.cs.advprog.perbaikiinaja.services.coupon.CouponService;
-import org.apache.coyote.Response;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.coupon.CouponService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,9 +29,10 @@ public class CouponController {
     public ResponseEntity<Coupon> createCoupon(@RequestBody CouponDto request) {
         try {
 
-            Coupon coupon = new CouponBuilder().setDiscountValue(request.getDiscountValue())
-                    .setMaxUsage(request.getMaxUsage())
-                    .setExpiryDate(request.getExpiryDate())
+            Coupon coupon = new CouponBuilder()
+                    .discountValue(request.getDiscountValue())
+                    .maxUsage(request.getMaxUsage())
+                    .expiryDate(request.getExpiryDate())
                     .build();
 
 

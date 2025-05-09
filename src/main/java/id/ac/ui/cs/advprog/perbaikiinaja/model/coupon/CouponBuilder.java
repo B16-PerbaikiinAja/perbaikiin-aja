@@ -22,19 +22,19 @@ public class CouponBuilder {
         );
     }
 
-    public CouponBuilder setDiscountValue(double discountValue) {
+    public CouponBuilder discountValue(double discountValue) {
         CouponValidation.validateDiscountValue(discountValue);
         this.discountValue = discountValue;
         return this;
     }
 
-    public CouponBuilder setMaxUsage(int maxUsage) {
+    public CouponBuilder maxUsage(int maxUsage) {
         CouponValidation.validateMaxUsage(maxUsage);
         this.maxUsage = maxUsage;
         return this;
     }
 
-    public CouponBuilder setExpiryDate(Date expiryDate) {
+    public CouponBuilder expiryDate(Date expiryDate) {
         CouponValidation.validateExpiryDate(expiryDate);
         this.expiryDate = expiryDate;
         return this;
