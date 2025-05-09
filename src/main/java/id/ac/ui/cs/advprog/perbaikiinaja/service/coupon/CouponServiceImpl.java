@@ -2,6 +2,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.service.coupon;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.coupon.CouponRepository;
+import id.ac.ui.cs.advprog.perbaikiinaja.validation.coupon.CouponValidation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public Coupon createCoupon(Coupon coupon) {
+        CouponValidation.validateCouponData(coupon);
         return couponRepository.save(coupon);
     }
 
@@ -31,6 +33,7 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public Optional<Coupon> updateCoupon(String code, Coupon updatedCouponDetails) {
+        CouponValidation.validateCouponData(updatedCouponDetails);
         Optional<Coupon> existingCouponOptional = couponRepository.findByCode(code);
         if (existingCouponOptional.isPresent()) {
             Coupon existingCoupon = existingCouponOptional.get();
