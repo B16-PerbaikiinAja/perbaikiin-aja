@@ -1,5 +1,7 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model.coupon;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.validation.coupon.CouponValidation;
+
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
@@ -21,19 +23,19 @@ public class CouponBuilder {
     }
 
     public CouponBuilder setDiscountValue(double discountValue) {
-        Coupon.validateDiscountValue(discountValue);
+        CouponValidation.validateDiscountValue(discountValue);
         this.discountValue = discountValue;
         return this;
     }
 
     public CouponBuilder setMaxUsage(int maxUsage) {
-        Coupon.validateMaxUsage(maxUsage);
+        CouponValidation.validateMaxUsage(maxUsage);
         this.maxUsage = maxUsage;
         return this;
     }
 
     public CouponBuilder setExpiryDate(Date expiryDate) {
-        Coupon.validateExpiryDate(expiryDate);
+        CouponValidation.validateExpiryDate(expiryDate);
         this.expiryDate = expiryDate;
         return this;
     }

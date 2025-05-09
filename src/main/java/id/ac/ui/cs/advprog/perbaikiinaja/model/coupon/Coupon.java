@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model.coupon;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.validation.coupon.CouponValidation;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -43,35 +44,17 @@ public class Coupon {
     }
 
     public void setDiscountValue(double discountValue) {
-        validateDiscountValue(discountValue);
+        CouponValidation.validateDiscountValue(discountValue);
         this.discountValue = discountValue;
     }
 
     public void setMaxUsage(int maxUsage) {
-        validateMaxUsage(maxUsage);
+        CouponValidation.validateMaxUsage(maxUsage);
         this.maxUsage = maxUsage;
     }
 
     public void setExpiryDate(Date expiryDate) {
-        validateExpiryDate(expiryDate);
+        CouponValidation.validateExpiryDate(expiryDate);
         this.expiryDate = expiryDate;
-    }
-
-    public static void validateDiscountValue(double discountValue) {
-        if (discountValue <= 0 || discountValue > 1) {
-            throw new InvalidParameterException("Discount must be greater than 0 and at most 1");
-        }
-    }
-
-    public static void validateMaxUsage(int maxUsage) {
-        if (maxUsage <= 0) {
-            throw new InvalidParameterException("Max usage must be greater than 0");
-        }
-    }
-
-    public static void validateExpiryDate(Date expiryDate) {
-        if (expiryDate == null || !expiryDate.after(new Date())) {
-            throw new InvalidParameterException("Expiry date must be in the future and not null");
-        }
     }
 }
