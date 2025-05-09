@@ -3,16 +3,23 @@ package id.ac.ui.cs.advprog.perbaikiinaja.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.concurrent.ThreadLocalRandom;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.state.EstimatedState;
+import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
+import id.ac.ui.cs.advprog.perbaikiinaja.state.RejectedState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Item;
+import id.ac.ui.cs.advprog.perbaikiinaja.dto.CustomerServiceRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 
@@ -151,6 +158,93 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         request.createReport(report);
 
         return serviceRequestRepository.save(request);
+    }
+
+    @Override
+    public ServiceRequest createFromDto(CustomerServiceRequestDto dto, User user) {
+        ServiceRequest request = new ServiceRequest();
+        Item item = Item.builder()
+                .name(dto.getName())
+                .condition(dto.getCondition())
+                .issueDescription(dto.getIssueDescription())
+                .build();
+        request.setItem(item);
+        request.setServiceDate(dto.getServiceDate());
+        request.setProblemDescription(dto.getIssueDescription());
+        request.setCustomer((Customer) user);
+
+        Technician randomTechnician = getRandomTechnician();
+        request.setTechnician(randomTechnician);
+
+        // TODO: Integrate coupon and payment method
+        return serviceRequestRepository.save(request);
+    }
+
+    private Technician getRandomTechnician() {
+        Iterable<User> users = userRepository.findAll();
+        List<Technician> allTechnicians = new java.util.ArrayList<>();
+        for (User u : users) {
+            if (u instanceof Technician) {
+                allTechnicians.add((Technician) u);
+            }
+        }
+        if (allTechnicians.isEmpty()) {
+            throw new IllegalStateException("No technician available to assign to this service request");
+        }
+        int randomIdx = ThreadLocalRandom.current().nextInt(allTechnicians.size());
+        return allTechnicians.get(randomIdx);
+    }
+
+    @Override
+    public ServiceRequest updateFromDto(UUID requestId, CustomerServiceRequestDto dto, User user) {
+        ServiceRequest existing = getServiceRequest(requestId);
+
+        checkCanUpdate(existing, user);
+
+        Item item = Item.builder()
+                .name(dto.getName())
+                .condition(dto.getCondition())
+                .issueDescription(dto.getIssueDescription())
+                .build();
+        existing.setItem(item);
+        existing.setServiceDate(dto.getServiceDate());
+        existing.setProblemDescription(dto.getIssueDescription());
+        // TODO: Integrate coupon and payment method
+
+        // Set state to Pending after update
+        existing.setState(new PendingState());
+
+        return serviceRequestRepository.save(existing);
+    }
+
+    @Override
+    public void delete(UUID requestId, User user) {
+        ServiceRequest existing = getServiceRequest(requestId);
+        checkCanDelete(existing, user);
+
+        serviceRequestRepository.deleteById(requestId);
+    }
+
+    private void checkCanUpdate(ServiceRequest existing, User user) {
+        checkCustomerOwnership(existing, user);
+        checkPendingOrRejectedState(existing);
+    }
+
+    private void checkCanDelete(ServiceRequest existing, User user) {
+        checkCustomerOwnership(existing, user);
+        checkPendingOrRejectedState(existing);
+    }
+
+    private void checkCustomerOwnership(ServiceRequest request, User user) {
+        if (!(user instanceof Customer) || !request.getCustomer().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("Only the owning customer can update this service request");
+        }
+    }
+
+    private void checkPendingOrRejectedState(ServiceRequest request) {
+        if ( !(request.getState() instanceof PendingState) && !(request.getState() instanceof RejectedState)) {
+            throw new IllegalStateException("Only permitted in Pending or Rejected state");
+        }
     }
 
     /**
