@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -75,6 +76,21 @@ public class CouponServiceTest {
 
         verify(couponRepository, times(1)).save(any(Coupon.class));
     }
+
+    @Test
+    void testCreateCouponWithInvalidDiscountValue() {
+        Date future = new Date(System.currentTimeMillis() + 172800000);
+        // Create a coupon with an invalid discount value (greater than 1)
+        Coupon couponToCreate = new Coupon("valid-code", 1.5, 5, 0, future);
+        // We expect an InvalidParameterException to be thrown when attempting to save the coupon
+        assertThrows(InvalidParameterException.class, () -> {
+            couponService.createCoupon(couponToCreate);
+        });
+
+        // Ensure that save was not called on the repository since the coupon is invalid
+        verify(couponRepository, never()).save(any(Coupon.class));
+    }
+
 
     @Test
     void testFindAllCoupon() {
@@ -148,6 +164,27 @@ public class CouponServiceTest {
         verify(couponRepository, times(1)).findByCode(nonExistingCode);
         verify(couponRepository, never()).save(any(Coupon.class));
     }
+
+    @Test
+    void testUpdateCouponWithInvalidDiscountValue() {
+        Coupon updatedCoupon = new Coupon();
+        updatedCoupon.setDiscountValue(1.5); // Invalid: Greater than 1
+        updatedCoupon.setMaxUsage(5);
+        updatedCoupon.setExpiryDate(new Date(System.currentTimeMillis() + 86400000L)); // tomorrow
+
+        when(couponRepository.findByCode("12345")).thenReturn(Optional.of(coupon1));
+
+        // Expecting InvalidParameterException to be thrown
+        InvalidParameterException thrownException = assertThrows(InvalidParameterException.class, () -> {
+            couponService.updateCoupon("12345", updatedCoupon);
+        });
+
+        // Optionally, check the exception message
+        assertEquals("Discount must be greater than 0 and at most 1", thrownException.getMessage());
+
+        verify(couponRepository, never()).save(any());  // Verify save() was not called
+    }
+
 
     @Test
     void testDeleteExistingCode() {
