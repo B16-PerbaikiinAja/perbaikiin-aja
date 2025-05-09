@@ -20,12 +20,15 @@ import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class ServiceRequestServiceTest {
@@ -90,6 +93,14 @@ class ServiceRequestServiceTest {
         dto.setIssueDescription("Screen cracked");
         dto.setServiceDate(LocalDate.now());
 
+        Technician tech1 = mock(Technician.class);
+        when(tech1.getId()).thenReturn(UUID.randomUUID());
+
+        // Prepare Iterable<User> with one technician
+        ArrayList<User> users = new ArrayList<>();
+        users.add(tech1);
+        when(userRepository.findAll()).thenReturn(users);
+
         when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
 
         ServiceRequest created = serviceRequestService.createFromDto(dto, customer);
@@ -99,7 +110,51 @@ class ServiceRequestServiceTest {
         assertEquals("Broken", created.getItem().getCondition());
         assertEquals("Screen cracked", created.getItem().getIssueDescription());
         assertEquals(customer, created.getCustomer());
+        assertEquals(tech1, created.getTechnician());
         verify(serviceRequestRepository, times(1)).save(any(ServiceRequest.class));
+    }
+
+    @Test
+    void testCreateFromDto_AssignsRandomTechnician() {
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Laptop");
+        dto.setCondition("Broken");
+        dto.setIssueDescription("Screen cracked");
+        dto.setServiceDate(LocalDate.now());
+
+        Technician tech1 = mock(Technician.class);
+        Technician tech2 = mock(Technician.class);
+        when(tech1.getId()).thenReturn(UUID.randomUUID());
+        when(tech2.getId()).thenReturn(UUID.randomUUID());
+
+        // Prepare Iterable<User> with two technicians
+        ArrayList<User> users = new ArrayList<>();
+        users.add(tech1);
+        users.add(tech2);
+        when(userRepository.findAll()).thenReturn(users);
+
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        ServiceRequest created = serviceRequestService.createFromDto(dto, customer);
+
+        assertNotNull(created.getTechnician());
+        assertTrue(created.getTechnician() == tech1 || created.getTechnician() == tech2);
+        verify(serviceRequestRepository, times(1)).save(any(ServiceRequest.class));
+    }
+
+    @Test
+    void testCreateFromDto_NoTechnician_ThrowsException() {
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Laptop");
+        dto.setCondition("Broken");
+        dto.setIssueDescription("Screen cracked");
+        dto.setServiceDate(LocalDate.now());
+
+        // Prepare Iterable<User> with no technicians
+        ArrayList<User> users = new ArrayList<>();
+        when(userRepository.findAll()).thenReturn(users);
+
+        assertThrows(IllegalStateException.class, () -> serviceRequestService.createFromDto(dto, customer));
     }
 
     @Test
