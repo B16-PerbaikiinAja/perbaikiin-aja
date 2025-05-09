@@ -13,6 +13,9 @@ public class ReviewRequestDto {
     @NotNull
     private Long technicianId;
 
+    @NotNull
+    private Long orderId;
+
     @NotBlank
     private String comment;
 
