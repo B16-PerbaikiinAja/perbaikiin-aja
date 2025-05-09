@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.services.coupon;
+package id.ac.ui.cs.advprog.perbaikiinaja.service.coupon;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.coupon.CouponRepository;
