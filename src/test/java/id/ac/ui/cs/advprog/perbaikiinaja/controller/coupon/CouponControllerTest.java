@@ -2,7 +2,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.controller.coupon;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
-import id.ac.ui.cs.advprog.perbaikiinaja.dtos.coupon.CouponDto;
+import id.ac.ui.cs.advprog.perbaikiinaja.dtos.coupon.CouponRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.coupon.CouponService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +58,7 @@ public class CouponControllerTest {
 
         when(couponService.createCoupon(any(Coupon.class))).thenReturn(validCoupon);
 
-        CouponDto request = new CouponDto();
+        CouponRequestDto request = new CouponRequestDto();
         request.setCode(couponCode);
         request.setDiscountValue(0.2);
         request.setMaxUsage(10);
@@ -79,7 +79,7 @@ public class CouponControllerTest {
         Date expiryDate = new Date(System.currentTimeMillis() + 100000);
         String couponCode = "unique-code";
 
-        CouponDto request = new CouponDto();
+        CouponRequestDto request = new CouponRequestDto();
         request.setCode(couponCode);
         request.setDiscountValue(1.1);
         request.setMaxUsage(10);
@@ -98,7 +98,7 @@ public class CouponControllerTest {
         Date expiryDate = new Date(System.currentTimeMillis() + 100000);
         String couponCode = "unique-code";
 
-        CouponDto request = new CouponDto();
+        CouponRequestDto request = new CouponRequestDto();
         request.setCode(couponCode);
         request.setDiscountValue(0.2);
         request.setMaxUsage(0);
@@ -116,7 +116,7 @@ public class CouponControllerTest {
         Date pastDate = new Date(System.currentTimeMillis() - 100000);
         String couponCode = "unique-code";
 
-        CouponDto request = new CouponDto();
+        CouponRequestDto request = new CouponRequestDto();
         request.setCode(couponCode);
         request.setDiscountValue(0.2);
         request.setMaxUsage(10);
@@ -186,7 +186,7 @@ public class CouponControllerTest {
 
         when(couponService.updateCoupon(eq(couponCode), any(Coupon.class))).thenReturn(Optional.of(updatedCoupon));
 
-        CouponDto requestDto = new CouponDto();
+        CouponRequestDto requestDto = new CouponRequestDto();
         requestDto.setDiscountValue(0.3);
         requestDto.setMaxUsage(15);
         requestDto.setExpiryDate(expiryDate);
@@ -206,7 +206,7 @@ public class CouponControllerTest {
         String couponCode = "existing-code";
         Date expiryDate = new Date(System.currentTimeMillis() + 100000);
 
-        CouponDto requestDto = new CouponDto();
+        CouponRequestDto requestDto = new CouponRequestDto();
         requestDto.setDiscountValue(1.2);
         requestDto.setMaxUsage(15);
         requestDto.setExpiryDate(expiryDate);
@@ -235,7 +235,9 @@ public class CouponControllerTest {
 
         mockMvc.perform(delete("/coupons/admin/" + couponCode)
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").
+                        value("Coupon deleted successfully."));
     }
 
     @Test
@@ -243,11 +245,12 @@ public class CouponControllerTest {
         String couponCode = "nonexistent-code";
 
         when(couponService.deleteCoupon(couponCode))
-                .thenThrow(new IllegalArgumentException("Coupon code not found."));
+                .thenReturn(Optional.empty()); // Service returns empty if not found
 
         mockMvc.perform(delete("/coupons/admin/" + couponCode)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
+
 }
 
