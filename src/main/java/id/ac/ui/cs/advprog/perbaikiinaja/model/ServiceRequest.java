@@ -3,6 +3,10 @@ package id.ac.ui.cs.advprog.perbaikiinaja.model;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.payment.PaymentMethod;
+
+import jakarta.persistence.*;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.ServiceRequestState;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
@@ -13,26 +17,52 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
  * Contains information about the item to be repaired,
  * the customer, technician, and the current state of the request.
  */
+
+@Entity
+@Table(name = "service_requests")
 public class ServiceRequest {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
     private Customer customer;
+
+    @ManyToOne
+    @JoinColumn(name = "technician_id")
     private Technician technician;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "item_id")
     private Item item;
+
     private LocalDate requestDate;
     private LocalDate serviceDate;
     private String problemDescription;
+
+    @ManyToOne
+    @JoinColumn(name = "payment_method_id")
     private PaymentMethod paymentMethod;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "estimate_id")
     private RepairEstimate estimate;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "report_id")
     private Report report;
+
+    @Transient
     private ServiceRequestState state;
 
     public ServiceRequest() {
         this.id = UUID.randomUUID();
         this.requestDate = LocalDate.now();
-        this.state = new PendingState(); // Initial state is always PendingState
+        this.state = new PendingState();
     }
 
-    // Getters and setters
     public UUID getId() {
         return id;
     }
@@ -65,17 +95,13 @@ public class ServiceRequest {
         return requestDate;
     }
 
-    public LocalDate getServiceDate() {
-        return serviceDate;
-    }
-
-    public void setServiceDate(LocalDate serviceDate) {
-        this.serviceDate = serviceDate;
-    }
-
     public String getProblemDescription() {
         return problemDescription;
     }
+
+    public LocalDate getServiceDate() {return serviceDate;}
+
+    public void setServiceDate(LocalDate serviceDate) {this.serviceDate = serviceDate;}
 
     public void setProblemDescription(String problemDescription) {
         this.problemDescription = problemDescription;
@@ -113,8 +139,8 @@ public class ServiceRequest {
         this.state = state;
     }
 
-    public String getStateName() {
-        return state.getStateName();
+    public ServiceRequestStateType getStateType() {
+        return state.getStateType();
     }
 
     // State transition methods

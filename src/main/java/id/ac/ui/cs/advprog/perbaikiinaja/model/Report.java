@@ -4,16 +4,27 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import jakarta.persistence.*;
+
 /**
  * Represents a report for a completed service request.
  * Contains information about the repair that was performed.
  */
+
+@Entity
+@Table(name = "reports")
 public class Report {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
     private String repairDetails;
     private String repairSummary;
     private LocalDateTime completionDateTime;
     private LocalDateTime createdDateTime;
+
+    @OneToOne(mappedBy = "report")
+    private ServiceRequest serviceRequest;
 
     public Report() {
         this.id = UUID.randomUUID();
@@ -51,6 +62,14 @@ public class Report {
 
     public LocalDateTime getCreatedDateTime() {
         return createdDateTime;
+    }
+
+    public ServiceRequest getServiceRequest() {
+        return serviceRequest;
+    }
+
+    public void setServiceRequest(ServiceRequest serviceRequest) {
+        this.serviceRequest = serviceRequest;
     }
 
     /**
