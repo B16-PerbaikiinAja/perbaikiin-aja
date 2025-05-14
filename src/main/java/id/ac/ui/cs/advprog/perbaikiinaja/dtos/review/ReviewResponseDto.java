@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.dtos;
+package id.ac.ui.cs.advprog.perbaikiinaja.dtos.review;
 
 import java.time.LocalDateTime;
 import lombok.*;

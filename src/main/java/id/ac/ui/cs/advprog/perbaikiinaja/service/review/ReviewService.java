@@ -1,7 +1,8 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.service;
+package id.ac.ui.cs.advprog.perbaikiinaja.service.review;
 
 import java.util.List;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
+
+import id.ac.ui.cs.advprog.perbaikiinaja.model.review.Review;
 
 public interface ReviewService {
     Review createReview(Long userId, Long orderId, Review review);

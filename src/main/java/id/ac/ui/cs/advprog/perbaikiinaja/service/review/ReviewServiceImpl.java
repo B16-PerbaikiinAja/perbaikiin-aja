@@ -1,8 +1,8 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.service;
+package id.ac.ui.cs.advprog.perbaikiinaja.service.review;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.review.Review;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.review.ReviewRepository;
-import id.ac.ui.cs.advprog.perbaikiinaja.validation.ReviewValidationStrategy;
+import id.ac.ui.cs.advprog.perbaikiinaja.validation.review.ReviewValidationStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

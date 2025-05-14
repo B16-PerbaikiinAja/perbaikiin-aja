@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.model;
+package id.ac.ui.cs.advprog.perbaikiinaja.model.review;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
@@ -33,7 +33,7 @@ public class Review {
     private Long userId;
 
     @Column(nullable = false)
-    private Long orderId;  // Tambahkan ini
+    private Long orderId;  
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

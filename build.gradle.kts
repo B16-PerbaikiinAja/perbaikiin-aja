@@ -30,49 +30,47 @@ repositories {
     mavenCentral()
 }
 
-
 val junitJupiterVersion = "5.9.1"
 val jjwtVersion = "0.11.5"
 
 
 dependencies {
+    // Spring Boot dependencies
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     
-    runtimeOnly("org.postgresql:postgresql:42.6.0")
-    runtimeOnly("com.h2database:h2")
-    
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-
+    // JWT dependencies
     implementation("io.jsonwebtoken:jjwt-api:$jjwtVersion")
     implementation("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
     implementation("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
     
-    runtimeOnly("org.postgresql:postgresql")
+    // Database dependencies
+    runtimeOnly("org.postgresql:postgresql:42.6.0")
     runtimeOnly("com.h2database:h2")
     
+    // Lombok for code reduction
     compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     
+    // Development dependencies
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     
+    // Testing dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
     testImplementation("org.mockito:mockito-core")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("org.springframework.security:spring-security-test")
 }
 
+// Test configurations
 
 tasks.withType<Test> {
     useJUnitPlatform()
-
-    testImplementation("org.springframework.security:spring-security-test")
 }
 
 tasks.register<Test>("unitTest") {
@@ -83,10 +81,11 @@ tasks.register<Test>("unitTest") {
     }
 }
 
+// JaCoCo Test Report configuration
+
 tasks.test {
     finalizedBy(tasks.jacocoTestReport)
 }
-
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)

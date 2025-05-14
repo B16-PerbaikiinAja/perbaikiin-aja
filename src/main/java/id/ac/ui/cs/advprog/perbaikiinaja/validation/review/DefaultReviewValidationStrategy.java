@@ -1,8 +1,8 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.validation;
+package id.ac.ui.cs.advprog.perbaikiinaja.validation.review;
 
 import org.springframework.stereotype.Component;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Review;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.review.Review;
 
 @Component
 public class DefaultReviewValidationStrategy implements ReviewValidationStrategy {
