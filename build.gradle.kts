@@ -47,10 +47,19 @@ dependencies {
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-    
+
     implementation("io.jsonwebtoken:jjwt-api:$jjwtVersion")
     implementation("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
     implementation("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
+    
+    runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly("com.h2database:h2")
+    
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    annotationProcessor("org.projectlombok:lombok")
+    
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
     
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
@@ -62,6 +71,8 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+
+    testImplementation("org.springframework.security:spring-security-test")
 }
 
 tasks.register<Test>("unitTest") {

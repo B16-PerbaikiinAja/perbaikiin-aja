@@ -3,7 +3,9 @@ package id.ac.ui.cs.advprog.perbaikiinaja.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.EstimatedState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,14 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     @Override
     public List<ServiceRequest> findByTechnician(UUID technicianId) {
         return serviceRequestRepository.findByTechnicianId(technicianId);
+    }
+
+    @Override
+    public List<ServiceRequest> findByTechnicianAndStatus(UUID technicianId, ServiceRequestStateType status) {
+        List<ServiceRequest> requests = findByTechnician(technicianId);
+        return requests.stream()
+                .filter(request -> request.getStateType().equals(status))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -148,6 +158,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         }
 
         // Create the report
+        report.setServiceRequest(request);
         request.createReport(report);
 
         return serviceRequestRepository.save(request);

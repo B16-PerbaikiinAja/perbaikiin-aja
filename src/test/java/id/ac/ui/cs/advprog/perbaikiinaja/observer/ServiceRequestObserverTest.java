@@ -1,6 +1,8 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.observer;
 
 import static org.junit.jupiter.api.Assertions.*;
+
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
@@ -18,7 +20,10 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 class ServiceRequestObserverTest {
 
     private ServiceRequestSubject subject;
-    private ServiceRequestObserver mockObserver;
+    private StateChangeObserver mockStateObserver;
+    private EstimateObserver mockEstimateObserver;
+    private ServiceCompletionObserver mockCompletionObserver;
+    private ReportObserver mockReportObserver;
     private ServiceRequest request;
     private Customer customer;
     private Technician technician;
@@ -28,10 +33,20 @@ class ServiceRequestObserverTest {
 
     @BeforeEach
     void setUp() {
-        // Create subject and mock observer
+        // Create subject and mock observers
         subject = new ServiceRequestSubject();
-        mockObserver = Mockito.mock(ServiceRequestObserver.class);
-        subject.addObserver(mockObserver);
+
+        // Create mock observers for each specialized interface
+        mockStateObserver = Mockito.mock(StateChangeObserver.class);
+        mockEstimateObserver = Mockito.mock(EstimateObserver.class);
+        mockCompletionObserver = Mockito.mock(ServiceCompletionObserver.class);
+        mockReportObserver = Mockito.mock(ReportObserver.class);
+
+        // Add all mock observers to the subject
+        subject.addObserver(mockStateObserver);
+        subject.addObserver(mockEstimateObserver);
+        subject.addObserver(mockCompletionObserver);
+        subject.addObserver(mockReportObserver);
 
         // Create test objects
         request = new ServiceRequest();
@@ -66,58 +81,61 @@ class ServiceRequestObserverTest {
     @Test
     void testObserverNotifications() {
         // Test state change notification
-        subject.notifyStateChange(request, "PENDING", "ESTIMATED");
-        Mockito.verify(mockObserver).onStateChange(request, "PENDING", "ESTIMATED");
+        subject.notifyStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
+        Mockito.verify(mockStateObserver).onStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
 
         // Test estimate provided notification
         request.setEstimate(estimate);
         subject.notifyEstimateProvided(request);
-        Mockito.verify(mockObserver).onEstimateProvided(request);
+        Mockito.verify(mockEstimateObserver).onEstimateProvided(request);
 
         // Test estimate accepted notification
         subject.notifyEstimateAccepted(request);
-        Mockito.verify(mockObserver).onEstimateAccepted(request);
+        Mockito.verify(mockEstimateObserver).onEstimateAccepted(request);
 
         // Test service completed notification
         subject.notifyServiceCompleted(request);
-        Mockito.verify(mockObserver).onServiceCompleted(request);
+        Mockito.verify(mockCompletionObserver).onServiceCompleted(request);
 
         // Test report created notification
         request.setReport(report);
         subject.notifyReportCreated(request);
-        Mockito.verify(mockObserver).onReportCreated(request);
+        Mockito.verify(mockReportObserver).onReportCreated(request);
     }
 
     @Test
     void testMultipleObservers() {
-        // Create a second observer
-        ServiceRequestObserver mockObserver2 = Mockito.mock(ServiceRequestObserver.class);
-        subject.addObserver(mockObserver2);
+        // Create a second state observer
+        StateChangeObserver mockStateObserver2 = Mockito.mock(StateChangeObserver.class);
+        subject.addObserver(mockStateObserver2);
 
         // Notify all observers
-        subject.notifyStateChange(request, "PENDING", "ESTIMATED");
+        subject.notifyStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
 
         // Verify both observers were notified
-        Mockito.verify(mockObserver).onStateChange(request, "PENDING", "ESTIMATED");
-        Mockito.verify(mockObserver2).onStateChange(request, "PENDING", "ESTIMATED");
+        Mockito.verify(mockStateObserver).onStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
+        Mockito.verify(mockStateObserver2).onStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
     }
 
     @Test
     void testRemoveObserver() {
-        // Remove the observer
-        subject.removeObserver(mockObserver);
+        // Remove one observer
+        subject.removeObserver(mockStateObserver);
 
         // Notify observers
-        subject.notifyStateChange(request, "PENDING", "ESTIMATED");
+        subject.notifyStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
 
         // Verify the removed observer was not notified
-        Mockito.verify(mockObserver, Mockito.never()).onStateChange(request, "PENDING", "ESTIMATED");
+        Mockito.verify(mockStateObserver, Mockito.never()).onStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
     }
 
     @Test
     void testCustomerNotifier() {
-        // Create a real CustomerNotifier
+        // Create a real CustomerNotifier (which implements all observer interfaces)
         CustomerNotifier customerNotifier = new CustomerNotifier();
+
+        // Add it to the subject
+        subject.addObserver(customerNotifier);
 
         // Make sure the service request has an estimate before testing onEstimateProvided
         RepairEstimate estimate = new RepairEstimate();
@@ -125,19 +143,19 @@ class ServiceRequestObserverTest {
         estimate.setCompletionDate(LocalDate.now().plusDays(3));
         request.setEstimate(estimate);
 
-        // No exceptions should be thrown
-        customerNotifier.onStateChange(request, "PENDING", "ESTIMATED");
-        customerNotifier.onEstimateProvided(request);
-        customerNotifier.onEstimateAccepted(request);
-        customerNotifier.onEstimateRejected(request);
-        customerNotifier.onServiceCompleted(request);
+        // Test all notification methods - no exceptions should be thrown
+        subject.notifyStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
+        subject.notifyEstimateProvided(request);
+        subject.notifyEstimateAccepted(request);
+        subject.notifyEstimateRejected(request);
+        subject.notifyServiceCompleted(request);
 
         // For onReportCreated, make sure there's a report
         Report report = new Report();
         report.setRepairSummary("Fixed the screen");
         request.setReport(report);
 
-        customerNotifier.onReportCreated(request);
+        subject.notifyReportCreated(request);
     }
 
     @Test
@@ -156,5 +174,25 @@ class ServiceRequestObserverTest {
         // Verify stats were updated
         assertEquals(initialJobCount + 1, technician.getCompletedJobCount());
         assertEquals(initialEarnings + estimate.getCost(), technician.getTotalEarnings(), 0.001);
+    }
+
+    @Test
+    void testObserverImplementingMultipleInterfaces() {
+        // Create a mock observer that implements multiple interfaces
+        MultipleInterfaceObserver mockMultiObserver = Mockito.mock(MultipleInterfaceObserver.class);
+        subject.addObserver(mockMultiObserver);
+
+        // Notify different types of events
+        subject.notifyStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
+        subject.notifyServiceCompleted(request);
+
+        // Verify the observer received both notifications
+        Mockito.verify(mockMultiObserver).onStateChange(request, ServiceRequestStateType.PENDING, ServiceRequestStateType.ESTIMATED);
+        Mockito.verify(mockMultiObserver).onServiceCompleted(request);
+    }
+
+    // Interface for testing an observer that implements multiple specialized interfaces
+    private interface MultipleInterfaceObserver extends StateChangeObserver, ServiceCompletionObserver {
+        // No additional methods needed
     }
 }
