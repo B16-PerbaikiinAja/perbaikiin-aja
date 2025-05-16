@@ -10,6 +10,8 @@
 
 ![container diagram drawio](https://github.com/user-attachments/assets/cc7add40-2275-4e82-b85b-0535658a5f17)
 
+Future architecture (**Asumsi: Arsitektur diterapkan setelah TK**)
+![context diagram future architecture](assets/future-architecture.png)
 
 ## Features
 
