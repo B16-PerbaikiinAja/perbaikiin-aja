@@ -50,6 +50,11 @@ Code Diagram
 
 ![container diagram review drawio](https://github.com/user-attachments/assets/a3e7d1a3-bced-4be2-9cf3-e97c5d52182a)
 
+**Class Diagram**
+
+![class diagram drawio](https://github.com/user-attachments/assets/ae66a655-8229-42f4-bb6f-3eba31aed6fa)
+
+
 * **Front End (React.js)**
 
   * Delivers static content to users.
