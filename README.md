@@ -90,7 +90,7 @@ Code Diagram
 
 ![code diagram payment method](assets/PaymentMethodCodeDiagram.png)
 
-## Coupons
+## Coupon
 **Container Diagram**
 
 ![container diagram Coupon](assets/Coupon-container-diagram.png)
