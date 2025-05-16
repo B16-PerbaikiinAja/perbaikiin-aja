@@ -28,6 +28,14 @@ Meskipun arsitektur mikroservis menawarkan banyak keunggulan, implementasinya ju
 
 ## Features
 
+## Authentication
+
+Component Diagram 
+![componen Diagram Authentication](./assets/ComponentDiagramAuth.jpg)
+
+Code Diagram 
+![Code Diagram Authentication](./assets/CodeDiagramAuth.jpg)
+
 ## Fitur 2 dan 3 (karena component dan code saling overlap)
 
 Component Diagram
