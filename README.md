@@ -47,7 +47,9 @@
 
 ## Payment Method
 **Container Diagram**
+
 ![container diagram payment method](assets/PaymentMethodContainerDiagram.png)
 
 **Code Diagram**
+
 ![code diagram payment method](assets/PaymentMethodCodeDiagram.png)
