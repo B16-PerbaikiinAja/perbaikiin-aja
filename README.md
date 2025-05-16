@@ -45,5 +45,11 @@
   * Supports data persistence for efficient role-based interactions.
   * Integrates with the backend for reading and writing review data.
 
+## Payment Method
+**Container Diagram**
 
+![container diagram payment method](assets/PaymentMethodContainerDiagram.png)
 
+**Code Diagram**
+
+![code diagram payment method](assets/PaymentMethodCodeDiagram.png)
