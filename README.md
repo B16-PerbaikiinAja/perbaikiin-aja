@@ -13,6 +13,11 @@
 
 ## Features
 
+## Fitur 2 dan 3 (karena component dan code saling overlap)
+
+![component diagram fitur 2 dan 3](assets/component-diagram-feature-2-and-3.png)
+![code diagram fitur 2 dan 3](assets/Feature3andFeature2CodeDiagram.png)
+
 ## Review
 
 **Container Diagram**
