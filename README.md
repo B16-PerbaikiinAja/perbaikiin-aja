@@ -89,3 +89,12 @@ Code Diagram
 **Code Diagram**
 
 ![code diagram payment method](assets/PaymentMethodCodeDiagram.png)
+
+## Coupons
+**Container Diagram**
+
+![container diagram Coupon](assets/Coupon-container-diagram.png)
+
+**Code Diagram**
+
+![code diagram Coupon](assets/Coupon-code-diagram.png)
