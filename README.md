@@ -15,7 +15,10 @@
 
 ## Fitur 2 dan 3 (karena component dan code saling overlap)
 
+Component Diagram
 ![component diagram fitur 2 dan 3](assets/component-diagram-feature-2-and-3.png)
+
+Code Diagram
 ![code diagram fitur 2 dan 3](assets/Feature3andFeature2CodeDiagram.png)
 
 ## Review
