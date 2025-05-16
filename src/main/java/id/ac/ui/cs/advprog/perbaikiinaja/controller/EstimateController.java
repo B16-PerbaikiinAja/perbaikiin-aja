@@ -4,15 +4,19 @@ import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Wallet;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.EstimateService;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -21,17 +25,20 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+
 @RestController
 @RequestMapping("/estimates")
 public class EstimateController {
 
     private final ServiceRequestService serviceRequestService;
     private final EstimateService estimateService;
+    private final WalletService walletService;
 
     @Autowired
-    public EstimateController(ServiceRequestService serviceRequestService, EstimateService estimateService) {
+    public EstimateController(ServiceRequestService serviceRequestService, EstimateService estimateService, WalletService walletService) {
         this.serviceRequestService = serviceRequestService;
         this.estimateService = estimateService;
+        this.walletService = walletService;
     }
 
     /**
@@ -164,6 +171,20 @@ public class EstimateController {
             // Process response based on action
             if ("ACCEPT".equals(action)) {
                 serviceRequest = estimateService.acceptEstimate(estimateId, customerId, feedback);
+
+                // Check if customer has sufficient balance
+                Optional<Wallet> customerWalletOpt = walletService.getWalletByUserId(customerId);
+                if (customerWalletOpt.isPresent()) {
+                    Wallet customerWallet = customerWalletOpt.get();
+                    BigDecimal estimateAmount = BigDecimal.valueOf(estimate.getCost());
+
+                    if (customerWallet.getBalance().compareTo(estimateAmount) < 0) {
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("errorCode", 4002);
+                        response.put("message", "Insufficient funds in wallet. Please deposit funds before accepting the estimate.");
+                        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                    }
+                }
 
                 // Build response
                 Map<String, Object> response = new HashMap<>();
