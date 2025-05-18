@@ -134,7 +134,7 @@ jobs:
                 - PG_PASS=${PG_PASS}
                 - JWT_SECRET_KEY=${JWT_SECRET_KEY}
                 - PORT=8080
-                - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+                nslookup db.enegsbpkslvzggobgqrw.supabase.co
           COMPOSE_EOF
 
             # Export environment variables for envsubst
