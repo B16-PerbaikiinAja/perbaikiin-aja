@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -347,7 +348,7 @@ class ServiceRequestServiceTest {
         // Assert
         assertNotNull(updatedRequest);
         assertEquals(estimate, updatedRequest.getEstimate());
-        assertEquals("ESTIMATED", updatedRequest.getStateName());
+        assertEquals(ServiceRequestStateType.ESTIMATED, updatedRequest.getStateType());
         verify(serviceRequestRepository).findById(requestId);
         verify(userRepository).findById(technicianId);
         verify(serviceRequestRepository).save(updatedRequest);
@@ -366,7 +367,7 @@ class ServiceRequestServiceTest {
 
         // Assert
         assertNotNull(updatedRequest);
-        assertEquals("ACCEPTED", updatedRequest.getStateName());
+        assertEquals(ServiceRequestStateType.ACCEPTED, updatedRequest.getStateType());
         verify(serviceRequestRepository).findById(requestId);
         verify(userRepository).findById(customerId);
         verify(serviceRequestRepository).save(updatedRequest);
@@ -385,7 +386,7 @@ class ServiceRequestServiceTest {
 
         // Assert
         assertNotNull(updatedRequest);
-        assertEquals("REJECTED", updatedRequest.getStateName());
+        assertEquals(ServiceRequestStateType.REJECTED, updatedRequest.getStateType());
         verify(serviceRequestRepository).findById(requestId);
         verify(userRepository).findById(customerId);
         verify(serviceRequestRepository).save(updatedRequest);
@@ -405,7 +406,7 @@ class ServiceRequestServiceTest {
 
         // Assert
         assertNotNull(updatedRequest);
-        assertEquals("IN_PROGRESS", updatedRequest.getStateName());
+        assertEquals(ServiceRequestStateType.IN_PROGRESS, updatedRequest.getStateType());
         verify(serviceRequestRepository).findById(requestId);
         verify(userRepository).findById(technicianId);
         verify(serviceRequestRepository).save(updatedRequest);
@@ -432,7 +433,7 @@ class ServiceRequestServiceTest {
 
         // Assert
         assertNotNull(updatedRequest);
-        assertEquals("COMPLETED", updatedRequest.getStateName());
+        assertEquals(ServiceRequestStateType.COMPLETED, updatedRequest.getStateType());
         verify(serviceRequestRepository).findById(requestId);
         verify(userRepository).findById(technicianId);
         verify(serviceRequestRepository).save(updatedRequest);
@@ -460,7 +461,7 @@ class ServiceRequestServiceTest {
         // Assert
         assertNotNull(updatedRequest);
         assertEquals(report, updatedRequest.getReport());
-        assertEquals("COMPLETED", updatedRequest.getStateName()); // State remains COMPLETED
+        assertEquals(ServiceRequestStateType.COMPLETED, updatedRequest.getStateType()); // State remains COMPLETED
         verify(serviceRequestRepository).findById(requestId);
         verify(userRepository).findById(technicianId);
         verify(serviceRequestRepository).save(updatedRequest);

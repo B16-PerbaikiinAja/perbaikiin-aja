@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.observer;
 import java.util.ArrayList;
 import java.util.List;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 
 /**
@@ -11,15 +12,34 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
  */
 public class ServiceRequestSubject {
 
-    private final List<ServiceRequestObserver> observers = new ArrayList<>();
+    private final List<StateChangeObserver> stateObservers = new ArrayList<>();
+    private final List<EstimateObserver> estimateObservers = new ArrayList<>();
+    private final List<ServiceCompletionObserver> completionObservers = new ArrayList<>();
+    private final List<ReportObserver> reportObservers = new ArrayList<>();
 
     /**
-     * Registers an observer to be notified of service request state changes.
+     * Registers an observer to be notified of events.
      * @param observer The observer to register
      */
     public void addObserver(ServiceRequestObserver observer) {
-        if (observer != null && !observers.contains(observer)) {
-            observers.add(observer);
+        if (observer == null) {
+            return;
+        }
+
+        if (observer instanceof StateChangeObserver && !stateObservers.contains(observer)) {
+            stateObservers.add((StateChangeObserver) observer);
+        }
+
+        if (observer instanceof EstimateObserver && !estimateObservers.contains(observer)) {
+            estimateObservers.add((EstimateObserver) observer);
+        }
+
+        if (observer instanceof ServiceCompletionObserver && !completionObservers.contains(observer)) {
+            completionObservers.add((ServiceCompletionObserver) observer);
+        }
+
+        if (observer instanceof ReportObserver && !reportObservers.contains(observer)) {
+            reportObservers.add((ReportObserver) observer);
         }
     }
 
@@ -28,7 +48,21 @@ public class ServiceRequestSubject {
      * @param observer The observer to unregister
      */
     public void removeObserver(ServiceRequestObserver observer) {
-        observers.remove(observer);
+        if (observer instanceof StateChangeObserver) {
+            stateObservers.remove(observer);
+        }
+
+        if (observer instanceof EstimateObserver) {
+            estimateObservers.remove(observer);
+        }
+
+        if (observer instanceof ServiceCompletionObserver) {
+            completionObservers.remove(observer);
+        }
+
+        if (observer instanceof ReportObserver) {
+            reportObservers.remove(observer);
+        }
     }
 
     /**
@@ -37,8 +71,8 @@ public class ServiceRequestSubject {
      * @param previousState The name of the previous state
      * @param newState The name of the new state
      */
-    public void notifyStateChange(ServiceRequest request, String previousState, String newState) {
-        for (ServiceRequestObserver observer : observers) {
+    public void notifyStateChange(ServiceRequest request, ServiceRequestStateType previousState, ServiceRequestStateType newState) {
+        for (StateChangeObserver observer : stateObservers) {
             observer.onStateChange(request, previousState, newState);
         }
     }
@@ -48,7 +82,7 @@ public class ServiceRequestSubject {
      * @param request The service request that received an estimate
      */
     public void notifyEstimateProvided(ServiceRequest request) {
-        for (ServiceRequestObserver observer : observers) {
+        for (EstimateObserver observer : estimateObservers) {
             observer.onEstimateProvided(request);
         }
     }
@@ -58,7 +92,7 @@ public class ServiceRequestSubject {
      * @param request The service request with the accepted estimate
      */
     public void notifyEstimateAccepted(ServiceRequest request) {
-        for (ServiceRequestObserver observer : observers) {
+        for (EstimateObserver observer : estimateObservers) {
             observer.onEstimateAccepted(request);
         }
     }
@@ -68,7 +102,7 @@ public class ServiceRequestSubject {
      * @param request The service request with the rejected estimate
      */
     public void notifyEstimateRejected(ServiceRequest request) {
-        for (ServiceRequestObserver observer : observers) {
+        for (EstimateObserver observer : estimateObservers) {
             observer.onEstimateRejected(request);
         }
     }
@@ -78,7 +112,7 @@ public class ServiceRequestSubject {
      * @param request The completed service request
      */
     public void notifyServiceCompleted(ServiceRequest request) {
-        for (ServiceRequestObserver observer : observers) {
+        for (ServiceCompletionObserver observer : completionObservers) {
             observer.onServiceCompleted(request);
         }
     }
@@ -88,7 +122,7 @@ public class ServiceRequestSubject {
      * @param request The service request that received a report
      */
     public void notifyReportCreated(ServiceRequest request) {
-        for (ServiceRequestObserver observer : observers) {
+        for (ReportObserver observer : reportObservers) {
             observer.onReportCreated(request);
         }
     }

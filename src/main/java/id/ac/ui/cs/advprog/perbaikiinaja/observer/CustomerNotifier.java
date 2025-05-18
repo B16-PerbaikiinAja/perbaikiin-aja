@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.observer;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 
@@ -7,12 +8,13 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
  * Observer that notifies customers of service request state changes.
  * Implements the Observer design pattern.
  */
-public class CustomerNotifier implements ServiceRequestObserver {
+public class CustomerNotifier implements StateChangeObserver, EstimateObserver,
+        ServiceCompletionObserver, ReportObserver {
 
     // This could be injected with a NotificationService in a real application
 
     @Override
-    public void onStateChange(ServiceRequest request, String previousState, String newState) {
+    public void onStateChange(ServiceRequest request, ServiceRequestStateType previousState, ServiceRequestStateType newState) {
         // Generic state change notification - could be implemented for specific state transitions
         System.out.println("Notifying customer: " + request.getCustomer().getFullName() +
                 " that their service request #" + request.getId() +

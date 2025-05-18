@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.state;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
@@ -62,7 +63,8 @@ public interface ServiceRequestState {
 
     /**
      * Gets the name of the current state.
+     *
      * @return The state name
      */
-    String getStateName();
+    ServiceRequestStateType getStateType();
 }
