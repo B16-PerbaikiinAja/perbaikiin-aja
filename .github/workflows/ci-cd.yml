@@ -134,7 +134,6 @@ jobs:
                 - PG_PASS=${PG_PASS}
                 - JWT_SECRET_KEY=${JWT_SECRET_KEY}
                 - PORT=8080
-                nslookup db.enegsbpkslvzggobgqrw.supabase.co
           COMPOSE_EOF
 
             # Export environment variables for envsubst
