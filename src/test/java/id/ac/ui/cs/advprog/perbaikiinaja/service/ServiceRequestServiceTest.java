@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -33,6 +34,9 @@ class ServiceRequestServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private WalletService walletService;
+
     private ServiceRequestService serviceRequestService;
 
     private UUID customerId;
@@ -49,7 +53,7 @@ class ServiceRequestServiceTest {
         // Create service with mocked repositories
         serviceRequestService = new ServiceRequestServiceImpl(
                 serviceRequestRepository,
-                userRepository);
+                userRepository, walletService);
 
         // Create test data with pre-defined UUIDs
         customerId = UUID.randomUUID();
