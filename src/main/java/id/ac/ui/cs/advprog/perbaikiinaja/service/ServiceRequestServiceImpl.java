@@ -21,9 +21,11 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.payment.PaymentMethod;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.coupon.CouponService;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.payment.PaymentMethodService;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.CouponBuilder;
 
@@ -39,15 +41,18 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     private final ServiceRequestRepository serviceRequestRepository;
     private final UserRepository userRepository;
     private final CouponService couponService;
+    private final PaymentMethodService paymentMethodService;
 
     @Autowired
     public ServiceRequestServiceImpl(
             ServiceRequestRepository serviceRequestRepository,
             UserRepository userRepository,
-            CouponService couponService) {
+            CouponService couponService,
+            PaymentMethodService paymentMethodService) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.userRepository = userRepository;
         this.couponService = couponService;
+        this.paymentMethodService = paymentMethodService;
     }
 
     @Override
@@ -187,6 +192,16 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         return null;
     }
 
+    private PaymentMethod getPaymentMethodById(UUID paymentMethodId) {
+        if (paymentMethodId != null) {
+            PaymentMethod paymentMethod = paymentMethodService.findById(paymentMethodId)
+                    .orElseThrow(() -> new IllegalArgumentException("Payment method not found with ID: " + paymentMethodId));
+            return paymentMethod;
+        } else {
+            throw new IllegalArgumentException("Payment method ID is required");
+        }
+    }
+
     @Override
     public ServiceRequest createFromDto(CustomerServiceRequestDto dto, User user) {
         ServiceRequest request = new ServiceRequest();
@@ -205,6 +220,9 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
         Coupon couponUsed = getCouponByCode(dto.getCouponCode());
         request.setCoupon(couponUsed);
+
+        PaymentMethod paymentMethod = getPaymentMethodById(dto.getPaymentMethodId());
+        request.setPaymentMethod(paymentMethod);
 
         return serviceRequestRepository.save(request);
     }
@@ -241,6 +259,9 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         
         Coupon couponUsed = getCouponByCode(dto.getCouponCode());
         existing.setCoupon(couponUsed);
+        
+        PaymentMethod paymentMethod = getPaymentMethodById(dto.getPaymentMethodId());
+        existing.setPaymentMethod(paymentMethod);
 
         // Set state to Pending after update
         existing.setState(new PendingState());
