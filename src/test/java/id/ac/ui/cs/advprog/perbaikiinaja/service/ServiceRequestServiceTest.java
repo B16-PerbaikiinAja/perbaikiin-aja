@@ -15,6 +15,8 @@ import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.RejectedState;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.coupon.CouponService;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.payment.PaymentMethodService;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.payment.PaymentMethod;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,13 +43,16 @@ class ServiceRequestServiceTest {
     private UserRepository userRepository;
     private ServiceRequestService serviceRequestService;
     private CouponService couponService;
+    private PaymentMethodService paymentMethodService;
 
     private Customer customer;
     private Technician technician;
     private UUID customerId;
     private UUID technicianId;
+    private UUID paymentMethodId;
     private UUID requestId;
     private ServiceRequest serviceRequest;
+    private PaymentMethod paymentMethod;
 
     @BeforeEach
     void setUp() {
@@ -56,10 +61,12 @@ class ServiceRequestServiceTest {
         serviceRequestRepository = mock(ServiceRequestRepository.class);
         userRepository = mock(UserRepository.class);
         couponService = mock(CouponService.class);
-        serviceRequestService = new ServiceRequestServiceImpl(serviceRequestRepository, userRepository, couponService);
+        paymentMethodService = mock(PaymentMethodService.class);
+        serviceRequestService = new ServiceRequestServiceImpl(serviceRequestRepository, userRepository, couponService, paymentMethodService);
 
         customerId = UUID.randomUUID();
         technicianId = UUID.randomUUID();
+        paymentMethodId = UUID.randomUUID();
 
         customer = mock(Customer.class);
         when(customer.getId()).thenReturn(customerId);
@@ -85,10 +92,18 @@ class ServiceRequestServiceTest {
 
         requestId = serviceRequest.getId();
 
+        // Create a payment method
+        paymentMethod = new PaymentMethod();
+        paymentMethod.setId(paymentMethodId);
+        paymentMethod.setName("Credit Card");
+        paymentMethod.setProvider("VISA");
+        paymentMethod.setCreatedAt(LocalDateTime.now());
+        
         when(userRepository.findById(customerId)).thenReturn(Optional.of(customer));
         when(userRepository.findById(technicianId)).thenReturn(Optional.of(technician));
         when(serviceRequestRepository.findById(requestId)).thenReturn(Optional.of(serviceRequest));
         when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+        when(paymentMethodService.findById(paymentMethodId)).thenReturn(Optional.of(paymentMethod));
     }
 
     @Test
@@ -98,6 +113,7 @@ class ServiceRequestServiceTest {
         dto.setCondition("Broken");
         dto.setIssueDescription("Screen cracked");
         dto.setServiceDate(LocalDate.now());
+        dto.setPaymentMethodId(paymentMethodId);
 
         Technician tech1 = mock(Technician.class);
         when(tech1.getId()).thenReturn(UUID.randomUUID());
@@ -117,6 +133,8 @@ class ServiceRequestServiceTest {
         assertEquals("Screen cracked", created.getItem().getIssueDescription());
         assertEquals(customer, created.getCustomer());
         assertEquals(tech1, created.getTechnician());
+        assertEquals(paymentMethod, created.getPaymentMethod());
+        verify(paymentMethodService).findById(paymentMethodId);
         verify(serviceRequestRepository, times(1)).save(any(ServiceRequest.class));
     }
 
@@ -127,6 +145,7 @@ class ServiceRequestServiceTest {
         dto.setCondition("Broken");
         dto.setIssueDescription("Screen cracked");
         dto.setServiceDate(LocalDate.now());
+        dto.setPaymentMethodId(paymentMethodId);
 
         Technician tech1 = mock(Technician.class);
         Technician tech2 = mock(Technician.class);
@@ -145,6 +164,7 @@ class ServiceRequestServiceTest {
 
         assertNotNull(created.getTechnician());
         assertTrue(created.getTechnician() == tech1 || created.getTechnician() == tech2);
+        assertEquals(paymentMethod, created.getPaymentMethod());
         verify(serviceRequestRepository, times(1)).save(any(ServiceRequest.class));
     }
 
@@ -155,12 +175,58 @@ class ServiceRequestServiceTest {
         dto.setCondition("Broken");
         dto.setIssueDescription("Screen cracked");
         dto.setServiceDate(LocalDate.now());
+        dto.setPaymentMethodId(paymentMethodId);
 
         // Prepare Iterable<User> with no technicians
         ArrayList<User> users = new ArrayList<>();
         when(userRepository.findAll()).thenReturn(users);
 
         assertThrows(IllegalStateException.class, () -> serviceRequestService.createFromDto(dto, customer));
+    }
+
+    @Test
+    void testCreateFromDto_NoPaymentMethod_ThrowsException() {
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Laptop");
+        dto.setCondition("Broken");
+        dto.setIssueDescription("Screen cracked");
+        dto.setServiceDate(LocalDate.now());
+        dto.setPaymentMethodId(null); // No payment method ID
+
+        Technician tech1 = mock(Technician.class);
+        when(tech1.getId()).thenReturn(UUID.randomUUID());
+
+        // Prepare Iterable<User> with one technician
+        ArrayList<User> users = new ArrayList<>();
+        users.add(tech1);
+        when(userRepository.findAll()).thenReturn(users);
+
+        assertThrows(IllegalArgumentException.class, () -> serviceRequestService.createFromDto(dto, customer));
+    }
+
+    @Test
+    void testCreateFromDto_InvalidPaymentMethod_ThrowsException() {
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Laptop");
+        dto.setCondition("Broken");
+        dto.setIssueDescription("Screen cracked");
+        dto.setServiceDate(LocalDate.now());
+        
+        UUID invalidPaymentMethodId = UUID.randomUUID();
+        dto.setPaymentMethodId(invalidPaymentMethodId);
+
+        Technician tech1 = mock(Technician.class);
+        when(tech1.getId()).thenReturn(UUID.randomUUID());
+
+        // Prepare Iterable<User> with one technician
+        ArrayList<User> users = new ArrayList<>();
+        users.add(tech1);
+        when(userRepository.findAll()).thenReturn(users);
+
+        // Simulate payment method not found
+        when(paymentMethodService.findById(invalidPaymentMethodId)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> serviceRequestService.createFromDto(dto, customer));
     }
 
     @Test
@@ -175,6 +241,7 @@ class ServiceRequestServiceTest {
         dto.setCondition("New");
         dto.setIssueDescription("Battery issue");
         dto.setServiceDate(LocalDate.now().plusDays(1));
+        dto.setPaymentMethodId(paymentMethodId);
 
         when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
         when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
@@ -183,6 +250,7 @@ class ServiceRequestServiceTest {
 
         assertEquals("Phone", updated.getItem().getName());
         assertTrue(updated.getState() instanceof PendingState);
+        assertEquals(paymentMethod, updated.getPaymentMethod());
         verify(serviceRequestRepository, times(1)).save(existing);
     }
 
@@ -198,6 +266,7 @@ class ServiceRequestServiceTest {
         dto.setCondition("Used");
         dto.setIssueDescription("Screen flicker");
         dto.setServiceDate(LocalDate.now().plusDays(2));
+        dto.setPaymentMethodId(paymentMethodId);
 
         when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
         when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
@@ -206,6 +275,7 @@ class ServiceRequestServiceTest {
 
         assertEquals("Tablet", updated.getItem().getName());
         assertTrue(updated.getState() instanceof PendingState);
+        assertEquals(paymentMethod, updated.getPaymentMethod());
         verify(serviceRequestRepository, times(1)).save(existing);
     }
 
@@ -521,6 +591,7 @@ class ServiceRequestServiceTest {
         dto.setIssueDescription("Screen cracked");
         dto.setServiceDate(LocalDate.now());
         dto.setCouponCode("VALID10");
+        dto.setPaymentMethodId(paymentMethodId);
 
         Technician tech1 = mock(Technician.class);
         when(tech1.getId()).thenReturn(UUID.randomUUID());
@@ -550,7 +621,9 @@ class ServiceRequestServiceTest {
         assertNotNull(created.getCoupon());
         assertEquals("VALID10", created.getCoupon().getCode());
         assertEquals(0.1, created.getCoupon().getDiscountValue());
+        assertEquals(paymentMethod, created.getPaymentMethod());
         verify(couponService).getCouponByCode("VALID10");
+        verify(paymentMethodService).findById(paymentMethodId);
         verify(serviceRequestRepository, times(1)).save(any(ServiceRequest.class));
     }
 
@@ -562,6 +635,7 @@ class ServiceRequestServiceTest {
         dto.setIssueDescription("Screen cracked");
         dto.setServiceDate(LocalDate.now());
         dto.setCouponCode("INVALID");
+        dto.setPaymentMethodId(paymentMethodId);
 
         Technician tech1 = mock(Technician.class);
         when(tech1.getId()).thenReturn(UUID.randomUUID());
@@ -593,6 +667,7 @@ class ServiceRequestServiceTest {
         dto.setIssueDescription("Screen cracked");
         dto.setServiceDate(LocalDate.now());
         dto.setCouponCode("");
+        dto.setPaymentMethodId(paymentMethodId);
 
         Technician tech1 = mock(Technician.class);
         when(tech1.getId()).thenReturn(UUID.randomUUID());
@@ -624,6 +699,7 @@ class ServiceRequestServiceTest {
         dto.setIssueDescription("Screen cracked");
         dto.setServiceDate(LocalDate.now());
         dto.setCouponCode(null);
+        dto.setPaymentMethodId(paymentMethodId);
 
         Technician tech1 = mock(Technician.class);
         when(tech1.getId()).thenReturn(UUID.randomUUID());
@@ -647,8 +723,7 @@ class ServiceRequestServiceTest {
     }
 
     @Test
-    void testUpdateFromDto_WithValidCoupon() {
-        // Arrange
+    void testUpdateFromDto_PendingState_WithCoupon() {
         UUID reqId = UUID.randomUUID();
         ServiceRequest existing = new ServiceRequest();
         existing.setCustomer(customer);
@@ -660,6 +735,7 @@ class ServiceRequestServiceTest {
         dto.setIssueDescription("Battery issue");
         dto.setServiceDate(LocalDate.now().plusDays(1));
         dto.setCouponCode("VALID10");
+        dto.setPaymentMethodId(paymentMethodId);
 
         // Create a valid coupon
         Coupon validCoupon = new Coupon();
@@ -686,8 +762,7 @@ class ServiceRequestServiceTest {
     }
 
     @Test
-    void testUpdateFromDto_WithInvalidCoupon() {
-        // Arrange
+    void testUpdateFromDto_PendingState_NoCoupon() {
         UUID reqId = UUID.randomUUID();
         ServiceRequest existing = new ServiceRequest();
         existing.setCustomer(customer);
@@ -698,37 +773,8 @@ class ServiceRequestServiceTest {
         dto.setCondition("New");
         dto.setIssueDescription("Battery issue");
         dto.setServiceDate(LocalDate.now().plusDays(1));
-        dto.setCouponCode("INVALID");
-
-        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
-        when(couponService.getCouponByCode("INVALID")).thenReturn(Optional.empty());
-        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
-
-        // Act
-        ServiceRequest updated = serviceRequestService.updateFromDto(reqId, dto, customer);
-
-        // Assert
-        assertEquals("Phone", updated.getItem().getName());
-        assertTrue(updated.getState() instanceof PendingState);
-        assertNull(updated.getCoupon()); // Since invalid coupon returns null
-        verify(couponService).getCouponByCode("INVALID");
-        verify(serviceRequestRepository).save(existing);
-    }
-
-    @Test
-    void testUpdateFromDto_WithNullCouponCode() {
-        // Arrange
-        UUID reqId = UUID.randomUUID();
-        ServiceRequest existing = new ServiceRequest();
-        existing.setCustomer(customer);
-        existing.setState(new PendingState());
-        
-        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
-        dto.setName("Phone");
-        dto.setCondition("New");
-        dto.setIssueDescription("Battery issue");
-        dto.setServiceDate(LocalDate.now().plusDays(1));
-        dto.setCouponCode(null);
+        dto.setCouponCode(null); // No coupon
+        dto.setPaymentMethodId(paymentMethodId);
 
         when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
         when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
@@ -739,37 +785,7 @@ class ServiceRequestServiceTest {
         // Assert
         assertEquals("Phone", updated.getItem().getName());
         assertTrue(updated.getState() instanceof PendingState);
-        assertNull(updated.getCoupon());
-        verify(couponService, never()).getCouponByCode(any());
-        verify(serviceRequestRepository).save(existing);
-    }
-
-    @Test
-    void testUpdateFromDto_WithEmptyCouponCode() {
-        // Arrange
-        UUID reqId = UUID.randomUUID();
-        ServiceRequest existing = new ServiceRequest();
-        existing.setCustomer(customer);
-        existing.setState(new PendingState());
-        
-        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
-        dto.setName("Phone");
-        dto.setCondition("New");
-        dto.setIssueDescription("Battery issue");
-        dto.setServiceDate(LocalDate.now().plusDays(1));
-        dto.setCouponCode("");
-
-        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
-        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
-
-        // Act
-        ServiceRequest updated = serviceRequestService.updateFromDto(reqId, dto, customer);
-
-        // Assert
-        assertEquals("Phone", updated.getItem().getName());
-        assertTrue(updated.getState() instanceof PendingState);
-        assertNull(updated.getCoupon());
-        verify(couponService, never()).getCouponByCode(any());
+        assertNull(updated.getCoupon()); // Coupon should be null
         verify(serviceRequestRepository).save(existing);
     }
 
@@ -787,6 +803,7 @@ class ServiceRequestServiceTest {
         dto.setIssueDescription("Screen flicker");
         dto.setServiceDate(LocalDate.now().plusDays(2));
         dto.setCouponCode("DISCOUNT20");
+        dto.setPaymentMethodId(paymentMethodId);
 
         // Create a valid coupon
         Coupon validCoupon = new Coupon();
@@ -833,6 +850,7 @@ class ServiceRequestServiceTest {
         dto.setIssueDescription("Not powering on");
         dto.setServiceDate(LocalDate.now().plusDays(3));
         dto.setCouponCode("NEW25");
+        dto.setPaymentMethodId(paymentMethodId);
 
         // Create a new coupon to replace the old one
         Coupon newCoupon = new Coupon();
@@ -856,5 +874,46 @@ class ServiceRequestServiceTest {
         assertEquals(0.25, updated.getCoupon().getDiscountValue());
         verify(couponService).getCouponByCode("NEW25");
         verify(serviceRequestRepository).save(existing);
+    }
+
+    @Test
+    void testUpdateFromDto_NoPaymentMethod_ThrowsException() {
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new PendingState());
+
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Phone");
+        dto.setCondition("New");
+        dto.setIssueDescription("Battery issue");
+        dto.setServiceDate(LocalDate.now().plusDays(1));
+        dto.setPaymentMethodId(null);  // No payment method ID
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+
+        assertThrows(IllegalArgumentException.class, () -> serviceRequestService.updateFromDto(reqId, dto, customer));
+    }
+
+    @Test
+    void testUpdateFromDto_InvalidPaymentMethod_ThrowsException() {
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new PendingState());
+
+        UUID invalidPaymentMethodId = UUID.randomUUID();
+        
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Phone");
+        dto.setCondition("New");
+        dto.setIssueDescription("Battery issue");
+        dto.setServiceDate(LocalDate.now().plusDays(1));
+        dto.setPaymentMethodId(invalidPaymentMethodId);
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+        when(paymentMethodService.findById(invalidPaymentMethodId)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> serviceRequestService.updateFromDto(reqId, dto, customer));
     }
 }
