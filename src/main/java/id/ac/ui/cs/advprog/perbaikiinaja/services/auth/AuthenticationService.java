@@ -57,9 +57,11 @@ public class AuthenticationService {
                 .address(input.getAddress())
                 .build();
 
+        User savedUser = userRepository.save(user);
+
         walletService.createWallet(user);
 
-        return userRepository.save(user);
+        return savedUser;
     }
 
     public User signupTechnician(RegisterTechnicianDto input) {
@@ -71,9 +73,11 @@ public class AuthenticationService {
                 .address(input.getAddress())
                 .build();
 
+        User savedUser = userRepository.save(user);
+
         walletService.createWallet(user);
 
-        return userRepository.save(user);
+        return savedUser;
     }
 
     public User authenticate(LoginUserDto input) {
