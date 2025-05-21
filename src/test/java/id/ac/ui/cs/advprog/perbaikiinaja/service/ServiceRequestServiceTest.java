@@ -13,6 +13,8 @@ import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.AcceptedState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.RejectedState;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.coupon.CouponService;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.sql.Date;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,6 +40,7 @@ class ServiceRequestServiceTest {
     private ServiceRequestRepository serviceRequestRepository;
     private UserRepository userRepository;
     private ServiceRequestService serviceRequestService;
+    private CouponService couponService;
 
     private Customer customer;
     private Technician technician;
@@ -51,7 +55,8 @@ class ServiceRequestServiceTest {
 
         serviceRequestRepository = mock(ServiceRequestRepository.class);
         userRepository = mock(UserRepository.class);
-        serviceRequestService = new ServiceRequestServiceImpl(serviceRequestRepository, userRepository);
+        couponService = mock(CouponService.class);
+        serviceRequestService = new ServiceRequestServiceImpl(serviceRequestRepository, userRepository, couponService);
 
         customerId = UUID.randomUUID();
         technicianId = UUID.randomUUID();
@@ -506,5 +511,350 @@ class ServiceRequestServiceTest {
         assertThrows(IllegalStateException.class, () -> {
             serviceRequestService.acceptEstimate(requestId, customerId);
         });
+    }
+
+    @Test
+    void testCreateFromDto_WithValidCoupon() {
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Laptop");
+        dto.setCondition("Broken");
+        dto.setIssueDescription("Screen cracked");
+        dto.setServiceDate(LocalDate.now());
+        dto.setCouponCode("VALID10");
+
+        Technician tech1 = mock(Technician.class);
+        when(tech1.getId()).thenReturn(UUID.randomUUID());
+
+        // Prepare Iterable<User> with one technician
+        ArrayList<User> users = new ArrayList<>();
+        users.add(tech1);
+        when(userRepository.findAll()).thenReturn(users);
+
+        // Create a valid coupon
+        Coupon validCoupon = new Coupon();
+        validCoupon.setCode("VALID10");
+        validCoupon.setDiscountValue(0.1);
+        validCoupon.setMaxUsage(5);
+        validCoupon.setExpiryDate(new Date(System.currentTimeMillis() + 86400000)); // Tomorrow
+        
+        when(couponService.getCouponByCode("VALID10")).thenReturn(Optional.of(validCoupon));
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        ServiceRequest created = serviceRequestService.createFromDto(dto, customer);
+
+        assertNotNull(created);
+        assertEquals("Laptop", created.getItem().getName());
+        assertEquals("Broken", created.getItem().getCondition());
+        assertEquals(customer, created.getCustomer());
+        assertEquals(tech1, created.getTechnician());
+        assertNotNull(created.getCoupon());
+        assertEquals("VALID10", created.getCoupon().getCode());
+        assertEquals(0.1, created.getCoupon().getDiscountValue());
+        verify(couponService).getCouponByCode("VALID10");
+        verify(serviceRequestRepository, times(1)).save(any(ServiceRequest.class));
+    }
+
+    @Test
+    void testCreateFromDto_WithInvalidCoupon() {
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Laptop");
+        dto.setCondition("Broken");
+        dto.setIssueDescription("Screen cracked");
+        dto.setServiceDate(LocalDate.now());
+        dto.setCouponCode("INVALID");
+
+        Technician tech1 = mock(Technician.class);
+        when(tech1.getId()).thenReturn(UUID.randomUUID());
+
+        // Prepare Iterable<User> with one technician
+        ArrayList<User> users = new ArrayList<>();
+        users.add(tech1);
+        when(userRepository.findAll()).thenReturn(users);
+
+        // No coupon found for the code
+        when(couponService.getCouponByCode("INVALID")).thenReturn(Optional.empty());
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        ServiceRequest created = serviceRequestService.createFromDto(dto, customer);
+
+        assertNotNull(created);
+        assertEquals("Laptop", created.getItem().getName());
+        assertEquals(customer, created.getCustomer());
+        assertEquals(tech1, created.getTechnician());
+        assertNull(created.getCoupon());
+        verify(serviceRequestRepository, times(1)).save(any(ServiceRequest.class));
+    }
+
+    @Test
+    void testCreateFromDto_WithEmptyCouponCode() {
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Laptop");
+        dto.setCondition("Broken");
+        dto.setIssueDescription("Screen cracked");
+        dto.setServiceDate(LocalDate.now());
+        dto.setCouponCode("");
+
+        Technician tech1 = mock(Technician.class);
+        when(tech1.getId()).thenReturn(UUID.randomUUID());
+
+        // Prepare Iterable<User> with one technician
+        ArrayList<User> users = new ArrayList<>();
+        users.add(tech1);
+        when(userRepository.findAll()).thenReturn(users);
+
+        // Empty coupon code returns null - implementation treats empty strings as null
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        ServiceRequest created = serviceRequestService.createFromDto(dto, customer);
+
+        assertNotNull(created);
+        assertEquals("Laptop", created.getItem().getName());
+        assertEquals(customer, created.getCustomer());
+        assertEquals(tech1, created.getTechnician());
+        assertNull(created.getCoupon()); // Should be null now
+        verify(couponService, never()).getCouponByCode(any());
+        verify(serviceRequestRepository, times(1)).save(any(ServiceRequest.class));
+    }
+
+    @Test
+    void testCreateFromDto_WithNullCouponCode() {
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Laptop");
+        dto.setCondition("Broken");
+        dto.setIssueDescription("Screen cracked");
+        dto.setServiceDate(LocalDate.now());
+        dto.setCouponCode(null);
+
+        Technician tech1 = mock(Technician.class);
+        when(tech1.getId()).thenReturn(UUID.randomUUID());
+
+        // Prepare Iterable<User> with one technician
+        ArrayList<User> users = new ArrayList<>();
+        users.add(tech1);
+        when(userRepository.findAll()).thenReturn(users);
+
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        ServiceRequest created = serviceRequestService.createFromDto(dto, customer);
+
+        assertNotNull(created);
+        assertEquals("Laptop", created.getItem().getName());
+        assertEquals(customer, created.getCustomer());
+        assertEquals(tech1, created.getTechnician());
+        assertNull(created.getCoupon()); // Should be null now
+        verify(couponService, never()).getCouponByCode(any());
+        verify(serviceRequestRepository, times(1)).save(any(ServiceRequest.class));
+    }
+
+    @Test
+    void testUpdateFromDto_WithValidCoupon() {
+        // Arrange
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new PendingState());
+        
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Phone");
+        dto.setCondition("New");
+        dto.setIssueDescription("Battery issue");
+        dto.setServiceDate(LocalDate.now().plusDays(1));
+        dto.setCouponCode("VALID10");
+
+        // Create a valid coupon
+        Coupon validCoupon = new Coupon();
+        validCoupon.setCode("VALID10");
+        validCoupon.setDiscountValue(0.1);  // 10% discount
+        validCoupon.setMaxUsage(5);
+        validCoupon.setExpiryDate(new Date(System.currentTimeMillis() + 86400000)); // Tomorrow
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+        when(couponService.getCouponByCode("VALID10")).thenReturn(Optional.of(validCoupon));
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        ServiceRequest updated = serviceRequestService.updateFromDto(reqId, dto, customer);
+
+        // Assert
+        assertEquals("Phone", updated.getItem().getName());
+        assertTrue(updated.getState() instanceof PendingState);
+        assertNotNull(updated.getCoupon());
+        assertEquals("VALID10", updated.getCoupon().getCode());
+        assertEquals(0.1, updated.getCoupon().getDiscountValue());
+        verify(couponService).getCouponByCode("VALID10");
+        verify(serviceRequestRepository).save(existing);
+    }
+
+    @Test
+    void testUpdateFromDto_WithInvalidCoupon() {
+        // Arrange
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new PendingState());
+        
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Phone");
+        dto.setCondition("New");
+        dto.setIssueDescription("Battery issue");
+        dto.setServiceDate(LocalDate.now().plusDays(1));
+        dto.setCouponCode("INVALID");
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+        when(couponService.getCouponByCode("INVALID")).thenReturn(Optional.empty());
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        ServiceRequest updated = serviceRequestService.updateFromDto(reqId, dto, customer);
+
+        // Assert
+        assertEquals("Phone", updated.getItem().getName());
+        assertTrue(updated.getState() instanceof PendingState);
+        assertNull(updated.getCoupon()); // Since invalid coupon returns null
+        verify(couponService).getCouponByCode("INVALID");
+        verify(serviceRequestRepository).save(existing);
+    }
+
+    @Test
+    void testUpdateFromDto_WithNullCouponCode() {
+        // Arrange
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new PendingState());
+        
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Phone");
+        dto.setCondition("New");
+        dto.setIssueDescription("Battery issue");
+        dto.setServiceDate(LocalDate.now().plusDays(1));
+        dto.setCouponCode(null);
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        ServiceRequest updated = serviceRequestService.updateFromDto(reqId, dto, customer);
+
+        // Assert
+        assertEquals("Phone", updated.getItem().getName());
+        assertTrue(updated.getState() instanceof PendingState);
+        assertNull(updated.getCoupon());
+        verify(couponService, never()).getCouponByCode(any());
+        verify(serviceRequestRepository).save(existing);
+    }
+
+    @Test
+    void testUpdateFromDto_WithEmptyCouponCode() {
+        // Arrange
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new PendingState());
+        
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Phone");
+        dto.setCondition("New");
+        dto.setIssueDescription("Battery issue");
+        dto.setServiceDate(LocalDate.now().plusDays(1));
+        dto.setCouponCode("");
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        ServiceRequest updated = serviceRequestService.updateFromDto(reqId, dto, customer);
+
+        // Assert
+        assertEquals("Phone", updated.getItem().getName());
+        assertTrue(updated.getState() instanceof PendingState);
+        assertNull(updated.getCoupon());
+        verify(couponService, never()).getCouponByCode(any());
+        verify(serviceRequestRepository).save(existing);
+    }
+
+    @Test
+    void testUpdateFromDto_RejectedState_WithCoupon() {
+        // Arrange
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new RejectedState());
+        
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Tablet");
+        dto.setCondition("Used");
+        dto.setIssueDescription("Screen flicker");
+        dto.setServiceDate(LocalDate.now().plusDays(2));
+        dto.setCouponCode("DISCOUNT20");
+
+        // Create a valid coupon
+        Coupon validCoupon = new Coupon();
+        validCoupon.setCode("DISCOUNT20");
+        validCoupon.setDiscountValue(0.2);  // 20% discount
+        validCoupon.setMaxUsage(2);
+        validCoupon.setExpiryDate(new Date(System.currentTimeMillis() + 86400000));
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+        when(couponService.getCouponByCode("DISCOUNT20")).thenReturn(Optional.of(validCoupon));
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        ServiceRequest updated = serviceRequestService.updateFromDto(reqId, dto, customer);
+
+        // Assert
+        assertEquals("Tablet", updated.getItem().getName());
+        // After update, state should be reset to Pending regardless of previous state
+        assertTrue(updated.getState() instanceof PendingState);
+        assertNotNull(updated.getCoupon());
+        assertEquals("DISCOUNT20", updated.getCoupon().getCode());
+        assertEquals(0.2, updated.getCoupon().getDiscountValue());
+        verify(couponService).getCouponByCode("DISCOUNT20");
+        verify(serviceRequestRepository).save(existing);
+    }
+
+    @Test
+    void testUpdateFromDto_ReplacesExistingCoupon() {
+        // Arrange
+        UUID reqId = UUID.randomUUID();
+        ServiceRequest existing = new ServiceRequest();
+        existing.setCustomer(customer);
+        existing.setState(new PendingState());
+        
+        // Create an existing coupon on the service request
+        Coupon existingCoupon = new Coupon();
+        existingCoupon.setCode("OLD10");
+        existingCoupon.setDiscountValue(0.1);  // 10% discount
+        existing.setCoupon(existingCoupon);
+        
+        CustomerServiceRequestDto dto = new CustomerServiceRequestDto();
+        dto.setName("Laptop");
+        dto.setCondition("Refurbished");
+        dto.setIssueDescription("Not powering on");
+        dto.setServiceDate(LocalDate.now().plusDays(3));
+        dto.setCouponCode("NEW25");
+
+        // Create a new coupon to replace the old one
+        Coupon newCoupon = new Coupon();
+        newCoupon.setCode("NEW25");
+        newCoupon.setDiscountValue(0.25);  // 25% discount
+        newCoupon.setMaxUsage(1);
+        newCoupon.setExpiryDate(new Date(System.currentTimeMillis() + 86400000));
+
+        when(serviceRequestRepository.findById(reqId)).thenReturn(Optional.of(existing));
+        when(couponService.getCouponByCode("NEW25")).thenReturn(Optional.of(newCoupon));
+        when(serviceRequestRepository.save(any(ServiceRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        ServiceRequest updated = serviceRequestService.updateFromDto(reqId, dto, customer);
+
+        // Assert
+        assertEquals("Laptop", updated.getItem().getName());
+        assertTrue(updated.getState() instanceof PendingState);
+        assertNotNull(updated.getCoupon());
+        assertEquals("NEW25", updated.getCoupon().getCode());
+        assertEquals(0.25, updated.getCoupon().getDiscountValue());
+        verify(couponService).getCouponByCode("NEW25");
+        verify(serviceRequestRepository).save(existing);
     }
 }

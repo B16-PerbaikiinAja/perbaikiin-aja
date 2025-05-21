@@ -23,6 +23,11 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.coupon.CouponService;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.CouponBuilder;
+
+import java.sql.Date;
 
 /**
  * Implementation of the ServiceRequestService interface.
@@ -33,13 +38,16 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
     private final ServiceRequestRepository serviceRequestRepository;
     private final UserRepository userRepository;
+    private final CouponService couponService;
 
     @Autowired
     public ServiceRequestServiceImpl(
             ServiceRequestRepository serviceRequestRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            CouponService couponService) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.userRepository = userRepository;
+        this.couponService = couponService;
     }
 
     @Override
@@ -170,6 +178,15 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         return serviceRequestRepository.save(request);
     }
 
+
+    private Coupon getCouponByCode(String couponCode){
+        if (couponCode != null && !couponCode.isEmpty()) {
+            return couponService.getCouponByCode(couponCode)
+                .orElse(null); 
+        }
+        return null;
+    }
+
     @Override
     public ServiceRequest createFromDto(CustomerServiceRequestDto dto, User user) {
         ServiceRequest request = new ServiceRequest();
@@ -186,7 +203,9 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         Technician randomTechnician = getRandomTechnician();
         request.setTechnician(randomTechnician);
 
-        // TODO: Integrate coupon and payment method
+        Coupon couponUsed = getCouponByCode(dto.getCouponCode());
+        request.setCoupon(couponUsed);
+
         return serviceRequestRepository.save(request);
     }
 
@@ -219,7 +238,9 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         existing.setItem(item);
         existing.setServiceDate(dto.getServiceDate());
         existing.setProblemDescription(dto.getIssueDescription());
-        // TODO: Integrate coupon and payment method
+        
+        Coupon couponUsed = getCouponByCode(dto.getCouponCode());
+        existing.setCoupon(couponUsed);
 
         // Set state to Pending after update
         existing.setState(new PendingState());
