@@ -30,6 +30,8 @@ public class TransactionController {
 
     private final TransactionService transactionService;
     private final WalletService walletService;
+    private final String MESSAGE_STR = "message";
+    private final String WALLET_NOT_FOUND_STR = "Wallet not found. Create a wallet first.";
 
     @Autowired
     public TransactionController(
@@ -50,7 +52,7 @@ public class TransactionController {
      * @return A page of transactions
      */
     @GetMapping("/me")
-    public ResponseEntity<?> getMyTransactions(
+    public ResponseEntity<Map<String, Object>> getMyTransactions(
             Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -61,7 +63,7 @@ public class TransactionController {
 
         if (walletOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Wallet not found. Create a wallet first.");
+            response.put(MESSAGE_STR, WALLET_NOT_FOUND_STR);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
@@ -81,7 +83,7 @@ public class TransactionController {
      * @return A list of transactions
      */
     @GetMapping("/me/type/{type}")
-    public ResponseEntity<?> getMyTransactionsByType(
+    public ResponseEntity<Map<String, Object>> getMyTransactionsByType(
             Authentication authentication,
             @PathVariable TransactionType type) {
         User user = (User) authentication.getPrincipal();
@@ -89,7 +91,7 @@ public class TransactionController {
 
         if (walletOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Wallet not found. Create a wallet first.");
+            response.put(MESSAGE_STR, WALLET_NOT_FOUND_STR);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
@@ -107,7 +109,7 @@ public class TransactionController {
      * @return A list of transactions
      */
     @GetMapping("/me/date-range")
-    public ResponseEntity<?> getMyTransactionsByDateRange(
+    public ResponseEntity<Map<String, Object>> getMyTransactionsByDateRange(
             Authentication authentication,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
@@ -116,7 +118,7 @@ public class TransactionController {
 
         if (walletOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Wallet not found. Create a wallet first.");
+            response.put(MESSAGE_STR, WALLET_NOT_FOUND_STR);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
@@ -134,12 +136,12 @@ public class TransactionController {
      */
     @GetMapping("/{transactionId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getTransaction(@PathVariable UUID transactionId) {
+    public ResponseEntity<Map<String, Object>> getTransaction(@PathVariable UUID transactionId) {
         Optional<Transaction> transactionOpt = transactionService.getTransactionById(transactionId);
 
         if (transactionOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Transaction not found");
+            response.put(MESSAGE_STR, "Transaction not found");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 

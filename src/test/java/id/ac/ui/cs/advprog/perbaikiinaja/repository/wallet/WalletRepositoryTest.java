@@ -1,17 +1,15 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.repository.wallet;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.auth.UserRole;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Wallet;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -103,7 +101,6 @@ class WalletRepositoryTest {
     @Test
     void testSaveWallet() {
         // Prepare test data
-        UUID userId = UUID.randomUUID();
         BigDecimal initialBalance = new BigDecimal("200.00");
 
         Wallet wallet = new Wallet(mockCustomer, initialBalance);

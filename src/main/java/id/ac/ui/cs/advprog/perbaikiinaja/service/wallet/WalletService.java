@@ -1,7 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.service.wallet;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Transaction;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Wallet;
 
 import java.math.BigDecimal;

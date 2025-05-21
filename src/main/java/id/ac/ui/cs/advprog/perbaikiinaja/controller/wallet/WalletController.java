@@ -24,6 +24,9 @@ import java.util.*;
 public class WalletController {
 
     private final WalletService walletService;
+    private final String MESSAGE_STR = "message";
+    private final String WALLET_NOT_FOUND_STR = "Wallet not found. Create a wallet first.";
+    private final String CST_TECH_STR = "Only customers and technicians have wallets";
 
     @Autowired
     public WalletController(WalletService walletService) {
@@ -37,13 +40,13 @@ public class WalletController {
      * @return The wallet information
      */
     @GetMapping("/me")
-    public ResponseEntity<?> getMyWallet(Authentication authentication) {
+    public ResponseEntity<Map<String, Object>> getMyWallet(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
 
         // Check if user is Customer or Technician
         if (!(user instanceof Customer) && !(user instanceof Technician)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Only customers and technicians have wallets"));
+                    .body(Map.of(MESSAGE_STR, CST_TECH_STR));
         }
 
         // Only call this after checking user type
@@ -51,7 +54,7 @@ public class WalletController {
 
         if (wallet.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Wallet not found. Create a wallet first.");
+            response.put(MESSAGE_STR, WALLET_NOT_FOUND_STR);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
@@ -65,18 +68,18 @@ public class WalletController {
      * @return The created wallet
      */
     @PostMapping("/me")
-    public ResponseEntity<?> createMyWallet(Authentication authentication) {
+    public ResponseEntity<Map<String, Object>> createMyWallet(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
 
         if (user.getRole().equals(UserRole.ADMIN.getValue())) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Admin users cannot have wallets");
+            response.put(MESSAGE_STR, "Admin users cannot have wallets");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
 
         if (walletService.hasWallet(user)) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "You already have a wallet");
+            response.put(MESSAGE_STR, "You already have a wallet");
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
 
@@ -92,7 +95,7 @@ public class WalletController {
      * @return The updated wallet
      */
     @PostMapping("/me/deposit")
-    public ResponseEntity<?> deposit(
+    public ResponseEntity<Map<String, Object>> deposit(
             Authentication authentication,
             @RequestBody Map<String, Object> requestBody) {
         User user = (User) authentication.getPrincipal();
@@ -100,12 +103,12 @@ public class WalletController {
 
         if (!(user instanceof Customer) && !(user instanceof Technician)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Only customers and technicians have wallets"));
+                    .body(Map.of(MESSAGE_STR, CST_TECH_STR));
         }
 
         if (walletOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Wallet not found. Create a wallet first.");
+            response.put(MESSAGE_STR, WALLET_NOT_FOUND_STR);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
@@ -114,7 +117,7 @@ public class WalletController {
             amount = new BigDecimal(requestBody.get("amount").toString());
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Invalid amount");
+            response.put(MESSAGE_STR, "Invalid amount");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
@@ -125,7 +128,7 @@ public class WalletController {
             return ResponseEntity.ok(createWalletResponse(wallet));
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", e.getMessage());
+            response.put(MESSAGE_STR, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
@@ -138,7 +141,7 @@ public class WalletController {
      * @return The updated wallet
      */
     @PostMapping("/me/withdraw")
-    public ResponseEntity<?> withdraw(
+    public ResponseEntity<Map<String, Object>> withdraw(
             Authentication authentication,
             @RequestBody Map<String, Object> requestBody) {
         User user = (User) authentication.getPrincipal();
@@ -146,12 +149,12 @@ public class WalletController {
 
         if (!(user instanceof Customer) && !(user instanceof Technician)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Only customers and technicians have wallets"));
+                    .body(Map.of(MESSAGE_STR, CST_TECH_STR));
         }
 
         if (walletOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Wallet not found. Create a wallet first.");
+            response.put(MESSAGE_STR, WALLET_NOT_FOUND_STR);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
@@ -160,7 +163,7 @@ public class WalletController {
             amount = new BigDecimal(requestBody.get("amount").toString());
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Invalid amount");
+            response.put(MESSAGE_STR, "Invalid amount");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
@@ -171,7 +174,7 @@ public class WalletController {
             return ResponseEntity.ok(createWalletResponse(wallet));
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", e.getMessage());
+            response.put(MESSAGE_STR, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
@@ -184,12 +187,12 @@ public class WalletController {
      */
     @GetMapping("/{walletId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getWallet(@PathVariable UUID walletId) {
+    public ResponseEntity<Map<String, Object>> getWallet(@PathVariable UUID walletId) {
         Optional<Wallet> wallet = walletService.getWalletById(walletId);
 
         if (wallet.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Wallet not found");
+            response.put(MESSAGE_STR, "Wallet not found");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
@@ -205,13 +208,13 @@ public class WalletController {
      */
     @PostMapping("/users/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> createWalletForUser(
+    public ResponseEntity<Map<String, Object>> createWalletForUser(
             @PathVariable UUID userId,
             @RequestBody(required = false) Map<String, Object> requestBody) {
         // Implementation relies on additional methods not included here
         // This would involve looking up the user by ID and creating a wallet for them
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "This endpoint is not fully implemented");
+        response.put(MESSAGE_STR, "This endpoint is not fully implemented");
         return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(response);
     }
 

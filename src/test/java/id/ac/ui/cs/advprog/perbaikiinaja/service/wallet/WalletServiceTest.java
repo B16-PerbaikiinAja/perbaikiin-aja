@@ -1,11 +1,9 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.service.wallet;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.TransactionType;
-import id.ac.ui.cs.advprog.perbaikiinaja.enums.auth.UserRole;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Admin;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Transaction;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Wallet;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
@@ -20,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -129,9 +126,6 @@ class WalletServiceTest {
 
     @Test
     void testCreateWalletForAdmin() {
-        // Setup
-//        when(admin.getRole()).thenReturn(UserRole.ADMIN.getValue());
-
         // Execute & Verify
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             walletService.createWallet(admin, BigDecimal.TEN);

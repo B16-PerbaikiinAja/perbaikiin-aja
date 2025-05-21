@@ -25,8 +25,7 @@ public class AuthenticationService {
     
     private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    private WalletService walletService;
+    private final WalletService walletService;
 
     public AuthenticationService(
         UserRepository userRepository,

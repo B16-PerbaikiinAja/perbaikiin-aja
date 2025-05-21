@@ -17,7 +17,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -28,7 +27,6 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,7 +45,6 @@ class TransactionControllerTest {
     private TransactionController transactionController;
 
     private User user;
-    private Customer customer;
     private Wallet wallet;
     private Transaction transaction1;
     private Transaction transaction2;
@@ -56,10 +53,10 @@ class TransactionControllerTest {
 
     @BeforeEach
     void setUp() {
-        customer = Customer.builder()
-                .email("customer@example.com")
-                .fullName("Test Customer")
-                .build();
+//        Customer customer = Customer.builder()
+//                .email("customer@example.com")
+//                .fullName("Test Customer")
+//                .build();
 
         walletId = UUID.randomUUID();
         wallet = new Wallet(user);

@@ -2,7 +2,6 @@ package id.ac.ui.cs.advprog.perbaikiinaja.service.wallet;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Transaction;
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.TransactionType;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Wallet;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
