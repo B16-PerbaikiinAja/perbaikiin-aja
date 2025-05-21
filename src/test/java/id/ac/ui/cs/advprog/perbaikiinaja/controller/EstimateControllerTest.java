@@ -7,6 +7,7 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.EstimateService;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,9 @@ public class EstimateControllerTest {
 
     @Mock
     private Authentication authentication;
+
+    @Mock
+    private WalletService walletService;
 
     @InjectMocks
     private EstimateController controller;
@@ -80,6 +84,8 @@ public class EstimateControllerTest {
         lenient().when(serviceRequest.getCustomer()).thenReturn(customer);
         lenient().when(serviceRequest.getEstimate()).thenReturn(estimate);
         lenient().when(serviceRequest.getStateType()).thenReturn(ServiceRequestStateType.ESTIMATED);
+
+        controller = new EstimateController(serviceRequestService, estimateService, walletService);
     }
 
     @Test

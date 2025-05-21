@@ -33,6 +33,7 @@ import java.util.UUID;
 import java.sql.Date;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -41,6 +42,9 @@ class ServiceRequestServiceTest {
 
     private ServiceRequestRepository serviceRequestRepository;
     private UserRepository userRepository;
+
+    @Mock
+    private WalletService walletService;
     private ServiceRequestService serviceRequestService;
     private CouponService couponService;
     private PaymentMethodService paymentMethodService;

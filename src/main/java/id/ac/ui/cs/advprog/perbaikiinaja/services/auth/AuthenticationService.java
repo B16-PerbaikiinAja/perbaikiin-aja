@@ -10,6 +10,8 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,14 +25,17 @@ public class AuthenticationService {
     
     private final AuthenticationManager authenticationManager;
 
+    private final WalletService walletService;
+
     public AuthenticationService(
         UserRepository userRepository,
         AuthenticationManager authenticationManager,
-        PasswordEncoder passwordEncoder
-    ) {
+        PasswordEncoder passwordEncoder,
+        WalletService walletService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.walletService = walletService;
     }
     public User signupAdmin(RegisterAdminDto input) {
         User user = Admin.builder()
@@ -52,6 +57,8 @@ public class AuthenticationService {
                 .address(input.getAddress())
                 .build();
 
+        walletService.createWallet(user);
+
         return userRepository.save(user);
     }
 
@@ -63,6 +70,8 @@ public class AuthenticationService {
                 .phoneNumber(input.getPhoneNumber())
                 .address(input.getAddress())
                 .build();
+
+        walletService.createWallet(user);
 
         return userRepository.save(user);
     }

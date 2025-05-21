@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -7,6 +8,7 @@ import java.util.stream.Collectors;
 import java.util.concurrent.ThreadLocalRandom;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.EstimatedState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.RejectedState;
@@ -42,17 +44,20 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     private final UserRepository userRepository;
     private final CouponService couponService;
     private final PaymentMethodService paymentMethodService;
+    private final WalletService walletService;
 
     @Autowired
     public ServiceRequestServiceImpl(
             ServiceRequestRepository serviceRequestRepository,
             UserRepository userRepository,
             CouponService couponService,
-            PaymentMethodService paymentMethodService) {
+            PaymentMethodService paymentMethodService,
+            WalletService walletService) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.userRepository = userRepository;
         this.couponService = couponService;
         this.paymentMethodService = paymentMethodService;
+        this.walletService = walletService;
     }
 
     @Override
@@ -162,6 +167,20 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
         // Complete the service
         request.completeService();
+
+        // Process payment - only if there's a valid estimate amount
+        if (request.getEstimate() != null && request.getEstimate().getCost() > 0) {
+            Customer customer = request.getCustomer();
+            BigDecimal amount = BigDecimal.valueOf(request.getEstimate().getCost());
+
+            // Process the payment between customer and technician wallets
+            walletService.processServicePayment(
+                    customer.getId(),
+                    technician.getId(),
+                    amount,
+                    request.getId()
+            );
+        }
 
         return serviceRequestRepository.save(request);
     }
