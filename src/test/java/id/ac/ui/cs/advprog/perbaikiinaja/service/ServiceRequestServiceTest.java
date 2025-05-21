@@ -20,6 +20,7 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.payment.PaymentMethod;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDate;
@@ -66,7 +67,7 @@ class ServiceRequestServiceTest {
         userRepository = mock(UserRepository.class);
         couponService = mock(CouponService.class);
         paymentMethodService = mock(PaymentMethodService.class);
-        serviceRequestService = new ServiceRequestServiceImpl(serviceRequestRepository, userRepository, couponService, paymentMethodService);
+        serviceRequestService = new ServiceRequestServiceImpl(serviceRequestRepository, userRepository, couponService, paymentMethodService, walletService);
 
         customerId = UUID.randomUUID();
         technicianId = UUID.randomUUID();
