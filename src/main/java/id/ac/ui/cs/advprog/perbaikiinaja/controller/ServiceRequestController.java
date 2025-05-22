@@ -1,6 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.dto.CustomerServiceRequestDto;
+import id.ac.ui.cs.advprog.perbaikiinaja.dtos.CustomerServiceRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;

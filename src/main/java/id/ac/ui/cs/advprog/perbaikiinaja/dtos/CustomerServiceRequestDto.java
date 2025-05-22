@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.perbaikiinaja.dto;
+package id.ac.ui.cs.advprog.perbaikiinaja.dtos;
 
 import lombok.Getter;
 import lombok.Setter;
