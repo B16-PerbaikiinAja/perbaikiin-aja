@@ -60,6 +60,7 @@ public class AuthenticationController {
         loginResponse.setRole(authenticatedUser.getRole());
         loginResponse.setFullName(authenticatedUser.getFullName());
         loginResponse.setEmail(authenticatedUser.getEmail());
+        loginResponse.setId(authenticatedUser.getId());
 
         return ResponseEntity.ok(loginResponse);
     }
