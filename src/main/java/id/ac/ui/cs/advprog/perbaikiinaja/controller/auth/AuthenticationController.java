@@ -57,6 +57,10 @@ public class AuthenticationController {
         loginResponse.setToken(jwtToken);
         loginResponse.setExpiresIn(jwtService.getExpirationTime());
 
+        loginResponse.setRole(authenticatedUser.getRole());
+        loginResponse.setFullName(authenticatedUser.getFullName());
+        loginResponse.setEmail(authenticatedUser.getEmail());
+
         return ResponseEntity.ok(loginResponse);
     }
 }
