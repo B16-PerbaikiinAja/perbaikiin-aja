@@ -4,10 +4,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.dtos.CustomerServiceRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
 
 /**
  * Service interface for managing service requests.
@@ -95,4 +97,21 @@ public interface ServiceRequestService {
      * @throws IllegalArgumentException if the report is invalid
      */
     ServiceRequest createReport(UUID requestId, Report report, UUID technicianId);
+
+    /**
+     * Deletes a service request by its ID.
+     * @param requestId The ID of the service request to delete
+     * @param user The authenticated user requesting the deletion
+     */
+    void delete(UUID requestId, User user);
+
+    /**
+     * Creates a new service request from a DTO and authenticated user.
+     */
+    ServiceRequest createFromDto(CustomerServiceRequestDto dto, User user);
+
+    /**
+     * Updates an existing service request from a DTO and authenticated user.
+     */
+    ServiceRequest updateFromDto(UUID requestId, CustomerServiceRequestDto dto, User user);
 }

@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.dtos.CustomerServiceRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -202,5 +204,40 @@ public class ServiceRequestController {
         response.put("serviceRequests", serviceRequests);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @GetMapping("/customer")
+    public ResponseEntity<?> getServiceRequests(@AuthenticationPrincipal User user) {
+        var requests = serviceRequestService.findByCustomer(user.getId());
+        return ResponseEntity.ok(requests);
+    }
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @PostMapping("/customer")
+    public ResponseEntity<ServiceRequest> createServiceRequest(
+            @RequestBody CustomerServiceRequestDto dto,
+            @AuthenticationPrincipal User user
+    ) {
+        ServiceRequest created = serviceRequestService.createFromDto(dto, user);
+        return ResponseEntity.ok(created);
+    }
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @PutMapping("/customer")
+    public ResponseEntity<ServiceRequest> updateServiceRequest(
+            @PathVariable UUID id,
+            @RequestBody CustomerServiceRequestDto dto,
+            @AuthenticationPrincipal User user
+    ) {
+        ServiceRequest updated = serviceRequestService.updateFromDto(id, dto, user);
+        return ResponseEntity.ok(updated);
+    }
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @DeleteMapping("/customer")
+    public ResponseEntity<Void> deleteServiceRequest(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User user
+    ) {
+        serviceRequestService.delete(id, user);
+        return ResponseEntity.noContent().build();
     }
 }

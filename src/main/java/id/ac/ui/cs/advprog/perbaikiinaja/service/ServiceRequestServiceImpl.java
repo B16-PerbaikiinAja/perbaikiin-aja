@@ -5,20 +5,33 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.concurrent.ThreadLocalRandom;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.dtos.CustomerServiceRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.EstimatedState;
+import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
+import id.ac.ui.cs.advprog.perbaikiinaja.state.RejectedState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.model.Item;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.payment.PaymentMethod;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.coupon.CouponService;
+import id.ac.ui.cs.advprog.perbaikiinaja.service.payment.PaymentMethodService;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.CouponBuilder;
+
+import java.sql.Date;
 
 /**
  * Implementation of the ServiceRequestService interface.
@@ -29,15 +42,21 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
     private final ServiceRequestRepository serviceRequestRepository;
     private final UserRepository userRepository;
+    private final CouponService couponService;
+    private final PaymentMethodService paymentMethodService;
     private final WalletService walletService;
 
     @Autowired
     public ServiceRequestServiceImpl(
             ServiceRequestRepository serviceRequestRepository,
             UserRepository userRepository,
+            CouponService couponService,
+            PaymentMethodService paymentMethodService,
             WalletService walletService) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.userRepository = userRepository;
+        this.couponService = couponService;
+        this.paymentMethodService = paymentMethodService;
         this.walletService = walletService;
     }
 
@@ -181,6 +200,122 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         request.createReport(report);
 
         return serviceRequestRepository.save(request);
+    }
+
+
+    private Coupon getCouponByCode(String couponCode){
+        if (couponCode != null && !couponCode.isEmpty()) {
+            return couponService.getCouponByCode(couponCode)
+                .orElse(null); 
+        }
+        return null;
+    }
+
+    private PaymentMethod getPaymentMethodById(UUID paymentMethodId) {
+        if (paymentMethodId != null) {
+            PaymentMethod paymentMethod = paymentMethodService.findById(paymentMethodId)
+                    .orElseThrow(() -> new IllegalArgumentException("Payment method not found with ID: " + paymentMethodId));
+            return paymentMethod;
+        } else {
+            throw new IllegalArgumentException("Payment method ID is required");
+        }
+    }
+
+    @Override
+    public ServiceRequest createFromDto(CustomerServiceRequestDto dto, User user) {
+        ServiceRequest request = new ServiceRequest();
+        Item item = Item.builder()
+                .name(dto.getName())
+                .condition(dto.getCondition())
+                .issueDescription(dto.getIssueDescription())
+                .build();
+        request.setItem(item);
+        request.setServiceDate(dto.getServiceDate());
+        request.setProblemDescription(dto.getIssueDescription());
+        request.setCustomer((Customer) user);
+
+        Technician randomTechnician = getRandomTechnician();
+        request.setTechnician(randomTechnician);
+
+        Coupon couponUsed = getCouponByCode(dto.getCouponCode());
+        request.setCoupon(couponUsed);
+
+        PaymentMethod paymentMethod = getPaymentMethodById(dto.getPaymentMethodId());
+        request.setPaymentMethod(paymentMethod);
+
+        return serviceRequestRepository.save(request);
+    }
+
+    private Technician getRandomTechnician() {
+        Iterable<User> users = userRepository.findAll();
+        List<Technician> allTechnicians = new java.util.ArrayList<>();
+        for (User u : users) {
+            if (u instanceof Technician) {
+                allTechnicians.add((Technician) u);
+            }
+        }
+        if (allTechnicians.isEmpty()) {
+            throw new IllegalStateException("No technician available to assign to this service request");
+        }
+        int randomIdx = ThreadLocalRandom.current().nextInt(allTechnicians.size());
+        return allTechnicians.get(randomIdx);
+    }
+
+    @Override
+    public ServiceRequest updateFromDto(UUID requestId, CustomerServiceRequestDto dto, User user) {
+        ServiceRequest existing = getServiceRequest(requestId);
+
+        checkCanUpdate(existing, user);
+
+        Item item = Item.builder()
+                .name(dto.getName())
+                .condition(dto.getCondition())
+                .issueDescription(dto.getIssueDescription())
+                .build();
+        existing.setItem(item);
+        existing.setServiceDate(dto.getServiceDate());
+        existing.setProblemDescription(dto.getIssueDescription());
+        
+        Coupon couponUsed = getCouponByCode(dto.getCouponCode());
+        existing.setCoupon(couponUsed);
+        
+        PaymentMethod paymentMethod = getPaymentMethodById(dto.getPaymentMethodId());
+        existing.setPaymentMethod(paymentMethod);
+
+        // Set state to Pending after update
+        existing.setState(new PendingState());
+
+        return serviceRequestRepository.save(existing);
+    }
+
+    @Override
+    public void delete(UUID requestId, User user) {
+        ServiceRequest existing = getServiceRequest(requestId);
+        checkCanDelete(existing, user);
+
+        serviceRequestRepository.deleteById(requestId);
+    }
+
+    private void checkCanUpdate(ServiceRequest existing, User user) {
+        checkCustomerOwnership(existing, user);
+        checkPendingOrRejectedState(existing);
+    }
+
+    private void checkCanDelete(ServiceRequest existing, User user) {
+        checkCustomerOwnership(existing, user);
+        checkPendingOrRejectedState(existing);
+    }
+
+    private void checkCustomerOwnership(ServiceRequest request, User user) {
+        if (!(user instanceof Customer) || !request.getCustomer().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("Only the owning customer can update this service request");
+        }
+    }
+
+    private void checkPendingOrRejectedState(ServiceRequest request) {
+        if ( !(request.getState() instanceof PendingState) && !(request.getState() instanceof RejectedState)) {
+            throw new IllegalStateException("Only permitted in Pending or Rejected state");
+        }
     }
 
     /**
