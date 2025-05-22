@@ -7,10 +7,13 @@ import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.payment.PaymentMethod;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.ServiceRequestState;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
 
 /**
  * Represents a service request in the repair system.
@@ -53,6 +56,13 @@ public class ServiceRequest {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "report_id")
     private Report report;
+
+    
+    @ManyToOne
+    @JoinColumn(name = "coupon_id")
+    @Getter
+    @Setter
+    private Coupon coupon;
 
     @Transient
     private ServiceRequestState state;
