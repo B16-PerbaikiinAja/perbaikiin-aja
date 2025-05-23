@@ -152,6 +152,27 @@ jobs:
                 - PORT=8080
           COMPOSE_EOF
 
+          cat > ~/perbaikiinaja/prometheus/prometheus.yml << 'COMPOSE_EOF'
+            scrape_configs:
+            - job_name: 'MyAppMetrics'
+              metrics_path: '/actuator/prometheus'
+              scrape_interval: 3s
+              static_configs:
+                - targets: ['perbaikiinaja-backend:8080']
+                  labels:
+                    application: 'My Spring Boot Application'
+          COMPOSE_EOF
+
+          cat > ~/perbaikiinaja/grafana/provisioning/datasources/datasources.yml << 'COMPOSE_EOF'
+            apiVersion: 1
+            datasources:
+              - name: Prometheus
+                type: prometheus
+                access: proxy
+                url: http://prometheus:9090
+                isDefault: true
+          COMPOSE_EOF
+
             # Export environment variables for envsubst
             export PG_HOST="${PG_HOST}"
             export PG_USER="${PG_USER}"
