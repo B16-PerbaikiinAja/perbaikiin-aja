@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,20 +24,27 @@ class ReviewRepositoryTest {
     @Test
     void whenFindByTechnicianId_thenReturnReviews() {
         // Given
-        Long technicianId = 1L;
+        UUID technicianId = UUID.randomUUID();
+        UUID userId1 = UUID.randomUUID();
+        UUID userId2 = UUID.randomUUID();
+        UUID userId3 = UUID.randomUUID();
+        UUID reportId1 = UUID.randomUUID();
+        UUID reportId2 = UUID.randomUUID();
+        UUID reportId3 = UUID.randomUUID();
+
         Review review1 = Review.builder()
-                .userId(1L)
+                .userId(userId1)
                 .technicianId(technicianId)
-                .orderId(1L)
+                .reportId(reportId1)
                 .comment("Good service")
                 .rating(4)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         Review review2 = Review.builder()
-                .userId(2L)
+                .userId(userId2)
                 .technicianId(technicianId)
-                .orderId(2L)
+                .reportId(reportId2)
                 .comment("Excellent work")
                 .rating(5)
                 .createdAt(LocalDateTime.now())
@@ -44,9 +52,9 @@ class ReviewRepositoryTest {
 
         // Review for different technician
         Review review3 = Review.builder()
-                .userId(3L)
-                .technicianId(2L)
-                .orderId(3L)
+                .userId(userId3)
+                .technicianId(UUID.randomUUID())
+                .reportId(reportId3)
                 .comment("Average")
                 .rating(3)
                 .createdAt(LocalDateTime.now())
@@ -66,14 +74,16 @@ class ReviewRepositoryTest {
     }
 
     @Test
-    void whenExistsByOrderIdAndUserId_thenReturnBoolean() {
+    void whenExistsByReportIdAndUserId_thenReturnBoolean() {
         // Given
-        Long orderId = 1L;
-        Long userId = 1L;
+        UUID reportId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID technicianId = UUID.randomUUID();
+
         Review review = Review.builder()
                 .userId(userId)
-                .technicianId(2L)
-                .orderId(orderId)
+                .technicianId(technicianId)
+                .reportId(reportId)
                 .comment("Good service")
                 .rating(4)
                 .createdAt(LocalDateTime.now())
@@ -83,39 +93,46 @@ class ReviewRepositoryTest {
         entityManager.flush();
 
         // When & Then
-        assertTrue(reviewRepository.existsByOrderIdAndUserId(orderId, userId));
-        assertFalse(reviewRepository.existsByOrderIdAndUserId(orderId, 999L));
-        assertFalse(reviewRepository.existsByOrderIdAndUserId(999L, userId));
+        assertTrue(reviewRepository.existsByReportIdAndUserId(reportId, userId));
+        assertFalse(reviewRepository.existsByReportIdAndUserId(reportId, UUID.randomUUID()));
+        assertFalse(reviewRepository.existsByReportIdAndUserId(UUID.randomUUID(), userId));
     }
 
     @Test
-    void whenFindByOrderId_thenReturnReviews() {
+    void whenFindByReportId_thenReturnReviews() {
         // Given
-        Long orderId = 1L;
+        UUID reportId = UUID.randomUUID();
+        UUID userId1 = UUID.randomUUID();
+        UUID userId2 = UUID.randomUUID();
+        UUID userId3 = UUID.randomUUID();
+        UUID technicianId1 = UUID.randomUUID();
+        UUID technicianId2 = UUID.randomUUID();
+        UUID technicianId3 = UUID.randomUUID();
+
         Review review1 = Review.builder()
-                .userId(1L)
-                .technicianId(2L)
-                .orderId(orderId)
+                .userId(userId1)
+                .technicianId(technicianId1)
+                .reportId(reportId)
                 .comment("First review")
                 .rating(4)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         Review review2 = Review.builder()
-                .userId(2L)
-                .technicianId(3L)
-                .orderId(orderId)
+                .userId(userId2)
+                .technicianId(technicianId2)
+                .reportId(reportId)
                 .comment("Second review")
                 .rating(5)
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        // Review for different order
+        // Review for different report
         Review review3 = Review.builder()
-                .userId(3L)
-                .technicianId(4L)
-                .orderId(2L)
-                .comment("Different order")
+                .userId(userId3)
+                .technicianId(technicianId3)
+                .reportId(UUID.randomUUID())
+                .comment("Different report")
                 .rating(3)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -126,21 +143,28 @@ class ReviewRepositoryTest {
         entityManager.flush();
 
         // When
-        List<Review> foundReviews = reviewRepository.findByOrderId(orderId);
+        List<Review> foundReviews = reviewRepository.findByReportId(reportId);
 
         // Then
         assertEquals(2, foundReviews.size());
-        assertTrue(foundReviews.stream().allMatch(r -> r.getOrderId().equals(orderId)));
+        assertTrue(foundReviews.stream().allMatch(r -> r.getReportId().equals(reportId)));
     }
 
     @Test
     void whenFindByUserId_thenReturnReviews() {
         // Given
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
+        UUID technicianId1 = UUID.randomUUID();
+        UUID technicianId2 = UUID.randomUUID();
+        UUID technicianId3 = UUID.randomUUID();
+        UUID reportId1 = UUID.randomUUID();
+        UUID reportId2 = UUID.randomUUID();
+        UUID reportId3 = UUID.randomUUID();
+
         Review review1 = Review.builder()
                 .userId(userId)
-                .technicianId(2L)
-                .orderId(1L)
+                .technicianId(technicianId1)
+                .reportId(reportId1)
                 .comment("First review")
                 .rating(4)
                 .createdAt(LocalDateTime.now())
@@ -148,8 +172,8 @@ class ReviewRepositoryTest {
 
         Review review2 = Review.builder()
                 .userId(userId)
-                .technicianId(3L)
-                .orderId(2L)
+                .technicianId(technicianId2)
+                .reportId(reportId2)
                 .comment("Second review")
                 .rating(5)
                 .createdAt(LocalDateTime.now())
@@ -157,9 +181,9 @@ class ReviewRepositoryTest {
 
         // Review by different user
         Review review3 = Review.builder()
-                .userId(2L)
-                .technicianId(4L)
-                .orderId(3L)
+                .userId(UUID.randomUUID())
+                .technicianId(technicianId3)
+                .reportId(reportId3)
                 .comment("Different user")
                 .rating(3)
                 .createdAt(LocalDateTime.now())
