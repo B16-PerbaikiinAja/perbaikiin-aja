@@ -116,8 +116,10 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           ssh $EC2_USERNAME@$EC2_HOST << EOF
-            rm -rf ~/perbaikiinaja
+            
             mkdir -p ~/perbaikiinaja
+            mkdir -p ~/perbaikiinaja/prometheus
+            mkdir -p ~/perbaikiinaja/grafana/provisioning/datasources
 
             # Create docker-compose.yml with environment variable substitution
             cat > ~/perbaikiinaja/docker-compose.yml << 'COMPOSE_EOF'
