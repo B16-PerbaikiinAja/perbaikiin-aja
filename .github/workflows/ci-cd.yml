@@ -203,7 +203,8 @@ jobs:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           # Copy Kubernetes manifests to production server
-          scp -r k8s/ $PROD_EC2_USERNAME@$PROD_EC2_HOST:~/perbaikiinaja-k8s/
+          ssh $PROD_EC2_USERNAME@$PROD_EC2_HOST 'mkdir -p ~/perbaikiinaja-k8s'
+          scp -r k8s/* $PROD_EC2_USERNAME@$PROD_EC2_HOST:~/perbaikiinaja-k8s/
           
           ssh $PROD_EC2_USERNAME@$PROD_EC2_HOST << 'EOF'
             cd ~/perbaikiinaja-k8s
