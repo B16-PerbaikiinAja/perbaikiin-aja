@@ -122,7 +122,6 @@ jobs:
             cat > ~/perbaikiinaja/docker-compose.yml << 'COMPOSE_EOF'
           version: '3'
           services:
-            services:
             prometheus:
               image: prom/prometheus:v2.44.0
               container_name: prometheus
