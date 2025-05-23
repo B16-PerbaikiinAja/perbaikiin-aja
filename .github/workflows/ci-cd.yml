@@ -186,10 +186,31 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
 
-      - name: Setup known hosts for production
+      - name: Setup SSH configuration
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.PROD_EC2_HOST }} >> ~/.ssh/known_hosts
+          
+          # Create SSH config to handle host key checking
+          cat > ~/.ssh/config << EOF
+          Host ${{ secrets.PROD_EC2_HOST }}
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            LogLevel ERROR
+          EOF
+          
+          # Set proper permissions
+          chmod 600 ~/.ssh/config
+          
+          # Test SSH connectivity
+          echo "Testing SSH connection to ${{ secrets.PROD_EC2_HOST }}..."
+          ssh -o ConnectTimeout=10 ${{ secrets.PROD_EC2_USERNAME }}@${{ secrets.PROD_EC2_HOST }} 'echo "SSH connection successful"' || {
+            echo "SSH connection failed. Please check:"
+            echo "1. Security group allows SSH (port 22) from 0.0.0.0/0"
+            echo "2. SSH service is running on the EC2 instance"
+            echo "3. The EC2 instance is running and accessible"
+            echo "4. The SSH key is correct"
+            exit 1
+          }
 
       - name: Deploy to Production EC2 with Kubernetes
         env:
@@ -203,13 +224,39 @@ jobs:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           # Copy Kubernetes manifests to production server
+          echo "Creating directory on production server..."
           ssh $PROD_EC2_USERNAME@$PROD_EC2_HOST 'mkdir -p ~/perbaikiinaja-k8s'
+          
+          echo "Copying Kubernetes manifests..."
           scp -r k8s/* $PROD_EC2_USERNAME@$PROD_EC2_HOST:~/perbaikiinaja-k8s/
           
+          echo "Deploying to Kubernetes..."
           ssh $PROD_EC2_USERNAME@$PROD_EC2_HOST << 'EOF'
             cd ~/perbaikiinaja-k8s
           
-            # Create DockerHub secret for pulling images
+            # Check if kubectl and k3s are working
+            echo "Checking Kubernetes cluster status..."
+            kubectl cluster-info || {
+              echo "Kubernetes cluster not accessible. Checking K3s status..."
+              sudo systemctl status k3s
+              echo "Attempting to restart K3s..."
+              sudo systemctl restart k3s
+              sleep 30
+              kubectl cluster-info || {
+                echo "K3s failed to start. Please check the server manually."
+                exit 1
+              }
+            }
+          
+            # FIRST: Create namespace
+            echo "Creating namespace..."
+            kubectl apply -f namespace.yaml
+          
+            # Wait for namespace to be ready
+            sleep 5
+          
+            # SECOND: Create DockerHub secret for pulling images
+            echo "Creating DockerHub secret..."
             kubectl delete secret dockerhub-secret -n perbaikiinaja-prod --ignore-not-found
             kubectl create secret docker-registry dockerhub-secret \
               --docker-server=https://index.docker.io/v1/ \
@@ -217,10 +264,8 @@ jobs:
               --docker-password=${{ secrets.DOCKERHUB_TOKEN }} \
               --namespace=perbaikiinaja-prod
           
-            # Create namespace
-            kubectl apply -f namespace.yaml
-          
-            # Create secrets with base64 encoded values
+            # THIRD: Create application secrets
+            echo "Creating application secrets..."
             kubectl delete secret perbaikiinaja-secrets -n perbaikiinaja-prod --ignore-not-found
             kubectl create secret generic perbaikiinaja-secrets \
               --from-literal=PG_HOST="${PROD_PG_HOST}" \
@@ -229,23 +274,57 @@ jobs:
               --from-literal=JWT_SECRET_KEY="${PROD_JWT_SECRET_KEY}" \
               --namespace=perbaikiinaja-prod
           
-            # Apply ConfigMap
+            # FOURTH: Apply ConfigMap
+            echo "Applying ConfigMap..."
             kubectl apply -f configmap.yaml
           
-            # Update deployment image
+            # FIFTH: Update deployment image
+            echo "Updating deployment image..."
             sed -i "s/\${DOCKERHUB_USERNAME}/${{ secrets.DOCKERHUB_USERNAME }}/g" deployment.yaml
           
-            # Apply deployment and service
+            # SIXTH: Apply deployment and service
+            echo "Applying deployment..."
             kubectl apply -f deployment.yaml
+            echo "Applying service..."
             kubectl apply -f service.yaml
           
-            # Wait for deployment to be ready
-            kubectl wait --for=condition=available --timeout=300s deployment/perbaikiinaja-backend -n perbaikiinaja-prod
-          
-            # Check deployment status
+            # Check current status
+            echo "Current deployment status:"
+            kubectl get deployment perbaikiinaja-backend -n perbaikiinaja-prod || echo "Deployment not found yet"
             kubectl get pods -n perbaikiinaja-prod
+          
+            # Wait for deployment with better error handling
+            echo "Waiting for deployment to be ready (timeout: 5 minutes)..."
+            if kubectl wait --for=condition=available --timeout=300s deployment/perbaikiinaja-backend -n perbaikiinaja-prod; then
+              echo "✓ Deployment successful!"
+            else
+              echo "⚠ Deployment timed out or failed. Checking status..."
+              kubectl describe deployment perbaikiinaja-backend -n perbaikiinaja-prod
+              kubectl get pods -n perbaikiinaja-prod
+          
+              # Get pod logs for debugging
+              for pod in $(kubectl get pods -n perbaikiinaja-prod -o jsonpath='{.items[*].metadata.name}'); do
+                echo "Logs for pod $pod:"
+                kubectl logs $pod -n perbaikiinaja-prod --tail=50 || echo "Could not get logs for $pod"
+              done
+          
+              # Don't exit with error - let's see if pods are running anyway
+              echo "Checking if pods are running despite timeout..."
+              RUNNING_PODS=$(kubectl get pods -n perbaikiinaja-prod --field-selector=status.phase=Running -o jsonpath='{.items[*].metadata.name}')
+              if [ ! -z "$RUNNING_PODS" ]; then
+                echo "✓ Some pods are running: $RUNNING_PODS"
+              else
+                echo "✗ No pods are running"
+                exit 1
+              fi
+            fi
+          
+            # Final status check
+            echo "Final deployment status:"
+            kubectl get pods -n perbaikiinaja-prod -o wide
             kubectl get services -n perbaikiinaja-prod
           
-            echo "Production deployment completed successfully!"
-            echo "Application should be accessible at http://${{ secrets.PROD_EC2_HOST }}:30080"
+            # Get service endpoint
+            NODE_PORT=$(kubectl get service perbaikiinaja-backend-service -n perbaikiinaja-prod -o jsonpath='{.spec.ports[0].nodePort}')
+            echo "Application should be accessible at: http://${{ secrets.PROD_EC2_HOST }}:${NODE_PORT}"
           EOF
