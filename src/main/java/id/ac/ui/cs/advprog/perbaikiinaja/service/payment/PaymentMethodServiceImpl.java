@@ -5,10 +5,12 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Repository;
+import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Repository
 @Transactional
@@ -30,9 +32,11 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
     }
 
     @Override
-    public List<PaymentMethod> findAll() {
-        return entityManager.createQuery("SELECT p FROM PaymentMethod p", PaymentMethod.class)
+    @Async
+    public CompletableFuture<List<PaymentMethod>> findAll() {
+        List<PaymentMethod> result = entityManager.createQuery("SELECT p FROM PaymentMethod p", PaymentMethod.class)
                 .getResultList();
+        return CompletableFuture.completedFuture(result);
     }
 
     @Override

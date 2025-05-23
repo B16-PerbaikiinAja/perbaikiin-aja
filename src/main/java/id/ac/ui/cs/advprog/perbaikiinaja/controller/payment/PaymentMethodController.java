@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/payment-methods")
@@ -57,10 +58,10 @@ public class PaymentMethodController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PaymentMethod>> getAll(Authentication authentication) {
+    public CompletableFuture<ResponseEntity<List<PaymentMethod>>> getAll(Authentication authentication) {
         authorizeAdmin(authentication);
-        List<PaymentMethod> paymentMethods = paymentMethodService.findAll();
-        return ResponseEntity.ok(paymentMethods);
+        return paymentMethodService.findAll()
+                .thenApply(ResponseEntity::ok);
     }
 
     @PutMapping("/{id}")

@@ -74,15 +74,15 @@ public class PaymentMethodServiceImplTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void testFindAll() {
+    void testFindAll() throws Exception {
         TypedQuery<PaymentMethod> query = mock(TypedQuery.class);
         when(entityManager.createQuery("SELECT p FROM PaymentMethod p", PaymentMethod.class)).thenReturn(query);
         when(query.getResultList()).thenReturn(List.of(method));
 
-        CompletableFuture<List<PaymentMethod>> future = service.findAllAsync();
+        CompletableFuture<List<PaymentMethod>> future = service.findAll();
 
         assertNotNull(future);
-        List<PaymentMethod> result = future.get();
+        List<PaymentMethod> all = future.get();
 
         assertEquals(1, all.size());
         assertEquals("Bank Transfer", all.get(0).getName());
