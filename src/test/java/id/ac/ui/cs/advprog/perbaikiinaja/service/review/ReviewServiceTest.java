@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,32 +24,41 @@ public class ReviewServiceTest {
     private ReviewRepository reviewRepository;
     private ReviewValidationStrategy validationStrategy;
     private ReviewService reviewService;
+    private UUID userId;
+    private UUID reportId;
+    private UUID reviewId;
+    private UUID technicianId;
 
     @BeforeEach
     void setUp() {
         reviewRepository = mock(ReviewRepository.class);
         validationStrategy = mock(ReviewValidationStrategy.class);
         reviewService = new ReviewServiceImpl(reviewRepository, validationStrategy);
+
+        userId = UUID.randomUUID();
+        reportId = UUID.randomUUID();
+        reviewId = UUID.randomUUID();
+        technicianId = UUID.randomUUID();
     }
 
     @Test
     void testCreateReview_success() {
         Review review = Review.builder()
-                .userId(1L)
-                .orderId(1L)
+                .userId(userId)
+                .reportId(reportId)
                 .rating(5)
                 .comment("Mantap!")
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        when(reviewRepository.existsByOrderIdAndUserId(1L, 1L)).thenReturn(false);
+        when(reviewRepository.existsByReportIdAndUserId(reportId, userId)).thenReturn(false);
         when(reviewRepository.save(any(Review.class))).thenReturn(review);
 
-        Review result = reviewService.createReview(1L, 1L, review);
+        Review result = reviewService.createReview(userId, reportId, review);
 
         assertNotNull(result);
-        assertEquals(1L, result.getUserId());
-        assertEquals(1L, result.getOrderId());
+        assertEquals(userId, result.getUserId());
+        assertEquals(reportId, result.getReportId());
         assertEquals("Mantap!", result.getComment());
         assertEquals(5, result.getRating());
 
@@ -58,21 +68,21 @@ public class ReviewServiceTest {
 
     @Test
     void testCreateReview_duplicateReview_throwsException() {
-        when(reviewRepository.existsByOrderIdAndUserId(1L, 1L)).thenReturn(true);
+        when(reviewRepository.existsByReportIdAndUserId(reportId, userId)).thenReturn(true);
 
         Review review = Review.builder()
-                .userId(1L)
-                .orderId(1L)
+                .userId(userId)
+                .reportId(reportId)
                 .rating(4)
                 .comment("Sudah pernah review")
                 .createdAt(LocalDateTime.now())
                 .build();
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            reviewService.createReview(1L, 1L, review);
+            reviewService.createReview(userId, reportId, review);
         });
 
-        assertEquals("You have already reviewed this order", exception.getMessage());
+        assertEquals("You have already reviewed this report", exception.getMessage());
         verify(validationStrategy, never()).validate(review);
         verify(reviewRepository, never()).save(any(Review.class));
     }
@@ -80,9 +90,9 @@ public class ReviewServiceTest {
     @Test
     void testUpdateReview_success() {
         Review existingReview = Review.builder()
-                .id(1L)
-                .userId(1L)
-                .orderId(1L)
+                .id(reviewId)
+                .userId(userId)
+                .reportId(reportId)
                 .comment("Old Comment")
                 .rating(3)
                 .createdAt(LocalDateTime.now())
@@ -93,10 +103,10 @@ public class ReviewServiceTest {
                 .rating(5)
                 .build();
 
-        when(reviewRepository.findById(1L)).thenReturn(Optional.of(existingReview));
+        when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(existingReview));
         when(reviewRepository.save(existingReview)).thenReturn(existingReview);
 
-        Review result = reviewService.updateReview(1L, 1L, updatedReview);
+        Review result = reviewService.updateReview(userId, reviewId, updatedReview);
 
         assertEquals("Updated Comment", result.getComment());
         assertEquals(5, result.getRating());
@@ -107,13 +117,13 @@ public class ReviewServiceTest {
     @Test
     void testDeleteReview_success() {
         Review review = Review.builder()
-                .id(1L)
-                .userId(1L)
+                .id(reviewId)
+                .userId(userId)
                 .build();
 
-        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+        when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
-        reviewService.deleteReview(1L, 1L);
+        reviewService.deleteReview(reviewId, userId);
 
         verify(reviewRepository).delete(review);
     }
@@ -124,31 +134,31 @@ public class ReviewServiceTest {
         Review review2 = Review.builder().rating(4).build();
         List<Review> reviews = List.of(review1, review2);
 
-        when(reviewRepository.findByTechnicianId(1L)).thenReturn(reviews);
+        when(reviewRepository.findByTechnicianId(technicianId)).thenReturn(reviews);
 
-        double average = reviewService.calculateAverageRating(1L);
+        double average = reviewService.calculateAverageRating(technicianId);
 
         assertEquals(4.5, average);
     }
 
     @Test
     void testGetAllReviews_success() {
-        Review review = Review.builder().id(1L).build();
+        Review review = Review.builder().id(reviewId).build();
         when(reviewRepository.findAll()).thenReturn(List.of(review));
 
         List<Review> result = reviewService.getAllReviews();
 
         assertEquals(1, result.size());
-        assertEquals(1L, result.get(0).getId());
+        assertEquals(reviewId, result.get(0).getId());
     }
 
     @Test
     void testDeleteReviewAsAdmin_success() {
-        Review review = Review.builder().id(1L).build();
+        Review review = Review.builder().id(reviewId).build();
 
-        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+        when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
-        reviewService.deleteReviewAsAdmin(1L);
+        reviewService.deleteReviewAsAdmin(reviewId);
 
         verify(reviewRepository).delete(review);
     }
