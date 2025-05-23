@@ -1,5 +1,8 @@
 HELP.md
 .gradle
+.env
+.direnv
+.envrc
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -35,5 +38,5 @@ out/
 
 ### VS Code ###
 .vscode/
+
 .ssh/
-.env
