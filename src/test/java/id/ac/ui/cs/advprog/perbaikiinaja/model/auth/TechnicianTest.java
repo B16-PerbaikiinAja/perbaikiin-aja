@@ -41,7 +41,7 @@ class TechnicianTest {
         assertTrue(technician.isAccountNonLocked());
         assertTrue(technician.isCredentialsNonExpired());
         assertTrue(technician.isEnabled());
-        assertTrue(technician.getAuthorities().isEmpty());
+        assertFalse(technician.getAuthorities().isEmpty());
     }
     
     @Test

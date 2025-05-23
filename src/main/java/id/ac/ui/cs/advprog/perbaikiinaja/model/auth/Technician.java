@@ -30,4 +30,19 @@ public class Technician extends User{
     public static TechnicianBuilder builder() {
         return new TechnicianBuilder();
     }
+
+    public int getCompletedJobCount() {
+        return completedJobs;
+    }
+
+    public void incrementCompletedJobCount() {
+        this.completedJobs++;
+    }
+
+    public void addEarnings(double amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("Earnings amount cannot be negative");
+        }
+        this.totalEarnings += amount;
+    }
 }

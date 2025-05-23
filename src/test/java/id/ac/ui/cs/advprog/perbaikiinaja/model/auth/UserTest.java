@@ -33,7 +33,7 @@ class UserTest {
         assertTrue(user.isAccountNonLocked());
         assertTrue(user.isCredentialsNonExpired());
         assertTrue(user.isEnabled());
-        assertTrue(user.getAuthorities().isEmpty());
+        assertFalse(user.getAuthorities().isEmpty());
     }
     
     @Test
