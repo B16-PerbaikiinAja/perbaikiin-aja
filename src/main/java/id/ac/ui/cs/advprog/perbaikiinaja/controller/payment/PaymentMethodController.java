@@ -34,23 +34,22 @@ public class PaymentMethodController {
         Object principal = authentication.getPrincipal();
 
         // Check if the principal object is an instance of your Admin class
-        if (!(principal instanceof Admin)) { // Use your actual Admin class here
+        if (!(principal instanceof Admin)) {
             throw new AccessDeniedException("Access is denied. Admin role required. Principal type: " + principal.getClass().getName());
         }
         // If it's an instance of Admin, we assume they are authorized for admin actions
     }
 
     @PostMapping
-    // REMOVED @PreAuthorize - we are doing manual checks now
     public ResponseEntity<PaymentMethod> create(@RequestBody PaymentMethod paymentMethod, Authentication authentication) {
-        authorizeAdmin(authentication); // Manual authorization check
+        authorizeAdmin(authentication);
         PaymentMethod createdPaymentMethod = paymentMethodService.save(paymentMethod);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPaymentMethod);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<PaymentMethod> getById(@PathVariable UUID id, Authentication authentication) {
-        authorizeAdmin(authentication); // Manual authorization check
+        authorizeAdmin(authentication);
         Optional<PaymentMethod> paymentMethodOptional = paymentMethodService.findById(id);
         return paymentMethodOptional
                 .map(ResponseEntity::ok)
@@ -59,14 +58,14 @@ public class PaymentMethodController {
 
     @GetMapping
     public ResponseEntity<List<PaymentMethod>> getAll(Authentication authentication) {
-        authorizeAdmin(authentication); // Manual authorization check
+        authorizeAdmin(authentication);
         List<PaymentMethod> paymentMethods = paymentMethodService.findAll();
         return ResponseEntity.ok(paymentMethods);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody PaymentMethod paymentMethod, Authentication authentication) {
-        authorizeAdmin(authentication); // Manual authorization check
+        authorizeAdmin(authentication);
 
         if (paymentMethod.getId() == null || !id.equals(paymentMethod.getId())) {
             return ResponseEntity.badRequest().body("ID in path (" + id + ") and body (" + paymentMethod.getId() + ") must match.");
@@ -82,7 +81,7 @@ public class PaymentMethodController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id, Authentication authentication) {
-        authorizeAdmin(authentication); // Manual authorization check
+        authorizeAdmin(authentication);
         try {
             paymentMethodService.deleteById(id);
             return ResponseEntity.noContent().build();

@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.lang.reflect.Field;
 
 
@@ -78,7 +79,10 @@ public class PaymentMethodServiceImplTest {
         when(entityManager.createQuery("SELECT p FROM PaymentMethod p", PaymentMethod.class)).thenReturn(query);
         when(query.getResultList()).thenReturn(List.of(method));
 
-        List<PaymentMethod> all = service.findAll();
+        CompletableFuture<List<PaymentMethod>> future = service.findAllAsync();
+
+        assertNotNull(future);
+        List<PaymentMethod> result = future.get();
 
         assertEquals(1, all.size());
         assertEquals("Bank Transfer", all.get(0).getName());
