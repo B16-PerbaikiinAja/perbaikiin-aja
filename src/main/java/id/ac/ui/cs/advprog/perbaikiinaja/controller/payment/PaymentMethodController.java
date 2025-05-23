@@ -58,10 +58,10 @@ public class PaymentMethodController {
     }
 
     @GetMapping
-    public CompletableFuture<ResponseEntity<List<PaymentMethod>>> getAll(Authentication authentication) {
+    public ResponseEntity<List<PaymentMethod>> getAll(Authentication authentication) {
         authorizeAdmin(authentication);
-        return paymentMethodService.findAll()
-                .thenApply(ResponseEntity::ok);
+        List<PaymentMethod> paymentMethods = paymentMethodService.findAll().join();
+        return ResponseEntity.ok(paymentMethods);
     }
 
     @PutMapping("/{id}")

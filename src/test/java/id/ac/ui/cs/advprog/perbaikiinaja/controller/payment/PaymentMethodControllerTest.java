@@ -16,6 +16,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.CompletableFuture;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -136,10 +137,10 @@ public class PaymentMethodControllerTest {
 
     // --- Get All Payment Methods ---
     @Test
-    void getAllPaymentMethods_asAdmin_shouldReturnOkWithList() {
+    void getAllPaymentMethods_asAdmin_shouldReturnOkWithList() throws Exception {
         setupAdminAuth();
         List<PaymentMethod> methods = Collections.singletonList(sampleMethod);
-        lenient().when(paymentMethodService.findAll()).thenReturn(methods);
+        lenient().when(paymentMethodService.findAll()).thenReturn(CompletableFuture.completedFuture(methods));
 
         ResponseEntity<List<PaymentMethod>> response = controller.getAll(authentication);
 
