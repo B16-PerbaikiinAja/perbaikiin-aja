@@ -9,6 +9,7 @@ import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/service-requests")
@@ -35,7 +37,8 @@ public class ServiceRequestController {
      */
     @GetMapping("/technician/{technicianId}")
     @PreAuthorize("hasRole('TECHNICIAN') and authentication.principal.id == #technicianId")
-    public ResponseEntity<?> getTechnicianServiceRequests(
+    @Async
+    public CompletableFuture<ResponseEntity<?>> getTechnicianServiceRequests(
             @PathVariable UUID technicianId,
             @RequestParam(required = false) ServiceRequestStateType status) {
 
@@ -44,24 +47,26 @@ public class ServiceRequestController {
             Map<String, Object> response = new HashMap<>();
             response.put("status", 400);
             response.put("message", "INVALID_STATUS_PARAMETER");
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            return CompletableFuture.completedFuture(new ResponseEntity<>(response, HttpStatus.BAD_REQUEST));
         }
 
-        // Get service requests (filtered by status if provided)
-        List<ServiceRequest> serviceRequests;
-        if (status != null) {
-            serviceRequests = serviceRequestService.findByTechnicianAndStatus(technicianId, status);
-        } else {
-            serviceRequests = serviceRequestService.findByTechnician(technicianId);
-        }
+        return CompletableFuture.supplyAsync(() -> {
+            // Get service requests (filtered by status if provided)
+            List<ServiceRequest> serviceRequests;
+            if (status != null) {
+                serviceRequests = serviceRequestService.findByTechnicianAndStatus(technicianId, status);
+            } else {
+                serviceRequests = serviceRequestService.findByTechnician(technicianId);
+            }
 
-        // Build response
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", 200);
-        response.put("message", "SUCCESS");
-        response.put("serviceRequests", serviceRequests);
+            // Build response
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", 200);
+            response.put("message", "SUCCESS");
+            response.put("serviceRequests", serviceRequests);
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        });
     }
 
     /**
@@ -69,15 +74,18 @@ public class ServiceRequestController {
      */
     @GetMapping("/customer/{customerId}")
     @PreAuthorize("hasRole('CUSTOMER') and authentication.principal.id == #customerId")
-    public ResponseEntity<?> getCustomerServiceRequests(@PathVariable UUID customerId) {
-        List<ServiceRequest> serviceRequests = serviceRequestService.findByCustomer(customerId);
+    @Async
+    public CompletableFuture<ResponseEntity<?>> getCustomerServiceRequests(@PathVariable UUID customerId) {
+        return CompletableFuture.supplyAsync(() -> {
+            List<ServiceRequest> serviceRequests = serviceRequestService.findByCustomer(customerId);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", 200);
-        response.put("message", "SUCCESS");
-        response.put("serviceRequests", serviceRequests);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", 200);
+            response.put("message", "SUCCESS");
+            response.put("serviceRequests", serviceRequests);
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        });
     }
 
     /**
@@ -85,10 +93,12 @@ public class ServiceRequestController {
      */
     @PutMapping("/{serviceRequestId}/technician/status")
     @PreAuthorize("hasRole('TECHNICIAN')")
-    public ResponseEntity<?> updateServiceRequestStatus(
+    @Async
+    public CompletableFuture<ResponseEntity<?>> updateServiceRequestStatus(
             @PathVariable UUID serviceRequestId,
             @RequestBody Map<String, Object> requestBody,
             Authentication authentication) {
+        return CompletableFuture.supplyAsync(() -> {
 
         User currentUser = (User) authentication.getPrincipal();
         UUID technicianId = currentUser.getId();
@@ -186,6 +196,7 @@ public class ServiceRequestController {
             response.put("message", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
+        });
     }
 
     /**
@@ -193,51 +204,68 @@ public class ServiceRequestController {
      */
     @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getAllServiceRequests() {
-        List<ServiceRequest> serviceRequests = new ArrayList<>();
-        // You would need to implement a method to get all service requests
-        // serviceRequests = serviceRequestService.findAll();
+    @Async
+    public CompletableFuture<ResponseEntity<?>> getAllServiceRequests() {
+        return CompletableFuture.supplyAsync(() -> {
+            List<ServiceRequest> serviceRequests = new ArrayList<>();
+            // You would need to implement a method to get all service requests
+            // serviceRequests = serviceRequestService.findAll();
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", 200);
-        response.put("message", "SUCCESS");
-        response.put("serviceRequests", serviceRequests);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", 200);
+            response.put("message", "SUCCESS");
+            response.put("serviceRequests", serviceRequests);
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        });
     }
 
     @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping("/customer")
-    public ResponseEntity<?> getServiceRequests(@AuthenticationPrincipal User user) {
-        var requests = serviceRequestService.findByCustomer(user.getId());
-        return ResponseEntity.ok(requests);
+    @Async
+    public CompletableFuture<ResponseEntity<?>> getServiceRequests(@AuthenticationPrincipal User user) {
+        return CompletableFuture.supplyAsync(() -> {
+            var requests = serviceRequestService.findByCustomer(user.getId());
+            return ResponseEntity.ok(requests);
+        });
     }
     @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping("/customer")
-    public ResponseEntity<ServiceRequest> createServiceRequest(
+    @Async
+    public CompletableFuture<ResponseEntity<ServiceRequest>> createServiceRequest(
             @RequestBody CustomerServiceRequestDto dto,
             @AuthenticationPrincipal User user
     ) {
-        ServiceRequest created = serviceRequestService.createFromDto(dto, user);
-        return ResponseEntity.ok(created);
+        return CompletableFuture.supplyAsync(() -> {
+            ServiceRequest created = serviceRequestService.createFromDto(dto, user);
+            return ResponseEntity.ok(created);
+        });
     }
+    
     @PreAuthorize("hasRole('CUSTOMER')")
-    @PutMapping("/customer")
-    public ResponseEntity<ServiceRequest> updateServiceRequest(
+    @PutMapping("/customer/{id}")
+    @Async
+    public CompletableFuture<ResponseEntity<ServiceRequest>> updateServiceRequest(
             @PathVariable UUID id,
             @RequestBody CustomerServiceRequestDto dto,
             @AuthenticationPrincipal User user
     ) {
-        ServiceRequest updated = serviceRequestService.updateFromDto(id, dto, user);
-        return ResponseEntity.ok(updated);
+        return CompletableFuture.supplyAsync(() -> {
+            ServiceRequest updated = serviceRequestService.updateFromDto(id, dto, user);
+            return ResponseEntity.ok(updated);
+        });
     }
+    
     @PreAuthorize("hasRole('CUSTOMER')")
-    @DeleteMapping("/customer")
-    public ResponseEntity<Void> deleteServiceRequest(
+    @DeleteMapping("/customer/{id}")
+    @Async
+    public CompletableFuture<ResponseEntity<Void>> deleteServiceRequest(
             @PathVariable UUID id,
             @AuthenticationPrincipal User user
     ) {
-        serviceRequestService.delete(id, user);
-        return ResponseEntity.noContent().build();
+        return CompletableFuture.supplyAsync(() -> {
+            serviceRequestService.delete(id, user);
+            return ResponseEntity.noContent().build();
+        });
     }
 }
