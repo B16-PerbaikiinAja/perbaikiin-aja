@@ -173,6 +173,8 @@ jobs:
                 isDefault: true
           COMPOSE_EOF
 
+          chmod -x ~/perbaikiinaja/grafana/provisioning/datasources/datasources.yml
+
             # Export environment variables for envsubst
             export PG_HOST="${PG_HOST}"
             export PG_USER="${PG_USER}"
