@@ -211,4 +211,28 @@ jobs:
               docker logs perbaikiinaja-backend
               exit 1
             fi
+
+            # Check monitoring services
+            if docker ps --filter "name=prometheus" --format "{{.Names}}" | grep -q prometheus; then
+              echo "Prometheus is running successfully"
+              echo "Prometheus UI is accessible at http://${EC2_HOST}:9090"
+            else
+              echo "Error: Prometheus container failed to start"
+              docker logs prometheus
+              exit 1
+            fi
+
+            if docker ps --filter "name=grafana" --format "{{.Names}}" | grep -q grafana; then
+              echo "Grafana is running successfully"
+              echo "Grafana dashboard is accessible at http://${EC2_HOST}:3000"
+              echo "Default credentials: admin/admin"
+            else
+              echo "❌ Error: Grafana container failed to start"
+              docker logs grafana
+              exit 1
+            fi
+
+            echo "Monitoring setup completed successfully! 🚀"
+            echo "Prometheus URL: http://${EC2_HOST}:9090"
+            echo "Grafana URL: http://${EC2_HOST}:3000 (login with admin/admin)"
           EOF
