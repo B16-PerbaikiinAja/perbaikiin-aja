@@ -131,16 +131,28 @@ jobs:
               ports:
                 - "9090:9090"
               volumes:
-                - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+                - ./prometheus:/etc/prometheus
+              networks:
+                - monitoring-network
+              restart: unless-stopped
               
             grafana:
               image: grafana/grafana:9.5.2
               container_name: grafana
               ports:
                 - "3000:3000"
-              restart: unless-stopped
               volumes:
-                - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+                - ./grafana/provisioning:/etc/grafana/provisioning
+              environment:
+                - GF_SECURITY_ADMIN_USER=admin
+                - GF_SECURITY_ADMIN_PASSWORD=admin
+                - GF_USERS_ALLOW_SIGN_UP=false
+              networks:
+                - monitoring-network
+              restart: unless-stopped
+              depends_on:
+                - prometheus
+
             perbaikiinaja-backend:
               image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging
               container_name: perbaikiinaja-backend
@@ -153,17 +165,31 @@ jobs:
                 - PG_PASS=${PG_PASS}
                 - JWT_SECRET_KEY=${JWT_SECRET_KEY}
                 - PORT=8080
+              networks:
+                - monitoring-network
+              
+          networks:
+            monitoring-network:
+              driver: bridge
           COMPOSE_EOF
 
           cat > ~/perbaikiinaja/prometheus/prometheus.yml << 'PROM_EOF'
+            global:
+              scrape_interval: 15s
+              evaluation_interval: 15s
+                        
             scrape_configs:
-            - job_name: 'MyAppMetrics'
-              metrics_path: '/actuator/prometheus'
-              scrape_interval: 3s
-              static_configs:
-                - targets: ['perbaikiinaja-backend:8080']
-                  labels:
-                    application: 'My Spring Boot Application'
+              - job_name: 'prometheus'
+                static_configs:
+                  - targets: ['localhost:9090']
+                    
+              - job_name: 'spring-boot-app'
+                metrics_path: '/actuator/prometheus'
+                scrape_interval: 5s
+                static_configs:
+                  - targets: ['perbaikiinaja-backend:8080']
+                    labels:
+                      application: 'Perbaikiinaja Spring Boot Application'
           PROM_EOF
 
           cat > ~/perbaikiinaja/grafana/provisioning/datasources/datasources.yml << 'GRAFANA_EOF'
@@ -227,12 +253,12 @@ jobs:
               echo "Grafana dashboard is accessible at http://${EC2_HOST}:3000"
               echo "Default credentials: admin/admin"
             else
-              echo "❌ Error: Grafana container failed to start"
+              echo "Error: Grafana container failed to start"
               docker logs grafana
               exit 1
             fi
 
-            echo "Monitoring setup completed successfully! 🚀"
+            echo "Monitoring setup completed successfully!"
             echo "Prometheus URL: http://${EC2_HOST}:9090"
             echo "Grafana URL: http://${EC2_HOST}:3000 (login with admin/admin)"
           EOF
