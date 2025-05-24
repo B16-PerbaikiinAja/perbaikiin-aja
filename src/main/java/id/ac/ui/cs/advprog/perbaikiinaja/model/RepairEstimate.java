@@ -55,6 +55,9 @@ public class RepairEstimate {
     }
 
     public void setCompletionDate(LocalDate completionDate) {
+        if (completionDate != null && completionDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Completion date cannot be in the past");
+        }
         this.completionDate = completionDate;
     }
 
