@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.service;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -257,7 +258,8 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         if (allTechnicians.isEmpty()) {
             throw new IllegalStateException("No technician available to assign to this service request");
         }
-        int randomIdx = ThreadLocalRandom.current().nextInt(allTechnicians.size());
+        SecureRandom secureRandom = new SecureRandom();
+        int randomIdx = secureRandom.nextInt(allTechnicians.size());
         return allTechnicians.get(randomIdx);
     }
 
