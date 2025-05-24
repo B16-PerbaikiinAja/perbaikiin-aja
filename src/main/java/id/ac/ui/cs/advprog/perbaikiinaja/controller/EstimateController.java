@@ -36,6 +36,12 @@ public class EstimateController {
     private static final String messageStr = "message";
     private static final String errorStr = "errorCode";
 
+    private static final String estimatedCostStr = "estimatedCost";
+    private static final String serviceRequestIdStr = "serviceRequestId";
+    private static final String statusStr = "status";
+    private static final String estimatedCompletionTime = "estimatedCompletionTime";
+    private static final String notesStr = "notes";
+
     @Autowired
     public EstimateController(ServiceRequestService serviceRequestService, EstimateService estimateService, WalletService walletService) {
         this.serviceRequestService = serviceRequestService;
@@ -57,7 +63,7 @@ public class EstimateController {
         UUID technicianId = currentUser.getId();
 
         // Validate estimate data
-        Double estimatedCost = ((Number) requestBody.get("estimatedCost")).doubleValue();
+        Double estimatedCost = ((Number) requestBody.get(estimatedCostStr)).doubleValue();
         if (estimatedCost < 0) {
             Map<String, Object> response = new HashMap<>();
             response.put(errorStr, 4000);
@@ -65,7 +71,7 @@ public class EstimateController {
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
-        LocalDate completionDate = LocalDate.parse((String) requestBody.get("estimatedCompletionTime"));
+        LocalDate completionDate = LocalDate.parse((String) requestBody.get(estimatedCompletionTime));
         if (completionDate.isBefore(LocalDate.now())) {
             Map<String, Object> response = new HashMap<>();
             response.put(errorStr, 4001);
@@ -78,8 +84,8 @@ public class EstimateController {
         estimate.setCost(estimatedCost);
         estimate.setCompletionDate(completionDate);
 
-        if (requestBody.containsKey("notes")) {
-            estimate.setNotes((String) requestBody.get("notes"));
+        if (requestBody.containsKey(notesStr)) {
+            estimate.setNotes((String) requestBody.get(notesStr));
         }
 
         try {
@@ -92,11 +98,11 @@ public class EstimateController {
 
             RepairEstimate createdEstimate = updatedRequest.getEstimate();
             estimateResponse.put("id", createdEstimate.getId());
-            estimateResponse.put("serviceRequestId", serviceRequestId);
-            estimateResponse.put("estimatedCost", createdEstimate.getCost());
-            estimateResponse.put("estimatedCompletionTime", createdEstimate.getCompletionDate());
-            estimateResponse.put("notes", createdEstimate.getNotes());
-            estimateResponse.put("status", ServiceRequestStateType.PENDING);
+            estimateResponse.put(serviceRequestIdStr, serviceRequestId);
+            estimateResponse.put(estimatedCostStr, createdEstimate.getCost());
+            estimateResponse.put(estimatedCompletionTime, createdEstimate.getCompletionDate());
+            estimateResponse.put(notesStr, createdEstimate.getNotes());
+            estimateResponse.put(statusStr, ServiceRequestStateType.PENDING);
             estimateResponse.put("createdAt", createdEstimate.getCreatedDate());
 
             response.put("estimate", estimateResponse);
@@ -194,17 +200,17 @@ public class EstimateController {
                 // Estimate info
                 Map<String, Object> estimateResponse = new HashMap<>();
                 estimateResponse.put("id", estimate.getId());
-                estimateResponse.put("serviceRequestId", serviceRequest.getId());
-                estimateResponse.put("estimatedCost", estimate.getCost());
-                estimateResponse.put("estimatedCompletionTime", estimate.getCompletionDate());
-                estimateResponse.put("status", ServiceRequestStateType.ACCEPTED);
+                estimateResponse.put(serviceRequestIdStr, serviceRequest.getId());
+                estimateResponse.put(estimatedCostStr, estimate.getCost());
+                estimateResponse.put(estimatedCompletionTime, estimate.getCompletionDate());
+                estimateResponse.put(statusStr, ServiceRequestStateType.ACCEPTED);
                 estimateResponse.put("feedback", feedback);
                 estimateResponse.put("updatedAt", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
                 // Service request info
                 Map<String, Object> serviceRequestResponse = new HashMap<>();
                 serviceRequestResponse.put("id", serviceRequest.getId());
-                serviceRequestResponse.put("status", serviceRequest.getStateType());
+                serviceRequestResponse.put(statusStr, serviceRequest.getStateType());
 
                 response.put("estimate", estimateResponse);
                 response.put("serviceRequest", serviceRequestResponse);
@@ -218,7 +224,7 @@ public class EstimateController {
                 Map<String, Object> response = new HashMap<>();
                 response.put(messageStr, "Estimate rejected and service request deleted successfully");
                 response.put("estimateId", estimateId.toString());
-                response.put("serviceRequestId", serviceRequestId.toString());
+                response.put(serviceRequestIdStr, serviceRequestId.toString());
 
                 return new ResponseEntity<>(response, HttpStatus.OK);
             }
