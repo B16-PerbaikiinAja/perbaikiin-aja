@@ -6,8 +6,10 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 @Repository
 public interface UserRepository extends CrudRepository<User, UUID> {
     Optional<User> findByEmail(String email);
+    List<User> findByRole(String role);
 }
