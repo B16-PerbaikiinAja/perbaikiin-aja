@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.review.Review;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,11 +13,16 @@ class ReviewTest {
 
     @Test
     void testOnCreate_shouldSetCreatedAtAndUpdatedAt() {
+        UUID technicianId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID reportId = UUID.randomUUID();
+
         Review review = Review.builder()
                 .rating(5)
                 .comment("Keren!")
-                .technicianId(1L)
-                .userId(2L)
+                .technicianId(technicianId)
+                .userId(userId)
+                .reportId(reportId)
                 .build();
 
         review.onCreate();
@@ -28,17 +34,22 @@ class ReviewTest {
 
     @Test
     void testOnUpdate_shouldUpdateUpdatedAt() throws InterruptedException {
+        UUID technicianId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID reportId = UUID.randomUUID();
+
         Review review = Review.builder()
                 .rating(4)
                 .comment("Kerja Bagus!")
-                .technicianId(1L)
-                .userId(2L)
+                .technicianId(technicianId)
+                .userId(userId)
+                .reportId(reportId)
                 .build();
 
         review.onCreate();
         LocalDateTime beforeUpdate = review.getUpdatedAt();
 
-        Thread.sleep(1000); // Simulasi delay waktu
+        Thread.sleep(1000);
 
         review.onUpdate();
         LocalDateTime afterUpdate = review.getUpdatedAt();

@@ -3,18 +3,20 @@ package id.ac.ui.cs.advprog.perbaikiinaja.dtos.review;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 public class ReviewRequestDto {
 
     @NotNull
-    private Long userId;
+    private UUID userId;
 
     @NotNull
-    private Long technicianId;
+    private UUID technicianId;
 
     @NotNull
-    private Long orderId;
+    private UUID reportId;
 
     @NotBlank
     private String comment;
