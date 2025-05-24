@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,8 +33,8 @@ public class EstimateController {
     private final EstimateService estimateService;
     private final WalletService walletService;
 
-    private final String MESSAGE_STR = "message";
-    private final String ERR_STR = "errorCode";
+    private static final String messageStr = "message";
+    private static final String errorStr = "errorCode";
 
     @Autowired
     public EstimateController(ServiceRequestService serviceRequestService, EstimateService estimateService, WalletService walletService) {
@@ -61,16 +60,16 @@ public class EstimateController {
         Double estimatedCost = ((Number) requestBody.get("estimatedCost")).doubleValue();
         if (estimatedCost < 0) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4000);
-            response.put(MESSAGE_STR, "Estimated cost cannot be negative");
+            response.put(errorStr, 4000);
+            response.put(messageStr, "Estimated cost cannot be negative");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
         LocalDate completionDate = LocalDate.parse((String) requestBody.get("estimatedCompletionTime"));
         if (completionDate.isBefore(LocalDate.now())) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4001);
-            response.put(MESSAGE_STR, "Estimated completion date cannot be in the past");
+            response.put(errorStr, 4001);
+            response.put(messageStr, "Estimated completion date cannot be in the past");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -106,13 +105,13 @@ public class EstimateController {
 
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4040);
-            response.put(MESSAGE_STR, e.getMessage());
+            response.put(errorStr, 4040);
+            response.put(messageStr, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (IllegalStateException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4090);
-            response.put(MESSAGE_STR, e.getMessage());
+            response.put(errorStr, 4090);
+            response.put(messageStr, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.CONFLICT);
         }
     }
@@ -134,8 +133,8 @@ public class EstimateController {
         String action = (String) requestBody.get("action");
         if (action == null || (!action.equals("ACCEPT") && !action.equals("REJECT"))) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4000);
-            response.put(MESSAGE_STR, "Action must be ACCEPT or REJECT");
+            response.put(errorStr, 4000);
+            response.put(messageStr, "Action must be ACCEPT or REJECT");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -146,8 +145,8 @@ public class EstimateController {
         Optional<RepairEstimate> estimateOpt = estimateService.findById(estimateId);
         if (estimateOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4040);
-            response.put(MESSAGE_STR, "Estimate not found");
+            response.put(errorStr, 4040);
+            response.put(messageStr, "Estimate not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
@@ -159,14 +158,14 @@ public class EstimateController {
             serviceRequest = estimateService.getServiceRequest(estimate);
             if (!serviceRequest.getCustomer().getId().equals(customerId)) {
                 Map<String, Object> response = new HashMap<>();
-                response.put(ERR_STR, 4030);
-                response.put(MESSAGE_STR, "User is not the owner of the service request");
+                response.put(errorStr, 4030);
+                response.put(messageStr, "User is not the owner of the service request");
                 return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
             }
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4041);
-            response.put(MESSAGE_STR, "Service request not found");
+            response.put(errorStr, 4041);
+            response.put(messageStr, "Service request not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
@@ -217,7 +216,7 @@ public class EstimateController {
 
                 // Build response
                 Map<String, Object> response = new HashMap<>();
-                response.put(MESSAGE_STR, "Estimate rejected and service request deleted successfully");
+                response.put(messageStr, "Estimate rejected and service request deleted successfully");
                 response.put("estimateId", estimateId.toString());
                 response.put("serviceRequestId", serviceRequestId.toString());
 
@@ -226,13 +225,13 @@ public class EstimateController {
 
         } catch (IllegalStateException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4090);
-            response.put(MESSAGE_STR, e.getMessage());
+            response.put(errorStr, 4090);
+            response.put(messageStr, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.CONFLICT);
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4000);
-            response.put(MESSAGE_STR, e.getMessage());
+            response.put(errorStr, 4000);
+            response.put(messageStr, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
