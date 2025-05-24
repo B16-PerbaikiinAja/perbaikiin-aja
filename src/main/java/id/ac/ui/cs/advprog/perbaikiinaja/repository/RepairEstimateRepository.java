@@ -11,10 +11,4 @@ import java.util.UUID;
  */
 @Repository
 public interface RepairEstimateRepository extends CrudRepository<RepairEstimate, UUID> {
-    /**
-     * Find a repair estimate by service request ID
-     * @param serviceRequestId The ID of the service request
-     * @return The repair estimate, if found
-     */
-    RepairEstimate findByServiceRequestId(UUID serviceRequestId);
 }

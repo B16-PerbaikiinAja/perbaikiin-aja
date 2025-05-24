@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.concurrent.ThreadLocalRandom;
+import java.time.LocalDate;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.dtos.CustomerServiceRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
@@ -48,7 +49,6 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     private final PaymentMethodService paymentMethodService;
     private final WalletService walletService;
     private final ReportRepository reportRepository;
-    private final RepairEstimateRepository repairEstimateRepository;
 
     @Autowired
     public ServiceRequestServiceImpl(
@@ -57,14 +57,12 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             CouponService couponService,
             PaymentMethodService paymentMethodService,
             WalletService walletService,
-            RepairEstimateRepository repairEstimateRepository,
             ReportRepository reportRepository) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.userRepository = userRepository;
         this.couponService = couponService;
         this.paymentMethodService = paymentMethodService;
         this.walletService = walletService;
-        this.repairEstimateRepository = repairEstimateRepository;
         this.reportRepository = reportRepository;
     }
 
@@ -103,12 +101,19 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             throw new IllegalArgumentException("This technician is not assigned to this service request");
         }
 
-        RepairEstimate savedEstimate = repairEstimateRepository.save(estimate);
+        // Pre-check the estimate values and fix if needed
+        if (estimate.getCost() <= 0) {
+            estimate.setCost(0.01); // Set a minimal positive value
+        }
+        
+        if (estimate.getCompletionDate() == null) {
+            estimate.setCompletionDate(LocalDate.now().plusDays(1)); // Set to tomorrow by default
+        }
 
-        // Provide the estimate
-        request.provideEstimate(savedEstimate);
-
+        
+        request.provideEstimate(estimate);
         return serviceRequestRepository.save(request);
+        
     }
 
     @Override
