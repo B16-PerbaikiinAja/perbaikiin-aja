@@ -87,7 +87,7 @@ public class PaymentMethodController {
             paymentMethodService.deleteById(id);
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }
