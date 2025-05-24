@@ -335,6 +335,7 @@ jobs:
               restart: unless-stopped
               depends_on:
                 - prometheus
+
             perbaikiinaja-backend:
               image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:main
               container_name: perbaikiinaja-backend-prod
@@ -349,8 +350,9 @@ jobs:
                 - PORT=8080
               networks:
                 - monitoring-network
-          monitoring-network:
-            driver: bridge
+          networks:
+            monitoring-network:
+              driver: bridge
           COMPOSE_EOF
 
           cat > ~/perbaikiinaja-prod/prometheus/prometheus.yml << 'PROM_EOF'
@@ -367,7 +369,7 @@ jobs:
                 metrics_path: '/actuator/prometheus'
                 scrape_interval: 5s
                 static_configs:
-                  - targets: ['perbaikiinaja-backend-prod:8080']
+                  - targets: ['perbaikiinaja-backend:8080']
                     labels:
                       application: 'Perbaikiinaja Spring Boot Application'
           PROM_EOF
