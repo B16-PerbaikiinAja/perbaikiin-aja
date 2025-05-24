@@ -178,7 +178,6 @@ public class EstimateController {
         try {
             // Process response based on action
             if ("ACCEPT".equals(action)) {
-                serviceRequest = estimateService.acceptEstimate(serviceRequestId, customerId, feedback);
 
                 // Check if customer has sufficient balance
                 Optional<Wallet> customerWalletOpt = walletService.getWalletByUserId(customerId);
@@ -192,6 +191,8 @@ public class EstimateController {
                         response.put("message", "Insufficient funds in wallet. Please deposit funds before accepting the estimate.");
                         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                     }
+
+                    serviceRequest = estimateService.acceptEstimate(serviceRequestId, customerId, feedback);
                 }
 
                 // Build response
