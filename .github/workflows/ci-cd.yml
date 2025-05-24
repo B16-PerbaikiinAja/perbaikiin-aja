@@ -301,6 +301,8 @@ jobs:
         run: |
           ssh $PROD_EC2_USERNAME@$PROD_EC2_HOST << EOF
             mkdir -p ~/perbaikiinaja-prod
+            mkdir -p ~/perbaikiinaja-prod/prometheus
+            mkdir -p ~/perbaikiinaja-prod/grafana/provisioning/datasources
 
             # Create docker-compose.yml with environment variable substitution
             cat > ~/perbaikiinaja-prod/docker-compose.yml << 'COMPOSE_EOF'
@@ -350,7 +352,7 @@ jobs:
             driver: bridge
           COMPOSE_EOF
 
-          cat > ~/perbaikiinaja/prometheus/prometheus.yml << 'PROM_EOF'
+          cat > ~/perbaikiinaja-prod/prometheus/prometheus.yml << 'PROM_EOF'
             global:
               scrape_interval: 15s
               evaluation_interval: 15s
@@ -364,12 +366,12 @@ jobs:
                 metrics_path: '/actuator/prometheus'
                 scrape_interval: 5s
                 static_configs:
-                  - targets: ['perbaikiinaja-backend:8080']
+                  - targets: ['perbaikiinaja-backend-prod:8080']
                     labels:
                       application: 'Perbaikiinaja Spring Boot Application'
           PROM_EOF
 
-          cat > ~/perbaikiinaja/grafana/provisioning/datasources/datasources.yml << 'GRAFANA_EOF'
+          cat > ~/perbaikiinaja-prod/grafana/provisioning/datasources/datasources.yml << 'GRAFANA_EOF'
             apiVersion: 1
             datasources:
               - name: Prometheus
