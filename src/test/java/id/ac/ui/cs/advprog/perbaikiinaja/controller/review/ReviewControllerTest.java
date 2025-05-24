@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller.review;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.dtos.review.DeleteReviewRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.dtos.review.ReviewRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.dtos.review.ReviewResponseDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.review.Review;
@@ -16,8 +17,11 @@ import org.springframework.http.ResponseEntity;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,35 +36,45 @@ class ReviewControllerTest {
     private ReviewRequestDto requestDto;
     private Review review;
     private ReviewResponseDto responseDto;
+    private UUID userId;
+    private UUID technicianId;
+    private UUID reportId;
+    private UUID reviewId;
 
     @BeforeEach
     void setUp() {
+        userId = UUID.randomUUID();
+        technicianId = UUID.randomUUID();
+        reportId = UUID.randomUUID();
+        reviewId = UUID.randomUUID();
+
         requestDto = new ReviewRequestDto();
-        requestDto.setUserId(1L);
-        requestDto.setTechnicianId(2L);
-        requestDto.setOrderId(3L);
+        requestDto.setUserId(userId);
+        requestDto.setTechnicianId(technicianId);
+        requestDto.setReportId(reportId);
         requestDto.setComment("Great service!");
         requestDto.setRating(5);
 
         review = Review.builder()
-                .id(1L)
-                .userId(1L)
-                .technicianId(2L)
-                .orderId(3L)
+                .id(reviewId)
+                .userId(userId)
+                .technicianId(technicianId)
+                .reportId(reportId)
                 .comment("Great service!")
                 .rating(5)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         responseDto = new ReviewResponseDto(
-                1L, 1L, 2L, 3L, "Great service!", 5, review.getCreatedAt()
+                reviewId, userId, technicianId, reportId,
+                "Great service!", 5, review.getCreatedAt()
         );
     }
 
     @Test
     void createReview_ShouldReturnCreatedReview() {
         // Arrange
-        when(reviewService.createReview(eq(requestDto.getUserId()), eq(requestDto.getOrderId()), any(Review.class)))
+        when(reviewService.createReview(eq(requestDto.getUserId()), eq(requestDto.getReportId()), any(Review.class)))
                 .thenReturn(review);
 
         // Act
@@ -72,13 +86,13 @@ class ReviewControllerTest {
         assertEquals(review.getId(), response.getBody().getId());
         assertEquals(review.getUserId(), response.getBody().getUserId());
         assertEquals(review.getTechnicianId(), response.getBody().getTechnicianId());
-        assertEquals(review.getOrderId(), response.getBody().getOrderId());
+        assertEquals(review.getReportId(), response.getBody().getReportId());
         assertEquals(review.getComment(), response.getBody().getComment());
         assertEquals(review.getRating(), response.getBody().getRating());
 
         verify(reviewService, times(1)).createReview(
                 eq(requestDto.getUserId()),
-                eq(requestDto.getOrderId()),
+                eq(requestDto.getReportId()),
                 any(Review.class)
         );
     }
@@ -86,7 +100,6 @@ class ReviewControllerTest {
     @Test
     void updateReview_ShouldReturnUpdatedReview() {
         // Arrange
-        Long reviewId = 1L;
         when(reviewService.updateReview(
                 eq(requestDto.getUserId()),
                 eq(reviewId),
@@ -102,7 +115,7 @@ class ReviewControllerTest {
         assertEquals(review.getId(), response.getBody().getId());
         assertEquals(review.getUserId(), response.getBody().getUserId());
         assertEquals(review.getTechnicianId(), response.getBody().getTechnicianId());
-        assertEquals(review.getOrderId(), response.getBody().getOrderId());
+        assertEquals(review.getReportId(), response.getBody().getReportId());
         assertEquals(review.getComment(), response.getBody().getComment());
         assertEquals(review.getRating(), response.getBody().getRating());
 
@@ -115,25 +128,32 @@ class ReviewControllerTest {
 
     @Test
     void deleteReview_ShouldReturnNoContent() {
-        Long reviewId = 1L;
-        Long userId = 1L;
 
-        ResponseEntity<Void> response = reviewController.deleteReview(reviewId, userId);
+        DeleteReviewRequest request = new DeleteReviewRequest(userId);
+        doNothing().when(reviewService).deleteReview(reviewId, userId);
 
+        // Act
+        ResponseEntity<Void> response = reviewController.deleteReview(reviewId, request);
+
+        // Assert
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
         assertNull(response.getBody());
 
+        // Verify 
         verify(reviewService, times(1)).deleteReview(reviewId, userId);
     }
 
     @Test
     void getReviewsByTechnician_ShouldReturnListOfReviews() {
-        Long technicianId = 2L;
+        UUID secondUserId = UUID.randomUUID();
+        UUID secondReportId = UUID.randomUUID();
+        UUID secondReviewId = UUID.randomUUID();
+
         Review review2 = Review.builder()
-                .id(2L)
-                .userId(3L)
-                .technicianId(2L)
-                .orderId(4L)
+                .id(secondReviewId)
+                .userId(secondUserId)
+                .technicianId(technicianId)
+                .reportId(secondReportId)
                 .comment("Good job")
                 .rating(4)
                 .createdAt(LocalDateTime.now())
@@ -152,5 +172,4 @@ class ReviewControllerTest {
 
         verify(reviewService, times(1)).getReviewsForTechnician(technicianId);
     }
-
 }

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "review")
@@ -15,9 +16,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class Review {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    private UUID id;
 
     @Min(1)
     @Max(5)
@@ -27,13 +30,13 @@ public class Review {
     private String comment;
 
     @Column(nullable = false)
-    private Long technicianId;
+    private UUID technicianId;
 
     @Column(nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @Column(nullable = false)
-    private Long orderId;  
+    private UUID reportId;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
