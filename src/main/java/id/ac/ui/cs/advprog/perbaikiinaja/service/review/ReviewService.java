@@ -1,15 +1,16 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.service.review;
 
-import java.util.List;
-
 import id.ac.ui.cs.advprog.perbaikiinaja.model.review.Review;
 
+import java.util.List;
+import java.util.UUID;
+
 public interface ReviewService {
-    Review createReview(Long userId, Long orderId, Review review);
-    Review updateReview(Long userId, Long reviewId, Review updatedReview);
-    void deleteReview(Long userId, Long reviewId);
-    List<Review> getReviewsForTechnician(Long technicianId);
-    double calculateAverageRating(Long technicianId);
+    Review createReview(UUID userId, UUID reportId, Review review);
+    Review updateReview(UUID userId, UUID reviewId, Review updatedReview);
+    void deleteReview(UUID userId, UUID reviewId);
+    List<Review> getReviewsForTechnician(UUID technicianId);
+    double calculateAverageRating(UUID technicianId);
     List<Review> getAllReviews();
-    void deleteReviewAsAdmin(Long reviewId);
+    void deleteReviewAsAdmin(UUID reviewId);
 }

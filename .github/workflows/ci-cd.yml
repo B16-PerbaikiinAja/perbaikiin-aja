@@ -116,12 +116,43 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           ssh $EC2_USERNAME@$EC2_HOST << EOF
+            
             mkdir -p ~/perbaikiinaja
+            mkdir -p ~/perbaikiinaja/prometheus
+            mkdir -p ~/perbaikiinaja/grafana/provisioning/datasources
 
             # Create docker-compose.yml with environment variable substitution
             cat > ~/perbaikiinaja/docker-compose.yml << 'COMPOSE_EOF'
           version: '3'
           services:
+            prometheus:
+              image: prom/prometheus:v2.44.0
+              container_name: prometheus
+              ports:
+                - "9090:9090"
+              volumes:
+                - ./prometheus:/etc/prometheus
+              networks:
+                - monitoring-network
+              restart: unless-stopped
+              
+            grafana:
+              image: grafana/grafana:9.5.2
+              container_name: grafana
+              ports:
+                - "3000:3000"
+              volumes:
+                - ./grafana/provisioning:/etc/grafana/provisioning
+              environment:
+                - GF_SECURITY_ADMIN_USER=admin
+                - GF_SECURITY_ADMIN_PASSWORD=admin
+                - GF_USERS_ALLOW_SIGN_UP=false
+              networks:
+                - monitoring-network
+              restart: unless-stopped
+              depends_on:
+                - prometheus
+
             perbaikiinaja-backend:
               image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging
               container_name: perbaikiinaja-backend
@@ -134,7 +165,42 @@ jobs:
                 - PG_PASS=${PG_PASS}
                 - JWT_SECRET_KEY=${JWT_SECRET_KEY}
                 - PORT=8080
+              networks:
+                - monitoring-network
+              
+          networks:
+            monitoring-network:
+              driver: bridge
           COMPOSE_EOF
+
+          cat > ~/perbaikiinaja/prometheus/prometheus.yml << 'PROM_EOF'
+            global:
+              scrape_interval: 15s
+              evaluation_interval: 15s
+                        
+            scrape_configs:
+              - job_name: 'prometheus'
+                static_configs:
+                  - targets: ['localhost:9090']
+                    
+              - job_name: 'spring-boot-app'
+                metrics_path: '/actuator/prometheus'
+                scrape_interval: 5s
+                static_configs:
+                  - targets: ['perbaikiinaja-backend:8080']
+                    labels:
+                      application: 'Perbaikiinaja Spring Boot Application'
+          PROM_EOF
+
+          cat > ~/perbaikiinaja/grafana/provisioning/datasources/datasources.yml << 'GRAFANA_EOF'
+            apiVersion: 1
+            datasources:
+              - name: Prometheus
+                type: prometheus
+                access: proxy
+                url: http://prometheus:9090
+                isDefault: true
+          GRAFANA_EOF
 
             # Export environment variables for envsubst
             export PG_HOST="${PG_HOST}"
@@ -171,6 +237,29 @@ jobs:
               docker logs perbaikiinaja-backend
               exit 1
             fi
+          # Check monitoring services
+            if docker ps --filter "name=prometheus" --format "{{.Names}}" | grep -q prometheus; then
+              echo "Prometheus is running successfully"
+              echo "Prometheus UI is accessible at http://${EC2_HOST}:9090"
+            else
+              echo "Error: Prometheus container failed to start"
+              docker logs prometheus
+              exit 1
+            fi
+
+            if docker ps --filter "name=grafana" --format "{{.Names}}" | grep -q grafana; then
+              echo "Grafana is running successfully"
+              echo "Grafana dashboard is accessible at http://${EC2_HOST}:3000"
+              echo "Default credentials: admin/admin"
+            else
+              echo "Error: Grafana container failed to start"
+              docker logs grafana
+              exit 1
+            fi
+
+            echo "Monitoring setup completed successfully!"
+            echo "Prometheus URL: http://${EC2_HOST}:9090"
+            echo "Grafana URL: http://${EC2_HOST}:3000 (login with admin/admin)"
           EOF
 
   deploy-production:
@@ -217,6 +306,33 @@ jobs:
             cat > ~/perbaikiinaja-prod/docker-compose.yml << 'COMPOSE_EOF'
           version: '3'
           services:
+            prometheus:
+              image: prom/prometheus:v2.44.0
+              container_name: prometheus
+              ports:
+                - "9090:9090"
+              volumes:
+                - ./prometheus:/etc/prometheus
+              networks:
+                - monitoring-network
+              restart: unless-stopped
+              
+            grafana:
+              image: grafana/grafana:9.5.2
+              container_name: grafana
+              ports:
+                - "3000:3000"
+              volumes:
+                - ./grafana/provisioning:/etc/grafana/provisioning
+              environment:
+                - GF_SECURITY_ADMIN_USER=admin
+                - GF_SECURITY_ADMIN_PASSWORD=admin
+                - GF_USERS_ALLOW_SIGN_UP=false
+              networks:
+                - monitoring-network
+              restart: unless-stopped
+              depends_on:
+                - prometheus
             perbaikiinaja-backend:
               image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:main
               container_name: perbaikiinaja-backend-prod
@@ -229,7 +345,39 @@ jobs:
                 - PG_PASS=${PROD_PG_PASS}
                 - JWT_SECRET_KEY=${PROD_JWT_SECRET_KEY}
                 - PORT=8080
+              networks:
+          monitoring-network:
+            driver: bridge
           COMPOSE_EOF
+
+          cat > ~/perbaikiinaja/prometheus/prometheus.yml << 'PROM_EOF'
+            global:
+              scrape_interval: 15s
+              evaluation_interval: 15s
+                        
+            scrape_configs:
+              - job_name: 'prometheus'
+                static_configs:
+                  - targets: ['localhost:9090']
+                    
+              - job_name: 'spring-boot-app'
+                metrics_path: '/actuator/prometheus'
+                scrape_interval: 5s
+                static_configs:
+                  - targets: ['perbaikiinaja-backend:8080']
+                    labels:
+                      application: 'Perbaikiinaja Spring Boot Application'
+          PROM_EOF
+
+          cat > ~/perbaikiinaja/grafana/provisioning/datasources/datasources.yml << 'GRAFANA_EOF'
+            apiVersion: 1
+            datasources:
+              - name: Prometheus
+                type: prometheus
+                access: proxy
+                url: http://prometheus:9090
+                isDefault: true
+          GRAFANA_EOF
 
             # Export environment variables for envsubst
             export PG_HOST="${PROD_PG_HOST}"
@@ -279,4 +427,28 @@ jobs:
               docker-compose logs
               exit 1
             fi
+
+            # Check monitoring services
+            if docker ps --filter "name=prometheus" --format "{{.Names}}" | grep -q prometheus; then
+              echo "Prometheus is running successfully"
+              echo "Prometheus UI is accessible at http://${PROD_EC2_HOST}:9090"
+            else
+              echo "Error: Prometheus container failed to start"
+              docker logs prometheus
+              exit 1
+            fi
+
+            if docker ps --filter "name=grafana" --format "{{.Names}}" | grep -q grafana; then
+              echo "Grafana is running successfully"
+              echo "Grafana dashboard is accessible at http://${PROD_EC2_HOST}:3000"
+              echo "Default credentials: admin/admin"
+            else
+              echo "Error: Grafana container failed to start"
+              docker logs grafana
+              exit 1
+            fi
+
+            echo "Monitoring setup completed successfully!"
+            echo "Prometheus URL: http://${PROD_EC2_HOST}:9090"
+            echo "Grafana URL: http://${PROD_EC2_HOST}:3000 (login with admin/admin)"
           EOF
