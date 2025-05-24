@@ -6,11 +6,10 @@ import java.util.UUID;
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.payment.PaymentMethod;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.state.*;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
-import id.ac.ui.cs.advprog.perbaikiinaja.state.ServiceRequestState;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
@@ -141,6 +140,10 @@ public class ServiceRequest {
 
     public void setStateType(ServiceRequestStateType stateType) {
         this.stateType = stateType;
+        // Keep state object in sync
+        if (this.state == null || this.state.getStateType() != stateType) {
+            this.state = createStateFromType(stateType);
+        }
     }
 
     public Report getReport() {
@@ -152,15 +155,44 @@ public class ServiceRequest {
     }
 
     public ServiceRequestState getState() {
+        // Ensure state is synchronized with stateType
+        if (state == null || state.getStateType() != stateType) {
+            this.state = createStateFromType(stateType);
+        }
         return state;
     }
 
     public void setState(ServiceRequestState state) {
         this.state = state;
+        this.stateType = state.getStateType();
     }
 
     public ServiceRequestStateType getStateType() {
         return state.getStateType();
+    }
+
+    private static ServiceRequestState createStateFromType(ServiceRequestStateType stateType) {
+        switch (stateType) {
+            case PENDING:
+                return new PendingState();
+            case ESTIMATED:
+                return new EstimatedState();
+            case ACCEPTED:
+                return new AcceptedState();
+            case IN_PROGRESS:
+                return new InProgressState();
+            case COMPLETED:
+                return new CompletedState();
+            case REJECTED:
+                return new RejectedState();
+            default:
+                return new PendingState(); // Default case
+        }
+    }
+
+    @PostLoad
+    private void initializeState() {
+        this.state = createStateFromType(this.stateType);
     }
 
     // State transition methods
