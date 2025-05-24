@@ -237,8 +237,7 @@ jobs:
               docker logs perbaikiinaja-backend
               exit 1
             fi
-
-            # Check monitoring services
+          # Check monitoring services
             if docker ps --filter "name=prometheus" --format "{{.Names}}" | grep -q prometheus; then
               echo "Prometheus is running successfully"
               echo "Prometheus UI is accessible at http://${EC2_HOST}:9090"
@@ -261,4 +260,112 @@ jobs:
             echo "Monitoring setup completed successfully!"
             echo "Prometheus URL: http://${EC2_HOST}:9090"
             echo "Grafana URL: http://${EC2_HOST}:3000 (login with admin/admin)"
+          EOF
+
+  deploy-production:
+    needs: build-and-push-docker
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Debug branch information
+        run: |
+          echo "GitHub ref: ${{ github.ref }}"
+          echo "GitHub event name: ${{ github.event_name }}"
+          echo "Is main branch: ${{ github.ref == 'refs/heads/main' }}"
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+
+      - name: Setup known hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "Resolving hostname..."
+          getent hosts ${{ secrets.PROD_EC2_HOST }} || echo "Could not resolve hostname with getent"
+          echo "Attempting to scan with ssh-keyscan..."
+          ssh-keyscan -v -H ${{ secrets.PROD_EC2_HOST }} >> ~/.ssh/known_hosts || echo "Warning: ssh-keyscan failed"
+          cat ~/.ssh/known_hosts
+
+      - name: Deploy to Production EC2 with Docker
+        env:
+          PROD_EC2_HOST: ${{ secrets.PROD_EC2_HOST }}
+          PROD_EC2_USERNAME: ${{ secrets.PROD_EC2_USERNAME }}
+          PROD_PG_HOST: ${{ secrets.PROD_PG_HOST }}
+          PROD_PG_USER: ${{ secrets.PROD_PG_USER }}
+          PROD_PG_PASS: ${{ secrets.PROD_PG_PASS }}
+          PROD_JWT_SECRET_KEY: ${{ secrets.PROD_JWT_SECRET_KEY }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          PROD_PORT: ${{ secrets.PROD_PORT || '8080' }}
+        run: |
+          ssh $PROD_EC2_USERNAME@$PROD_EC2_HOST << EOF
+            mkdir -p ~/perbaikiinaja-prod
+
+            # Create docker-compose.yml with environment variable substitution
+            cat > ~/perbaikiinaja-prod/docker-compose.yml << 'COMPOSE_EOF'
+          version: '3'
+          services:
+            perbaikiinaja-backend:
+              image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:main
+              container_name: perbaikiinaja-backend-prod
+              restart: always
+              ports:
+                - "${PROD_PORT}:8080"
+              environment:
+                - PG_HOST=${PROD_PG_HOST}
+                - PG_USER=${PROD_PG_USER}
+                - PG_PASS=${PROD_PG_PASS}
+                - JWT_SECRET_KEY=${PROD_JWT_SECRET_KEY}
+                - PORT=8080
+          COMPOSE_EOF
+
+            # Export environment variables for envsubst
+            export PG_HOST="${PROD_PG_HOST}"
+            export PG_USER="${PROD_PG_USER}"
+            export PG_PASS="${PROD_PG_PASS}"
+            export JWT_SECRET_KEY="${PROD_JWT_SECRET_KEY}"
+            export PROD_PORT="${PROD_PORT}"
+            export DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}"
+
+            # Substitute environment variables in docker-compose.yml
+            cd ~/perbaikiinaja-prod
+            envsubst < docker-compose.yml > docker-compose-temp.yml
+            mv docker-compose-temp.yml docker-compose.yml
+
+            # Ensure Docker is running
+            sudo service docker start
+
+            # Pull the latest image
+            docker pull \${DOCKERHUB_USERNAME}/perbaikiinaja-backend:main
+
+            # Stop and remove existing container
+            docker-compose down
+
+            # Start the container
+            docker-compose up -d
+
+            # Check if container is running
+            sleep 10
+            if docker ps --filter "name=perbaikiinaja-backend-prod" --format "{{.Names}}" | grep -q perbaikiinaja-backend-prod; then
+              echo "Container is running successfully"
+              echo "Production application should be accessible at http://${PROD_EC2_HOST}:${PROD_PORT}"
+          
+              # Additional health check
+              echo "Performing health check..."
+              sleep 5
+              if curl -f http://localhost:${PROD_PORT}/actuator/health > /dev/null 2>&1; then
+                echo "✓ Health check passed"
+              else
+                echo "⚠ Health check failed, but container is running. Check application logs:"
+                docker logs perbaikiinaja-backend-prod --tail=20
+              fi
+            else
+              echo "✗ Error: Container failed to start"
+              echo "Container logs:"
+              docker logs perbaikiinaja-backend-prod
+              echo "Docker compose logs:"
+              docker-compose logs
+              exit 1
+            fi
           EOF
