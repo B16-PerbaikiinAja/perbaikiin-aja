@@ -348,6 +348,7 @@ jobs:
                 - JWT_SECRET_KEY=${PROD_JWT_SECRET_KEY}
                 - PORT=8080
               networks:
+                - monitoring-network
           monitoring-network:
             driver: bridge
           COMPOSE_EOF
