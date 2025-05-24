@@ -18,16 +18,23 @@ public class Report {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
+
+    @Column(nullable = false, length = 2000)
     private String repairDetails;
+
+    @Column(nullable = false, length = 500)
     private String repairSummary;
+
+    @Column(nullable = false)
     private LocalDateTime completionDateTime;
+
+    @Column(nullable = false)
     private LocalDateTime createdDateTime;
 
     @OneToOne(mappedBy = "report")
     private ServiceRequest serviceRequest;
 
     public Report() {
-        this.id = UUID.randomUUID();
         this.createdDateTime = LocalDateTime.now();
     }
 

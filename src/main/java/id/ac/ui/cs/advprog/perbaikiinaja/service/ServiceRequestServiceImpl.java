@@ -9,6 +9,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.dtos.CustomerServiceRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.RepairEstimateRepository;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.ReportRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.EstimatedState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
@@ -45,6 +47,8 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     private final CouponService couponService;
     private final PaymentMethodService paymentMethodService;
     private final WalletService walletService;
+    private final ReportRepository reportRepository;
+    private final RepairEstimateRepository repairEstimateRepository;
 
     @Autowired
     public ServiceRequestServiceImpl(
@@ -52,12 +56,16 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             UserRepository userRepository,
             CouponService couponService,
             PaymentMethodService paymentMethodService,
-            WalletService walletService) {
+            WalletService walletService,
+            RepairEstimateRepository repairEstimateRepository,
+            ReportRepository reportRepository) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.userRepository = userRepository;
         this.couponService = couponService;
         this.paymentMethodService = paymentMethodService;
         this.walletService = walletService;
+        this.repairEstimateRepository = repairEstimateRepository;
+        this.reportRepository = reportRepository;
     }
 
     @Override
@@ -95,8 +103,10 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             throw new IllegalArgumentException("This technician is not assigned to this service request");
         }
 
+        RepairEstimate savedEstimate = repairEstimateRepository.save(estimate);
+
         // Provide the estimate
-        request.provideEstimate(estimate);
+        request.provideEstimate(savedEstimate);
 
         return serviceRequestRepository.save(request);
     }
@@ -195,9 +205,11 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             throw new IllegalArgumentException("This technician is not assigned to this service request");
         }
 
+        Report savedReport = reportRepository.save(report);
+
         // Create the report
         report.setServiceRequest(request);
-        request.createReport(report);
+        request.createReport(savedReport);
 
         return serviceRequestRepository.save(request);
     }

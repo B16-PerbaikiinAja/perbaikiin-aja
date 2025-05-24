@@ -17,16 +17,23 @@ public class RepairEstimate {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
+
+    @Column(nullable = false)
     private double cost;
+
+    @Column(nullable = false)
     private LocalDate completionDate;
+
+    @Column(nullable = false)
     private String notes;
+
+    @Column(nullable = false)
     private LocalDate createdDate;
 
     @OneToOne(mappedBy = "estimate")
     private ServiceRequest serviceRequest;
 
     public RepairEstimate() {
-        this.id = UUID.randomUUID();
         this.createdDate = LocalDate.now();
     }
 
@@ -67,6 +74,14 @@ public class RepairEstimate {
 
     public LocalDate getCreatedDate() {
         return createdDate;
+    }
+
+    public ServiceRequest getServiceRequest() {
+        return serviceRequest;
+    }
+
+    public void setServiceRequest(ServiceRequest serviceRequest) {
+        this.serviceRequest = serviceRequest;
     }
 
     /**

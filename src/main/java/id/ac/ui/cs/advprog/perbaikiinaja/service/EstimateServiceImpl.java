@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.service;
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.RepairEstimateRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,31 +17,22 @@ import java.util.stream.StreamSupport;
 public class EstimateServiceImpl implements EstimateService {
 
     private final ServiceRequestRepository serviceRequestRepository;
+    private final RepairEstimateRepository repairEstimateRepository;
 
     @Autowired
-    public EstimateServiceImpl(ServiceRequestRepository serviceRequestRepository) {
+    public EstimateServiceImpl(ServiceRequestRepository serviceRequestRepository, RepairEstimateRepository repairEstimateRepository) {
         this.serviceRequestRepository = serviceRequestRepository;
+        this.repairEstimateRepository = repairEstimateRepository;
     }
 
     @Override
     public Optional<RepairEstimate> findById(UUID estimateId) {
-        // In a real implementation, there would be an EstimateRepository
-        // For now, we'll search through all service requests to find the estimate
-        return StreamSupport.stream(serviceRequestRepository.findAll().spliterator(), false)
-                .filter(request -> request.getEstimate() != null)
-                .filter(request -> request.getEstimate().getId().equals(estimateId))
-                .map(ServiceRequest::getEstimate)
-                .findFirst();
+        return repairEstimateRepository.findById(estimateId);
     }
 
     @Override
     public ServiceRequest getServiceRequest(RepairEstimate estimate) {
-        // In a real implementation, the RepairEstimate would have a reference to its ServiceRequest
-        // For now, we'll search through all service requests to find the one with this estimate
-        return StreamSupport.stream(serviceRequestRepository.findAll().spliterator(), false)
-                .filter(request -> request.getEstimate() != null)
-                .filter(request -> request.getEstimate().getId().equals(estimate.getId()))
-                .findFirst()
+        return serviceRequestRepository.findById(estimate.getServiceRequest().getId())
                 .orElseThrow(() -> new IllegalArgumentException("Service request not found for estimate: " + estimate.getId()));
     }
 

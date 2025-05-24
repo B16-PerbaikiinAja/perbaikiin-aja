@@ -59,7 +59,6 @@ public class ServiceRequest {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "report_id")
     private Report report;
-
     
     @ManyToOne
     @JoinColumn(name = "coupon_id")
