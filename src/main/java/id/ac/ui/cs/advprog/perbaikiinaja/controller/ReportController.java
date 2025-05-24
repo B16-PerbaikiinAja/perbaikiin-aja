@@ -182,36 +182,39 @@ public class ReportController {
                 reports = reportService.getAllReports();
             }
 
-            // Build response
+            // Build response - now we need to get ServiceRequest for each report
             List<Map<String, Object>> reportsList = new ArrayList<>();
             for (Report report : reports) {
                 Map<String, Object> reportMap = new HashMap<>();
                 reportMap.put("id", report.getId());
 
+                // Get ServiceRequest for this report
+                ServiceRequest serviceRequest = reportService.getServiceRequestByReportId(report.getId());
+
                 // Service request info
                 Map<String, Object> serviceRequestMap = new HashMap<>();
-                serviceRequestMap.put("id", report.getServiceRequest().getId());
-                serviceRequestMap.put("status", report.getServiceRequest().getStateType());
+                serviceRequestMap.put("id", serviceRequest.getId());
+                serviceRequestMap.put("status", serviceRequest.getStateType());
 
                 // Customer info
                 Map<String, Object> customerMap = new HashMap<>();
-                customerMap.put("id", report.getServiceRequest().getCustomer().getId());
-                customerMap.put("fullName", report.getServiceRequest().getCustomer().getFullName());
+                customerMap.put("id", serviceRequest.getCustomer().getId());
+                customerMap.put("fullName", serviceRequest.getCustomer().getFullName());
                 serviceRequestMap.put("customer", customerMap);
 
                 // Item info
                 Map<String, Object> itemMap = new HashMap<>();
-                itemMap.put("name", report.getServiceRequest().getItem().getName());
-                itemMap.put("condition", report.getServiceRequest().getItem().getCondition());
-                itemMap.put("issueDescription", report.getServiceRequest().getItem().getIssueDescription());
+                itemMap.put("name", serviceRequest.getItem().getName());
+                itemMap.put("condition", serviceRequest.getItem().getCondition());
+                itemMap.put("issueDescription", serviceRequest.getItem().getIssueDescription());
                 serviceRequestMap.put("item", itemMap);
 
                 reportMap.put("serviceRequest", serviceRequestMap);
 
                 // Technician info
                 Map<String, Object> technicianMap = new HashMap<>();
-                technicianMap.put("id", report.getServiceRequest().getTechnician().getId());
-                technicianMap.put("fullName", report.getServiceRequest().getTechnician().getFullName());
+                technicianMap.put("id", serviceRequest.getTechnician().getId());
+                technicianMap.put("fullName", serviceRequest.getTechnician().getFullName());
                 reportMap.put("technician", technicianMap);
 
                 // Report details
@@ -250,7 +253,7 @@ public class ReportController {
             for (Report report : reports) {
                 Map<String, Object> reportMap = new HashMap<>();
                 reportMap.put("id", report.getId());
-                reportMap.put("serviceRequestId", report.getServiceRequest().getId());
+                reportMap.put("serviceRequestId", reportService.getServiceRequestByReportId(report.getId()).getId());
                 reportMap.put("repairDetails", report.getRepairDetails());
                 reportMap.put("resolutionSummary", report.getRepairSummary());
                 reportMap.put("completionDate", report.getCompletionDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));

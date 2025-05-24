@@ -7,6 +7,7 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.ReportRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.AcceptedState;
@@ -46,6 +47,9 @@ class ServiceRequestServiceTest {
 
     @Mock
     private WalletService walletService;
+
+    @Mock
+    private ReportRepository reportRepository;
     private ServiceRequestService serviceRequestService;
     private CouponService couponService;
     private PaymentMethodService paymentMethodService;
@@ -67,7 +71,7 @@ class ServiceRequestServiceTest {
         userRepository = mock(UserRepository.class);
         couponService = mock(CouponService.class);
         paymentMethodService = mock(PaymentMethodService.class);
-        serviceRequestService = new ServiceRequestServiceImpl(serviceRequestRepository, userRepository, couponService, paymentMethodService, walletService);
+        serviceRequestService = new ServiceRequestServiceImpl(serviceRequestRepository, userRepository, couponService, paymentMethodService, walletService, reportRepository);
 
         customerId = UUID.randomUUID();
         technicianId = UUID.randomUUID();
@@ -530,10 +534,23 @@ class ServiceRequestServiceTest {
         serviceRequest.startService(); // Move to IN_PROGRESS state
         serviceRequest.completeService(); // Move to COMPLETED state
 
+        // Create a real Report object with all required fields properly set
         Report report = new Report();
         report.setRepairDetails("Replaced screen with a new one");
         report.setRepairSummary("Fixed the cracked screen");
         report.setCompletionDateTime(LocalDateTime.now());
+
+        // Debug: Check if report is valid
+        System.out.println("Report valid: " + report.isValid());
+        System.out.println("Repair details: " + report.getRepairDetails());
+        System.out.println("Repair summary: " + report.getRepairSummary());
+        System.out.println("Completion date time: " + report.getCompletionDateTime());
+
+        // Ensure the report is valid before proceeding
+        assertTrue(report.isValid(), "Report should be valid with all required fields set");
+
+        // Mock the reportRepository.save to return the report with an ID
+        when(reportRepository.save(any(Report.class))).thenReturn(report);
 
         // Act
         ServiceRequest updatedRequest = serviceRequestService.createReport(requestId, report, technicianId);
@@ -544,6 +561,7 @@ class ServiceRequestServiceTest {
         assertEquals(ServiceRequestStateType.COMPLETED, updatedRequest.getStateType()); // State remains COMPLETED
         verify(serviceRequestRepository).findById(requestId);
         verify(userRepository).findById(technicianId);
+        verify(reportRepository).save(report); // Verify report is saved
         verify(serviceRequestRepository).save(updatedRequest);
     }
 
