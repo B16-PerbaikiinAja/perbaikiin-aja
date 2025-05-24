@@ -29,6 +29,9 @@ public class ServiceRequest {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    @Version
+    private Long version;
+
     @ManyToOne
     @JoinColumn(name = "customer_id")
     private Customer customer;

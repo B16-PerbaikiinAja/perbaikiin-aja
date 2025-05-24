@@ -222,7 +222,7 @@ public class ServiceRequestController {
         return ResponseEntity.ok(created);
     }
     @PreAuthorize("hasRole('CUSTOMER')")
-    @PutMapping("/customer")
+    @PutMapping("/customer/{id}")
     public ResponseEntity<ServiceRequest> updateServiceRequest(
             @PathVariable UUID id,
             @RequestBody CustomerServiceRequestDto dto,
@@ -232,7 +232,7 @@ public class ServiceRequestController {
         return ResponseEntity.ok(updated);
     }
     @PreAuthorize("hasRole('CUSTOMER')")
-    @DeleteMapping("/customer")
+    @DeleteMapping("/customer/{id}")
     public ResponseEntity<Void> deleteServiceRequest(
             @PathVariable UUID id,
             @AuthenticationPrincipal User user
