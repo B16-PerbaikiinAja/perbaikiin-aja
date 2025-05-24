@@ -206,7 +206,7 @@ jobs:
           PROD_PG_HOST: ${{ secrets.PROD_PG_HOST }}
           PROD_PG_USER: ${{ secrets.PROD_PG_USER }}
           PROD_PG_PASS: ${{ secrets.PROD_PG_PASS }}
-          PROD_JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          PROD_JWT_SECRET_KEY: ${{ secrets.PROD_JWT_SECRET_KEY }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           PROD_PORT: ${{ secrets.PROD_PORT || '8080' }}
         run: |
@@ -227,7 +227,7 @@ jobs:
                 - PG_HOST=${PROD_PG_HOST}
                 - PG_USER=${PROD_PG_USER}
                 - PG_PASS=${PROD_PG_PASS}
-                - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+                - JWT_SECRET_KEY=${PROD_JWT_SECRET_KEY}
                 - PORT=8080
           COMPOSE_EOF
 
@@ -235,7 +235,7 @@ jobs:
             export PG_HOST="${PROD_PG_HOST}"
             export PG_USER="${PROD_PG_USER}"
             export PG_PASS="${PROD_PG_PASS}"
-            export JWT_SECRET_KEY="${JWT_SECRET_KEY}"
+            export JWT_SECRET_KEY="${PROD_JWT_SECRET_KEY}"
             export PROD_PORT="${PROD_PORT}"
             export DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}"
 
