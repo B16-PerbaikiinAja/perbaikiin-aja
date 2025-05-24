@@ -27,7 +27,7 @@ public class WalletServiceImpl implements WalletService {
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
-    private final String WALLET_NOT_FOUND_STR = "Wallet not found";
+    private static final String walletNotFoundStr = "Wallet not found";
 
     @Autowired
     public WalletServiceImpl(
@@ -95,7 +95,7 @@ public class WalletServiceImpl implements WalletService {
     @Transactional
     public Wallet deposit(UUID walletId, BigDecimal amount, String description) {
         Wallet wallet = walletRepository.findById(walletId)
-                .orElseThrow(() -> new IllegalArgumentException(WALLET_NOT_FOUND_STR));
+                .orElseThrow(() -> new IllegalArgumentException(walletNotFoundStr));
 
         wallet.deposit(amount);
 
@@ -114,7 +114,7 @@ public class WalletServiceImpl implements WalletService {
     @Transactional
     public Wallet withdraw(UUID walletId, BigDecimal amount, String description) {
         Wallet wallet = walletRepository.findById(walletId)
-                .orElseThrow(() -> new IllegalArgumentException(WALLET_NOT_FOUND_STR));
+                .orElseThrow(() -> new IllegalArgumentException(walletNotFoundStr));
 
         wallet.withdraw(amount);
 
@@ -181,7 +181,7 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public BigDecimal getBalance(UUID walletId) {
         Wallet wallet = walletRepository.findById(walletId)
-                .orElseThrow(() -> new IllegalArgumentException(WALLET_NOT_FOUND_STR));
+                .orElseThrow(() -> new IllegalArgumentException(walletNotFoundStr));
         return wallet.getBalance();
     }
 
