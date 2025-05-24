@@ -66,12 +66,17 @@ public class ServiceRequest {
     @Setter
     private Coupon coupon;
 
+    @Column(name = "state_type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ServiceRequestStateType stateType;
+
     @Transient
     private ServiceRequestState state;
 
     public ServiceRequest() {
         this.requestDate = LocalDate.now();
         this.state = new PendingState();
+        this.stateType = ServiceRequestStateType.PENDING;
     }
 
     public UUID getId() {
@@ -134,6 +139,10 @@ public class ServiceRequest {
         this.estimate = estimate;
     }
 
+    public void setStateType(ServiceRequestStateType stateType) {
+        this.stateType = stateType;
+    }
+
     public Report getReport() {
         return report;
     }
@@ -163,6 +172,7 @@ public class ServiceRequest {
      */
     public void provideEstimate(RepairEstimate estimate) throws IllegalStateException {
         this.state = this.state.provideEstimate(this, estimate);
+        setStateType(this.state.getStateType());
     }
 
     /**
@@ -171,6 +181,7 @@ public class ServiceRequest {
      */
     public void acceptEstimate() throws IllegalStateException {
         this.state = this.state.acceptEstimate(this);
+        setStateType(this.state.getStateType());
     }
 
     /**
@@ -179,6 +190,7 @@ public class ServiceRequest {
      */
     public void rejectEstimate() throws IllegalStateException {
         this.state = this.state.rejectEstimate(this);
+        setStateType(this.state.getStateType());
     }
 
     /**
@@ -187,6 +199,7 @@ public class ServiceRequest {
      */
     public void startService() throws IllegalStateException {
         this.state = this.state.startService(this);
+        setStateType(this.state.getStateType());
     }
 
     /**
@@ -195,6 +208,7 @@ public class ServiceRequest {
      */
     public void completeService() throws IllegalStateException {
         this.state = this.state.completeService(this);
+        setStateType(this.state.getStateType());
     }
 
     /**
