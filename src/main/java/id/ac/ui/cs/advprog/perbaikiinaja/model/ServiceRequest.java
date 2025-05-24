@@ -68,7 +68,6 @@ public class ServiceRequest {
     private ServiceRequestState state;
 
     public ServiceRequest() {
-        this.id = UUID.randomUUID();
         this.requestDate = LocalDate.now();
         this.state = new PendingState();
     }
