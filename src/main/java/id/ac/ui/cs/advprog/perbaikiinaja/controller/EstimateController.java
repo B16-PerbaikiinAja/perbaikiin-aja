@@ -43,7 +43,10 @@ public class EstimateController {
     private static final String notesStr = "notes";
 
     @Autowired
-    public EstimateController(ServiceRequestService serviceRequestService, EstimateService estimateService, WalletService walletService) {
+    public EstimateController(
+            ServiceRequestService serviceRequestService, 
+            EstimateService estimateService, 
+            WalletService walletService) {
         this.serviceRequestService = serviceRequestService;
         this.estimateService = estimateService;
         this.walletService = walletService;
@@ -125,10 +128,10 @@ public class EstimateController {
     /**
      * Respond to an estimate (accept/reject) as a customer
      */
-    @PutMapping("/customer/{estimateId}/response")
+    @PutMapping("/customer/{serviceRequestId}/response")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<?> respondToEstimate(
-            @PathVariable UUID estimateId,
+            @PathVariable UUID serviceRequestId,
             @RequestBody Map<String, Object> requestBody,
             Authentication authentication) {
 
@@ -147,21 +150,25 @@ public class EstimateController {
         // Get feedback (optional)
         String feedback = (String) requestBody.getOrDefault("feedback", "");
 
-        // Find estimate
-        Optional<RepairEstimate> estimateOpt = estimateService.findById(estimateId);
+        // Find service request and its estimate
+        Optional<RepairEstimate> estimateOpt = estimateService.findById(serviceRequestId);
         if (estimateOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
+
             response.put(errorStr, 4040);
             response.put(messageStr, "Estimate not found");
+
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
         RepairEstimate estimate = estimateOpt.get();
 
-        // Check if customer owns the service request
+        // Try to get service request
         ServiceRequest serviceRequest;
         try {
-            serviceRequest = estimateService.getServiceRequest(estimate);
+            serviceRequest = serviceRequestService.findById(serviceRequestId)
+                    .orElseThrow(() -> new IllegalArgumentException("Service request not found"));
+
             if (!serviceRequest.getCustomer().getId().equals(customerId)) {
                 Map<String, Object> response = new HashMap<>();
                 response.put(errorStr, 4030);
@@ -178,7 +185,6 @@ public class EstimateController {
         try {
             // Process response based on action
             if ("ACCEPT".equals(action)) {
-                serviceRequest = estimateService.acceptEstimate(estimateId, customerId, feedback);
 
                 // Check if customer has sufficient balance
                 Optional<Wallet> customerWalletOpt = walletService.getWalletByUserId(customerId);
@@ -192,6 +198,8 @@ public class EstimateController {
                         response.put("message", "Insufficient funds in wallet. Please deposit funds before accepting the estimate.");
                         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                     }
+
+                    serviceRequest = estimateService.acceptEstimate(serviceRequestId, customerId, feedback);
                 }
 
                 // Build response
@@ -200,10 +208,12 @@ public class EstimateController {
                 // Estimate info
                 Map<String, Object> estimateResponse = new HashMap<>();
                 estimateResponse.put("id", estimate.getId());
+
                 estimateResponse.put(serviceRequestIdStr, serviceRequest.getId());
                 estimateResponse.put(estimatedCostStr, estimate.getCost());
                 estimateResponse.put(estimatedCompletionTime, estimate.getCompletionDate());
                 estimateResponse.put(statusStr, ServiceRequestStateType.ACCEPTED);
+
                 estimateResponse.put("feedback", feedback);
                 estimateResponse.put("updatedAt", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
@@ -218,12 +228,12 @@ public class EstimateController {
                 return new ResponseEntity<>(response, HttpStatus.OK);
 
             } else { // REJECT
-                UUID serviceRequestId = estimateService.rejectEstimate(estimateId, customerId, feedback);
+                UUID rejectedServiceRequestId = estimateService.rejectEstimate(serviceRequestId, customerId, feedback);
 
                 // Build response
                 Map<String, Object> response = new HashMap<>();
+
                 response.put(messageStr, "Estimate rejected and service request deleted successfully");
-                response.put("estimateId", estimateId.toString());
                 response.put(serviceRequestIdStr, serviceRequestId.toString());
 
                 return new ResponseEntity<>(response, HttpStatus.OK);

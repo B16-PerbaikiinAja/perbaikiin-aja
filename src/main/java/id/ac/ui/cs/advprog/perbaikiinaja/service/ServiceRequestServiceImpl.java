@@ -7,9 +7,12 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.concurrent.ThreadLocalRandom;
+import java.time.LocalDate;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.dtos.CustomerServiceRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.RepairEstimateRepository;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.ReportRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.EstimatedState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
@@ -46,6 +49,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     private final CouponService couponService;
     private final PaymentMethodService paymentMethodService;
     private final WalletService walletService;
+    private final ReportRepository reportRepository;
 
     @Autowired
     public ServiceRequestServiceImpl(
@@ -53,12 +57,14 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             UserRepository userRepository,
             CouponService couponService,
             PaymentMethodService paymentMethodService,
-            WalletService walletService) {
+            WalletService walletService,
+            ReportRepository reportRepository) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.userRepository = userRepository;
         this.couponService = couponService;
         this.paymentMethodService = paymentMethodService;
         this.walletService = walletService;
+        this.reportRepository = reportRepository;
     }
 
     @Override
@@ -96,10 +102,19 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             throw new IllegalArgumentException("This technician is not assigned to this service request");
         }
 
-        // Provide the estimate
-        request.provideEstimate(estimate);
+        // Pre-check the estimate values and fix if needed
+        if (estimate.getCost() <= 0) {
+            estimate.setCost(0.01); // Set a minimal positive value
+        }
+        
+        if (estimate.getCompletionDate() == null) {
+            estimate.setCompletionDate(LocalDate.now().plusDays(1)); // Set to tomorrow by default
+        }
 
+        
+        request.provideEstimate(estimate);
         return serviceRequestRepository.save(request);
+        
     }
 
     @Override
@@ -196,9 +211,10 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             throw new IllegalArgumentException("This technician is not assigned to this service request");
         }
 
+        Report savedReport = reportRepository.save(report);
+
         // Create the report
-        report.setServiceRequest(request);
-        request.createReport(report);
+        request.createReport(savedReport);
 
         return serviceRequestRepository.save(request);
     }

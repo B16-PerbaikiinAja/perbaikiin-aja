@@ -90,7 +90,7 @@ public class ReportControllerTest {
         report = mock(Report.class);
         lenient().when(report.getId()).thenReturn(reportId);
         lenient().when(report.getRepairDetails()).thenReturn("Replaced the broken screen");
-        lenient().when(report.getRepairSummary()).thenReturn("Fixed screen issue");
+        lenient().when(report.getRepairSummary()).thenReturn("Fixed the cracked screen");
         lenient().when(report.getCompletionDateTime()).thenReturn(LocalDateTime.now());
         lenient().when(report.getCreatedDateTime()).thenReturn(LocalDateTime.now());
 
@@ -102,8 +102,6 @@ public class ReportControllerTest {
         lenient().when(serviceRequest.getItem()).thenReturn(item);
         lenient().when(serviceRequest.getStateType()).thenReturn(ServiceRequestStateType.COMPLETED);
         lenient().when(serviceRequest.getReport()).thenReturn(report);
-
-        lenient().when(report.getServiceRequest()).thenReturn(serviceRequest);
 
         // Create list of reports
         reports = Arrays.asList(report);
@@ -119,7 +117,7 @@ public class ReportControllerTest {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("serviceRequestId", serviceRequestId.toString());
         requestBody.put("repairDetails", "Replaced the broken screen");
-        requestBody.put("resolutionSummary", "Fixed screen issue");
+        requestBody.put("resolutionSummary", "Fixed the cracked screen");
         requestBody.put("completionDate", LocalDateTime.now().toString());
 
         // Act
@@ -167,7 +165,7 @@ public class ReportControllerTest {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("serviceRequestId", "not-a-uuid");
         requestBody.put("repairDetails", "Replaced the broken screen");
-        requestBody.put("resolutionSummary", "Fixed screen issue");
+        requestBody.put("resolutionSummary", "Fixed the cracked screen");
         requestBody.put("completionDate", LocalDateTime.now().toString());
 
         // Act
@@ -192,7 +190,7 @@ public class ReportControllerTest {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("serviceRequestId", serviceRequestId.toString());
         requestBody.put("repairDetails", "Replaced the broken screen");
-        requestBody.put("resolutionSummary", "Fixed screen issue");
+        requestBody.put("resolutionSummary", "Fixed the cracked screen");
         requestBody.put("completionDate", "not-a-date");
 
         // Act
@@ -218,7 +216,7 @@ public class ReportControllerTest {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("serviceRequestId", serviceRequestId.toString());
         requestBody.put("repairDetails", ""); // Empty repair details should cause validation to fail
-        requestBody.put("resolutionSummary", "Fixed screen issue");
+        requestBody.put("resolutionSummary", "Fixed the cracked screen");
         requestBody.put("completionDate", LocalDateTime.now().toString());
 
         // Act
@@ -240,7 +238,7 @@ public class ReportControllerTest {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("serviceRequestId", serviceRequestId.toString());
         requestBody.put("repairDetails", "Replaced the broken screen");
-        requestBody.put("resolutionSummary", "Fixed screen issue");
+        requestBody.put("resolutionSummary", "Fixed the cracked screen");
         requestBody.put("completionDate", LocalDateTime.now().toString());
 
         // Act
@@ -265,7 +263,7 @@ public class ReportControllerTest {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("serviceRequestId", serviceRequestId.toString());
         requestBody.put("repairDetails", "Replaced the broken screen");
-        requestBody.put("resolutionSummary", "Fixed screen issue");
+        requestBody.put("resolutionSummary", "Fixed the cracked screen");
         requestBody.put("completionDate", LocalDateTime.now().toString());
 
         // Act
@@ -285,6 +283,7 @@ public class ReportControllerTest {
         // Arrange
         lenient().when(authentication.getPrincipal()).thenReturn(admin);
         when(reportService.getAllReports()).thenReturn(reports);
+        when(reportService.getServiceRequestByReportId(reportId)).thenReturn(serviceRequest);
 
         // Act
         ResponseEntity<?> response = controller.getReports(null, null, null, null);
@@ -302,6 +301,7 @@ public class ReportControllerTest {
         assertEquals(1, reportsList.size());
 
         verify(reportService).getAllReports();
+        verify(reportService).getServiceRequestByReportId(reportId);
     }
 
     @Test
@@ -309,6 +309,7 @@ public class ReportControllerTest {
         // Arrange
         lenient().when(authentication.getPrincipal()).thenReturn(admin);
         when(reportService.getReportById(reportId)).thenReturn(report);
+        when(reportService.getServiceRequestByReportId(reportId)).thenReturn(serviceRequest);
 
         // Act
         ResponseEntity<?> response = controller.getReports(null, null, null, reportId);
@@ -326,6 +327,7 @@ public class ReportControllerTest {
         assertEquals(1, reportsList.size());
 
         verify(reportService).getReportById(reportId);
+        verify(reportService).getServiceRequestByReportId(reportId);
     }
 
     @Test
@@ -333,6 +335,7 @@ public class ReportControllerTest {
         // Arrange
         lenient().when(authentication.getPrincipal()).thenReturn(admin);
         when(reportService.getReportsByTechnician(technicianId)).thenReturn(reports);
+        when(reportService.getServiceRequestByReportId(reportId)).thenReturn(serviceRequest);
 
         // Act
         ResponseEntity<?> response = controller.getReports(null, null, technicianId, null);
@@ -350,6 +353,7 @@ public class ReportControllerTest {
         assertEquals(1, reportsList.size());
 
         verify(reportService).getReportsByTechnician(technicianId);
+        verify(reportService).getServiceRequestByReportId(reportId);
     }
 
     @Test
@@ -359,6 +363,7 @@ public class ReportControllerTest {
         LocalDate startDate = LocalDate.now().minusDays(7);
         LocalDate endDate = LocalDate.now();
         when(reportService.getReportsByDateRange(startDate, endDate)).thenReturn(reports);
+        when(reportService.getServiceRequestByReportId(reportId)).thenReturn(serviceRequest);
 
         // Act
         ResponseEntity<?> response = controller.getReports(
@@ -380,6 +385,7 @@ public class ReportControllerTest {
         assertEquals(1, reportsList.size());
 
         verify(reportService).getReportsByDateRange(startDate, endDate);
+        verify(reportService).getServiceRequestByReportId(reportId);
     }
 
     @Test
@@ -448,6 +454,7 @@ public class ReportControllerTest {
         // Arrange
         lenient().when(authentication.getPrincipal()).thenReturn(technician);
         when(reportService.getReportsByTechnician(technicianId)).thenReturn(reports);
+        when(reportService.getServiceRequestByReportId(reportId)).thenReturn(serviceRequest);
 
         // Act
         ResponseEntity<?> response = controller.getTechnicianReports(technicianId);
@@ -465,6 +472,7 @@ public class ReportControllerTest {
         assertEquals(1, reportsList.size());
 
         verify(reportService).getReportsByTechnician(technicianId);
+        verify(reportService).getServiceRequestByReportId(reportId);
     }
 
     @Test
