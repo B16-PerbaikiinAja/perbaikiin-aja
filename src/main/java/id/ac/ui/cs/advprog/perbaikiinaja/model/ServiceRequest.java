@@ -29,6 +29,9 @@ public class ServiceRequest {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    @Version
+    private Long version;
+
     @ManyToOne
     @JoinColumn(name = "customer_id")
     private Customer customer;
@@ -68,7 +71,6 @@ public class ServiceRequest {
     private ServiceRequestState state;
 
     public ServiceRequest() {
-        this.id = UUID.randomUUID();
         this.requestDate = LocalDate.now();
         this.state = new PendingState();
     }
