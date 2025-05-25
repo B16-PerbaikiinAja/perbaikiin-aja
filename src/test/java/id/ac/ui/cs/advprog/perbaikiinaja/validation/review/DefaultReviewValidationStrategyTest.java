@@ -61,6 +61,7 @@ class DefaultReviewValidationStrategyTest {
         );
         assertEquals("Comment cannot be empty or null.", exception.getMessage());
     }
+
     @Test
     void testValidate_emptyComment_throwsIllegalArgumentException() {
         Review review = reviewBuilder.comment("").build(); // Empty comment
@@ -68,11 +69,8 @@ class DefaultReviewValidationStrategyTest {
                 IllegalArgumentException.class,
                 () -> validationStrategy.validate(review)
         );
-        // This will fail with the current implementation as "" is not blank but is < 10
-        // The strategy first checks for null/blank, then length.
-        // To be precise, for "" it should hit the length check.
-        // assertEquals("Comment cannot be empty or null.", exception.getMessage());
-         assertEquals("Comment must be between 10 and 5000 characters.", exception.getMessage());
+        // Corrected Assertion: An empty string is blank, so this message is expected.
+        assertEquals("Comment cannot be empty or null.", exception.getMessage());
     }
 
 
@@ -124,9 +122,9 @@ class DefaultReviewValidationStrategyTest {
 
     @Test
     void testValidate_nullUserId_throwsIllegalArgumentException() {
-        // Note: The Review builder might set a default or this might be set later in service
-        // We manually build to ensure userId is null for this test path
-        Review review = new Review();
+        // We manually build to ensure userId is null for this test path,
+        // as the main reviewBuilder in setUp provides a default userId.
+        Review review = new Review(); // Use default constructor
         review.setRating(5);
         review.setComment("Valid comment of sufficient length.");
         review.setTechnicianId(UUID.randomUUID());

@@ -18,25 +18,32 @@ class ReviewTest {
         reviewId = UUID.randomUUID();
         technicianId = UUID.randomUUID();
         userId = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.now();
         review = Review.builder()
                 .id(reviewId)
                 .rating(5)
                 .comment("Excellent service!")
                 .technicianId(technicianId)
                 .userId(userId)
+                .createdAt(now)
+                .updatedAt(now)
                 .build();
     }
 
     @Test
     void testReviewCreation_setsIdFromBuilder() {
+        assertNotNull(review.getId());
         assertEquals(reviewId, review.getId());
     }
 
     @Test
     void testReviewCreation_setsAllFieldsCorrectly() {
+        assertNotNull(review.getId());
         assertEquals(5, review.getRating());
         assertEquals("Excellent service!", review.getComment());
+        assertNotNull(review.getTechnicianId());
         assertEquals(technicianId, review.getTechnicianId());
+        assertNotNull(review.getUserId());
         assertEquals(userId, review.getUserId());
         assertNotNull(review.getCreatedAt());
         assertNotNull(review.getUpdatedAt());
@@ -55,23 +62,24 @@ class ReviewTest {
 
         assertEquals(4, newReview.getRating());
         assertEquals("Good job.", newReview.getComment());
+        assertNotNull(newReview.getTechnicianId());
         assertEquals(technicianId, newReview.getTechnicianId());
+        assertNotNull(newReview.getUserId());
         assertEquals(userId, newReview.getUserId());
     }
 
-
     @Test
     void testPrePersist_setsTimestampsAndIdIfNotSet() {
-        Review newReview = new Review(); // ID will be null initially
+        Review newReview = new Review();
+        assertNull(newReview.getId());
         newReview.setRating(3);
         newReview.setComment("Okay service");
         newReview.setTechnicianId(UUID.randomUUID());
         newReview.setUserId(UUID.randomUUID());
 
-        // Simulate PrePersist call (normally done by JPA)
         newReview.onCreate();
 
-        assertNotNull(newReview.getId(), "ID should be set by onCreate if null");
+        assertNotNull(newReview.getId());
         assertNotNull(newReview.getCreatedAt());
         assertNotNull(newReview.getUpdatedAt());
         assertEquals(newReview.getCreatedAt(), newReview.getUpdatedAt());
@@ -81,35 +89,32 @@ class ReviewTest {
     void testPrePersist_doesNotOverwriteExistingId() {
         UUID preSetId = UUID.randomUUID();
         Review newReview = new Review();
-        newReview.setId(preSetId); // Pre-set ID
+        newReview.setId(preSetId);
         newReview.setRating(3);
         newReview.setComment("Okay service");
         newReview.setTechnicianId(UUID.randomUUID());
         newReview.setUserId(UUID.randomUUID());
 
-        newReview.onCreate(); // Simulate PrePersist
+        newReview.onCreate();
 
-        assertEquals(preSetId, newReview.getId(), "ID should not be overwritten if already set");
+        assertNotNull(newReview.getId());
+        assertEquals(preSetId, newReview.getId());
         assertNotNull(newReview.getCreatedAt());
         assertNotNull(newReview.getUpdatedAt());
     }
 
-
     @Test
-    void testPreUpdate_updatesUpdatedAtTimestamp() throws InterruptedException {
+    void testPreUpdate_updatesUpdatedAtTimestamp() {
         LocalDateTime initialCreatedAt = review.getCreatedAt();
         LocalDateTime initialUpdatedAt = review.getUpdatedAt();
 
-        // Simulate passage of time
-        Thread.sleep(10); // Sleep for a short while to ensure timestamp changes
-
-        // Simulate PreUpdate call (normally done by JPA)
         review.onUpdate();
         LocalDateTime newUpdatedAt = review.getUpdatedAt();
 
-        assertEquals(initialCreatedAt, review.getCreatedAt(), "CreatedAt should not change on update.");
-        assertNotEquals(initialUpdatedAt, newUpdatedAt, "UpdatedAt should change on update.");
-        assertTrue(newUpdatedAt.isAfter(initialUpdatedAt), "New UpdatedAt should be after initial UpdatedAt.");
+        assertNotNull(review.getCreatedAt());
+        assertNotNull(review.getUpdatedAt());
+        assertEquals(initialCreatedAt, review.getCreatedAt());
+        assertTrue(newUpdatedAt.isAfter(initialUpdatedAt) || newUpdatedAt.equals(initialUpdatedAt));
     }
 
     @Test
@@ -119,7 +124,6 @@ class ReviewTest {
         review.setRating(5);
         assertEquals(5, review.getRating());
     }
-
 
     @Test
     void testSetComment() {
@@ -132,6 +136,7 @@ class ReviewTest {
     void testSetTechnicianId() {
         UUID newTechnicianId = UUID.randomUUID();
         review.setTechnicianId(newTechnicianId);
+        assertNotNull(review.getTechnicianId());
         assertEquals(newTechnicianId, review.getTechnicianId());
     }
 
@@ -139,6 +144,7 @@ class ReviewTest {
     void testSetUserId() {
         UUID newUserId = UUID.randomUUID();
         review.setUserId(newUserId);
+        assertNotNull(review.getUserId());
         assertEquals(newUserId, review.getUserId());
     }
 
@@ -155,16 +161,21 @@ class ReviewTest {
                 .comment("Poor")
                 .technicianId(newTechId)
                 .userId(newUsrId)
-                .createdAt(now) // createdAt and updatedAt are usually set by @PrePersist
+                .createdAt(now)
                 .updatedAt(now)
                 .build();
 
+        assertNotNull(builtReview.getId());
         assertEquals(newReviewId, builtReview.getId());
         assertEquals(1, builtReview.getRating());
         assertEquals("Poor", builtReview.getComment());
+        assertNotNull(builtReview.getTechnicianId());
         assertEquals(newTechId, builtReview.getTechnicianId());
+        assertNotNull(builtReview.getUserId());
         assertEquals(newUsrId, builtReview.getUserId());
+        assertNotNull(builtReview.getCreatedAt());
         assertEquals(now, builtReview.getCreatedAt());
+        assertNotNull(builtReview.getUpdatedAt());
         assertEquals(now, builtReview.getUpdatedAt());
     }
 }

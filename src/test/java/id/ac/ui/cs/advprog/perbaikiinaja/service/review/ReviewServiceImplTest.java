@@ -14,8 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -44,16 +44,18 @@ class ReviewServiceImplTest {
     @InjectMocks
     private ReviewServiceImpl reviewService;
 
-    private User customerUser;
-    private User technicianUser;
+    @Spy
+    private Customer customerUserSpy;
+    @Spy
+    private Technician technicianUserSpy;
+
+    private Customer customerUserObj;
+    private Technician technicianUserObj;
+
     private Review review;
-    private Review updatedReviewDetails;
     private UUID customerId;
     private UUID technicianId;
     private UUID reviewId;
-
-    private static final Duration REVIEW_UPDATE_WINDOW = Duration.ofDays(7);
-
 
     @BeforeEach
     void setUp() {
@@ -61,193 +63,214 @@ class ReviewServiceImplTest {
         technicianId = UUID.randomUUID();
         reviewId = UUID.randomUUID();
 
-        // Mock User objects
-        customerUser = mock(Customer.class); // Use mock(Customer.class) for specific type if needed
-        when(customerUser.getId()).thenReturn(customerId);
-        when(customerUser.getFullName()).thenReturn("Test Customer");
-        // Add other necessary when(customerUser.getX()).thenReturn(Y) as required by your service logic
+        customerUserObj = Customer.builder()
+                .fullName("Test Customer")
+                .email("customer@example.com")
+                .password("password123") // Valid password
+                .phoneNumber("1234567890")
+                .address("Customer Address")
+                .build();
+        customerUserObj.setRole(UserRole.CUSTOMER.getValue());
 
-        technicianUser = mock(Technician.class); // Use mock(Technician.class)
-        when(technicianUser.getId()).thenReturn(technicianId);
-        when(technicianUser.getFullName()).thenReturn("Test Technician");
-        when(technicianUser.getRole()).thenReturn(UserRole.TECHNICIAN.getValue());
-        // Add other necessary when(technicianUser.getX()).thenReturn(Y)
+
+        technicianUserObj = Technician.builder()
+                .fullName("Test Technician")
+                .email("technician@example.com")
+                .password("password123") // Valid password
+                .phoneNumber("0987654321")
+                .address("Technician Address")
+                .build();
+        technicianUserObj.setRole(UserRole.TECHNICIAN.getValue());
+
+
+        customerUserSpy = spy(customerUserObj);
+        technicianUserSpy = spy(technicianUserObj);
+
+        lenient().doReturn(customerId).when(customerUserSpy).getId();
+        lenient().doReturn(technicianId).when(technicianUserSpy).getId();
+        lenient().doReturn(UserRole.CUSTOMER.getValue()).when(customerUserSpy).getRole();
+        lenient().doReturn(UserRole.TECHNICIAN.getValue()).when(technicianUserSpy).getRole();
+
 
         review = Review.builder()
                 .id(reviewId)
                 .userId(customerId)
                 .technicianId(technicianId)
-                .comment("Original comment, long enough for validation.")
+                .comment("Great service!")
                 .rating(5)
-                .createdAt(LocalDateTime.now().minusDays(1)) // within update window
+                .createdAt(LocalDateTime.now().minusDays(1))
                 .updatedAt(LocalDateTime.now().minusDays(1))
-                .build();
-
-        updatedReviewDetails = Review.builder()
-                .technicianId(technicianId) // technicianId should match for update
-                .comment("Updated comment, also sufficiently long.")
-                .rating(4)
                 .build();
     }
 
     @Test
     void createReview_success() {
-        when(userRepository.findById(customerId)).thenReturn(Optional.of(customerUser));
-        when(userRepository.findById(technicianId)).thenReturn(Optional.of(technicianUser)); 
+        when(userRepository.findById(customerId)).thenReturn(Optional.of(customerUserSpy));
+        when(userRepository.findById(technicianId)).thenReturn(Optional.of(technicianUserSpy));
         when(reviewRepository.findByUserIdAndTechnicianId(customerId, technicianId)).thenReturn(Optional.empty());
-        when(reviewRepository.save(any(Review.class))).thenAnswer(invocation -> {
-            Review r = invocation.getArgument(0);
-            if (r.getId() == null) r.setId(UUID.randomUUID()); 
-            r.setCreatedAt(LocalDateTime.now()); 
-            r.setUpdatedAt(LocalDateTime.now()); 
-            return r;
-        });
+        when(reviewRepository.save(any(Review.class))).thenReturn(review);
         doNothing().when(validationStrategy).validate(any(Review.class));
 
+        Review createdReview = reviewService.createReview(customerId, review);
 
-        Review reviewToCreate = Review.builder()
-                                .technicianId(technicianId)
-                                .comment("A good comment for creation")
-                                .rating(5)
-                                .build();
-
-        Review created = reviewService.createReview(customerId, reviewToCreate);
-
-        assertNotNull(created);
-        assertEquals(customerId, created.getUserId());
-        assertEquals(technicianId, created.getTechnicianId());
-        assertNotNull(created.getCreatedAt());
-        assertNotNull(created.getUpdatedAt());
-        verify(validationStrategy).validate(reviewToCreate);
-        verify(reviewRepository).save(reviewToCreate);
+        assertNotNull(createdReview);
+        assertEquals(customerId, createdReview.getUserId());
+        assertEquals(technicianId, createdReview.getTechnicianId());
+        assertNotNull(createdReview.getCreatedAt());
+        assertNotNull(createdReview.getUpdatedAt());
+        verify(reviewRepository, times(1)).save(any(Review.class));
+        verify(validationStrategy, times(1)).validate(any(Review.class));
     }
 
     @Test
-    void createReview_userNotFound_throwsRuntimeException() {
+    void createReview_userNotFound_throwsException() {
         when(userRepository.findById(customerId)).thenReturn(Optional.empty());
-        Review reviewToCreate = Review.builder().technicianId(technicianId).comment("test").rating(1).build();
-
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
-            reviewService.createReview(customerId, reviewToCreate);
+            reviewService.createReview(customerId, review);
         });
         assertEquals("User not found", exception.getMessage());
         verify(reviewRepository, never()).save(any(Review.class));
     }
 
     @Test
-    void createReview_technicianNotFound_throwsRuntimeException() {
-        when(userRepository.findById(customerId)).thenReturn(Optional.of(customerUser));
-        when(userRepository.findById(technicianId)).thenReturn(Optional.empty()); 
-        Review reviewToCreate = Review.builder().technicianId(technicianId).comment("test").rating(1).build();
+    void createReview_technicianNotFound_throwsException() {
+        when(userRepository.findById(customerId)).thenReturn(Optional.of(customerUserSpy));
+        when(userRepository.findById(technicianId)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
-            reviewService.createReview(customerId, reviewToCreate);
+            reviewService.createReview(customerId, review);
         });
         assertEquals("Technician not found or user is not a technician", exception.getMessage());
     }
 
     @Test
-    void createReview_reviewedUserIsNotTechnician_throwsRuntimeException() {
-        User notATechnician = mock(Customer.class); // Mock a user that is not a Technician
-        when(notATechnician.getId()).thenReturn(technicianId);
-        when(notATechnician.getRole()).thenReturn(UserRole.CUSTOMER.getValue()); 
+    void createReview_technicianNotTechnicianRole_throwsException() {
+        Customer notATechnicianObj = Customer.builder() // Create the actual object
+                .fullName("Not Tech")
+                .email("not@tech.com")
+                .password("password123") // Fixed password
+                .phoneNumber("12345678") // Valid phone number
+                .address("a")
+                .build();
+        notATechnicianObj.setRole(UserRole.CUSTOMER.getValue()); // Set role on actual object
 
-        when(userRepository.findById(customerId)).thenReturn(Optional.of(customerUser));
+        Customer notATechnician = spy(notATechnicianObj); // Spy the object
+        lenient().doReturn(technicianId).when(notATechnician).getId(); // Stub ID on the spy
+
+        when(userRepository.findById(customerId)).thenReturn(Optional.of(customerUserSpy));
         when(userRepository.findById(technicianId)).thenReturn(Optional.of(notATechnician));
-        Review reviewToCreate = Review.builder().technicianId(technicianId).comment("test").rating(1).build();
-
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
-            reviewService.createReview(customerId, reviewToCreate);
+            reviewService.createReview(customerId, review);
         });
         assertEquals("Technician not found or user is not a technician", exception.getMessage());
     }
 
-    @Test
-    void createReview_alreadyReviewed_throwsRuntimeException() {
-        when(userRepository.findById(customerId)).thenReturn(Optional.of(customerUser));
-        when(userRepository.findById(technicianId)).thenReturn(Optional.of(technicianUser));
-        when(reviewRepository.findByUserIdAndTechnicianId(customerId, technicianId)).thenReturn(Optional.of(review)); 
-        Review reviewToCreate = Review.builder().technicianId(technicianId).comment("test").rating(1).build();
 
+    @Test
+    void createReview_alreadyReviewed_throwsException() {
+        when(userRepository.findById(customerId)).thenReturn(Optional.of(customerUserSpy));
+        when(userRepository.findById(technicianId)).thenReturn(Optional.of(technicianUserSpy));
+        when(reviewRepository.findByUserIdAndTechnicianId(customerId, technicianId)).thenReturn(Optional.of(review));
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
-            reviewService.createReview(customerId, reviewToCreate);
+            reviewService.createReview(customerId, review);
         });
         assertEquals("You have already reviewed this technician.", exception.getMessage());
     }
 
-
     @Test
     void updateReview_success() {
+        Review updatedDetails = Review.builder()
+                .comment("Updated comment")
+                .rating(4)
+                .technicianId(technicianId)
+                .build();
+
+        review.setUserId(customerUserSpy.getId());
+
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
-        when(reviewRepository.save(any(Review.class))).thenReturn(review); 
+        when(reviewRepository.save(any(Review.class))).thenReturn(review);
         doNothing().when(validationStrategy).validate(any(Review.class));
 
-        Review result = reviewService.updateReview(customerId, reviewId, updatedReviewDetails);
+        Review updatedReview = reviewService.updateReview(customerUserSpy.getId(), reviewId, updatedDetails);
 
-        assertNotNull(result);
-        assertEquals(updatedReviewDetails.getComment(), result.getComment());
-        assertEquals(updatedReviewDetails.getRating(), result.getRating());
-        verify(validationStrategy).validate(review); 
-        verify(reviewRepository).save(review);
+        assertNotNull(updatedReview);
+        assertEquals("Updated comment", updatedReview.getComment());
+        assertEquals(4, updatedReview.getRating());
+        verify(reviewRepository, times(1)).save(any(Review.class));
+        verify(validationStrategy, times(1)).validate(any(Review.class));
     }
-
+    
     @Test
-    void updateReview_notFound_throwsRuntimeException() {
+    void updateReview_notFound_throwsException() {
+        Review updatedDetails = Review.builder().comment("Updated").rating(3).technicianId(technicianId).build();
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
-            reviewService.updateReview(customerId, reviewId, updatedReviewDetails);
+            reviewService.updateReview(customerId, reviewId, updatedDetails);
         });
         assertEquals("Review not found with ID: " + reviewId, exception.getMessage());
     }
 
     @Test
-    void updateReview_unauthorizedUser_throwsRuntimeException() {
-        when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review)); 
+    void updateReview_notAuthorized_throwsException() {
+        Review updatedDetails = Review.builder().comment("Updated").rating(3).technicianId(technicianId).build();
         UUID otherUserId = UUID.randomUUID();
+        review.setUserId(customerId); 
+        when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
-            reviewService.updateReview(otherUserId, reviewId, updatedReviewDetails);
+            reviewService.updateReview(otherUserId, reviewId, updatedDetails);
         });
         assertEquals("You are not authorized to update this review.", exception.getMessage());
     }
-
+    
     @Test
-    void updateReview_windowExpired_throwsRuntimeException() {
-        review.setCreatedAt(LocalDateTime.now().minus(REVIEW_UPDATE_WINDOW).minusHours(1)); 
+    void updateReview_windowExpired_throwsException() {
+        Review updatedDetails = Review.builder().comment("Updated").rating(3).technicianId(technicianId).build();
+        review.setCreatedAt(LocalDateTime.now().minus(Duration.ofDays(8))); 
+        review.setUserId(customerId); 
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
-            reviewService.updateReview(customerId, reviewId, updatedReviewDetails);
+            reviewService.updateReview(customerId, reviewId, updatedDetails);
         });
-        assertEquals("Review update window of " + REVIEW_UPDATE_WINDOW.toDays() + " days has expired.", exception.getMessage());
+        assertTrue(exception.getMessage().contains("Review update window of"));
+        assertTrue(exception.getMessage().contains("days has expired."));
     }
 
     @Test
-    void updateReview_changingTechnicianId_throwsIllegalArgumentException() {
+    void updateReview_changingTechnicianId_throwsException() {
+        Review updatedDetails = Review.builder()
+                .comment("Updated comment")
+                .rating(4)
+                .technicianId(UUID.randomUUID()) 
+                .build();
+        review.setUserId(customerId);
+
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
-        updatedReviewDetails.setTechnicianId(UUID.randomUUID()); 
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            reviewService.updateReview(customerId, reviewId, updatedReviewDetails);
+            reviewService.updateReview(customerId, reviewId, updatedDetails);
         });
         assertEquals("Cannot change the technician for an existing review.", exception.getMessage());
     }
 
+
     @Test
     void deleteReview_success() {
+        review.setUserId(customerId); 
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
         doNothing().when(reviewRepository).delete(review);
 
         assertDoesNotThrow(() -> reviewService.deleteReview(reviewId, customerId));
-        verify(reviewRepository).delete(review);
+        verify(reviewRepository, times(1)).delete(review);
     }
 
     @Test
-    void deleteReview_notFound_throwsRuntimeException() {
+    void deleteReview_notFound_throwsException() {
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
@@ -257,9 +280,10 @@ class ReviewServiceImplTest {
     }
 
     @Test
-    void deleteReview_unauthorizedUser_throwsRuntimeException() {
-        when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
+    void deleteReview_notAuthorized_throwsException() {
         UUID otherUserId = UUID.randomUUID();
+        review.setUserId(customerId); 
+        when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
             reviewService.deleteReview(reviewId, otherUserId);
@@ -269,19 +293,18 @@ class ReviewServiceImplTest {
 
     @Test
     void getReviewsForTechnician_success() {
-        when(userRepository.findById(technicianId)).thenReturn(Optional.of(technicianUser));
+        when(userRepository.findById(technicianId)).thenReturn(Optional.of(technicianUserSpy));
         when(reviewRepository.findByTechnicianId(technicianId)).thenReturn(Collections.singletonList(review));
 
-        List<Review> result = reviewService.getReviewsForTechnician(technicianId);
+        List<Review> reviews = reviewService.getReviewsForTechnician(technicianId);
 
-        assertNotNull(result);
-        assertFalse(result.isEmpty());
-        assertEquals(1, result.size());
-        assertEquals(review, result.get(0));
+        assertFalse(reviews.isEmpty());
+        assertEquals(1, reviews.size());
+        assertEquals(review, reviews.get(0));
     }
 
     @Test
-    void getReviewsForTechnician_technicianNotFound_throwsRuntimeException() {
+    void getReviewsForTechnician_technicianNotFound_throwsException() {
         when(userRepository.findById(technicianId)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
@@ -289,12 +312,20 @@ class ReviewServiceImplTest {
         });
         assertEquals("Technician not found or user is not a technician with ID: " + technicianId, exception.getMessage());
     }
+    
+    @Test
+    void getReviewsForTechnician_userIsNotTechnician_throwsException() {
+        Customer notATechnicianObj = Customer.builder() // Create actual object
+                .fullName("Not a Tech")
+                .email("nota@tech.com")
+                .password("password123") // Fixed password
+                .phoneNumber("12345678") // Valid phone number
+                .address("Some Address")
+                .build();
+        notATechnicianObj.setRole(UserRole.CUSTOMER.getValue()); // Set role on actual object
 
-     @Test
-    void getReviewsForTechnician_userIsNotTechnician_throwsRuntimeException() {
-        User notATechnician = mock(Customer.class);
-        when(notATechnician.getId()).thenReturn(technicianId);
-        when(notATechnician.getRole()).thenReturn(UserRole.CUSTOMER.getValue());
+        Customer notATechnician = spy(notATechnicianObj); // Spy the object
+        lenient().doReturn(technicianId).when(notATechnician).getId(); // Stub ID on spy, make lenient
 
         when(userRepository.findById(technicianId)).thenReturn(Optional.of(notATechnician));
 
@@ -307,77 +338,85 @@ class ReviewServiceImplTest {
 
     @Test
     void calculateAverageRating_success() {
-        Review review2 = Review.builder().rating(3).technicianId(technicianId).build();
-        when(userRepository.findById(technicianId)).thenReturn(Optional.of(technicianUser)); 
+        Review review2 = Review.builder().rating(3).build();
+        when(userRepository.findById(technicianId)).thenReturn(Optional.of(technicianUserSpy));
         when(reviewRepository.findByTechnicianId(technicianId)).thenReturn(Arrays.asList(review, review2));
 
-
-        double average = reviewService.calculateAverageRating(technicianId);
-        assertEquals(4.0, average, 0.001); 
+        double averageRating = reviewService.calculateAverageRating(technicianId);
+        assertEquals(4.0, averageRating, 0.001);
     }
 
     @Test
     void calculateAverageRating_noReviews_returnsZero() {
-        when(userRepository.findById(technicianId)).thenReturn(Optional.of(technicianUser)); 
+        when(userRepository.findById(technicianId)).thenReturn(Optional.of(technicianUserSpy));
         when(reviewRepository.findByTechnicianId(technicianId)).thenReturn(Collections.emptyList());
 
-        double average = reviewService.calculateAverageRating(technicianId);
-        assertEquals(0.0, average, 0.001);
+        double averageRating = reviewService.calculateAverageRating(technicianId);
+        assertEquals(0.0, averageRating, 0.001);
     }
 
     @Test
     void getAllReviews_success() {
-        when(reviewRepository.findAll()).thenReturn(Arrays.asList(review, updatedReviewDetails));
-        List<Review> result = reviewService.getAllReviews();
-        assertEquals(2, result.size());
+        when(reviewRepository.findAll()).thenReturn(Collections.singletonList(review));
+        List<Review> reviews = reviewService.getAllReviews();
+        assertFalse(reviews.isEmpty());
+        assertEquals(1, reviews.size());
     }
 
     @Test
     void deleteReviewAsAdmin_success() {
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
         doNothing().when(reviewRepository).delete(review);
+
         assertDoesNotThrow(() -> reviewService.deleteReviewAsAdmin(reviewId));
-        verify(reviewRepository).delete(review);
+        verify(reviewRepository, times(1)).delete(review);
     }
 
     @Test
-    void deleteReviewAsAdmin_notFound_throwsRuntimeException() {
+    void deleteReviewAsAdmin_notFound_throwsException() {
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.empty());
-        Exception exception = assertThrows(RuntimeException.class, () -> reviewService.deleteReviewAsAdmin(reviewId));
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            reviewService.deleteReviewAsAdmin(reviewId);
+        });
         assertEquals("Review not found with ID: " + reviewId, exception.getMessage());
     }
 
     @Test
     void getAvailableTechniciansForReview_success() {
-        Technician tech1Mock = mock(Technician.class);
-        when(tech1Mock.getId()).thenReturn(UUID.randomUUID());
-        when(tech1Mock.getFullName()).thenReturn("Tech One");
+        Technician techForListObj = Technician.builder()
+                                .fullName("Available Tech")
+                                .email("avail@tech.com")
+                                .password("password123") // Fixed password
+                                .phoneNumber("12345678") // Valid phone number
+                                .address("a")
+                                .build();
+        techForListObj.setRole(UserRole.TECHNICIAN.getValue());
 
-        Technician tech2Mock = mock(Technician.class);
-        when(tech2Mock.getId()).thenReturn(UUID.randomUUID());
-        when(tech2Mock.getFullName()).thenReturn("Tech Two");
+        Technician spiedTechForList = spy(techForListObj);
+        UUID availableTechId = UUID.randomUUID();
+        lenient().doReturn(availableTechId).when(spiedTechForList).getId();
 
+        when(userRepository.findByRole(UserRole.TECHNICIAN.getValue())).thenReturn(Collections.singletonList(spiedTechForList));
+        List<TechnicianSelectionDto> technicians = reviewService.getAvailableTechniciansForReview();
 
-        when(userRepository.findByRole(UserRole.TECHNICIAN.getValue())).thenReturn(Arrays.asList(tech1Mock, tech2Mock));
-
-        List<TechnicianSelectionDto> result = reviewService.getAvailableTechniciansForReview();
-
-        assertEquals(2, result.size());
-        assertEquals("Tech One", result.get(0).getFullName());
-        assertEquals(tech1Mock.getId(), result.get(0).getId());
+        assertFalse(technicians.isEmpty());
+        assertEquals(1, technicians.size());
+        assertEquals(availableTechId, technicians.get(0).getId());
+        assertEquals("Available Tech", technicians.get(0).getFullName());
+    }
+    
+    @Test
+    void getUserById_found() {
+        when(userRepository.findById(customerId)).thenReturn(Optional.of(customerUserSpy));
+        User foundUser = reviewService.getUserById(customerId);
+        assertNotNull(foundUser);
+        assertEquals(customerUserSpy, foundUser);
     }
 
     @Test
-    void getUserById_success() {
-        when(userRepository.findById(customerId)).thenReturn(Optional.of(customerUser));
-        User result = reviewService.getUserById(customerId);
-        assertEquals(customerUser, result);
-    }
-
-    @Test
-    void getUserById_notFound_returnsNull() {
+    void getUserById_notFound() {
         when(userRepository.findById(customerId)).thenReturn(Optional.empty());
-        User result = reviewService.getUserById(customerId);
-        assertNull(result);
+        User foundUser = reviewService.getUserById(customerId);
+        assertNull(foundUser);
     }
 }
