@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.perbaikiinaja.builder.ReportBuilder;
 import id.ac.ui.cs.advprog.perbaikiinaja.builder.RepairReportBuilder;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ReportService;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
@@ -141,9 +142,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get reports with filtering options (admin only)
-     */
     @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getReports(
@@ -152,98 +150,176 @@ public class ReportController {
             @RequestParam(required = false) UUID technicianId,
             @RequestParam(required = false) UUID reportId) {
 
-        // Get reports based on parameters
-        List<Report> reports;
-
         try {
-            if (reportId != null) {
-                try {
-                    Report report = reportService.getReportById(reportId);
-                    reports = Collections.singletonList(report);
-                } catch (IllegalArgumentException e) {
-                    Map<String, Object> response = new HashMap<>();
-                    response.put(ERRORCODESTR, 4041);
-                    response.put(MESSAGESTR, "Report not found");
-                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-                }
-            } else if (technicianId != null) {
-                try {
-                    reports = reportService.getReportsByTechnician(technicianId);
-                } catch (IllegalArgumentException e) {
-                    Map<String, Object> response = new HashMap<>();
-                    response.put(ERRORCODESTR, 4040);
-                    response.put(MESSAGESTR, "Technician not found");
-                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-                }
-            } else if (dateStart != null && dateEnd != null) {
-                try {
-                    LocalDate startDate = LocalDate.parse(dateStart);
-                    LocalDate endDate = LocalDate.parse(dateEnd);
-                    reports = reportService.getReportsByDateRange(startDate, endDate);
-                } catch (DateTimeParseException e) {
-                    Map<String, Object> response = new HashMap<>();
-                    response.put(ERRORCODESTR, e.toString().contains(dateStart) ? 4000 : 4001);
-                    response.put(MESSAGESTR, "Invalid date format. Expected format: YYYY-MM-DD");
-                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-                }
-            } else {
-                reports = reportService.getAllReports();
-            }
-
-            // Build response - now we need to get ServiceRequest for each report
-            List<Map<String, Object>> reportsList = new ArrayList<>();
-            for (Report report : reports) {
-                Map<String, Object> reportMap = new HashMap<>();
-                reportMap.put("id", report.getId());
-
-                // Get ServiceRequest for this report
-                ServiceRequest serviceRequest = reportService.getServiceRequestByReportId(report.getId());
-
-                // Service request info
-                Map<String, Object> serviceRequestMap = new HashMap<>();
-                serviceRequestMap.put("id", serviceRequest.getId());
-                serviceRequestMap.put("status", serviceRequest.getStateType());
-
-                // Customer info
-                Map<String, Object> customerMap = new HashMap<>();
-                customerMap.put("id", serviceRequest.getCustomer().getId());
-                customerMap.put("fullName", serviceRequest.getCustomer().getFullName());
-                serviceRequestMap.put("customer", customerMap);
-
-                // Item info
-                Map<String, Object> itemMap = new HashMap<>();
-                itemMap.put("name", serviceRequest.getItem().getName());
-                itemMap.put("condition", serviceRequest.getItem().getCondition());
-                itemMap.put("issueDescription", serviceRequest.getItem().getIssueDescription());
-                serviceRequestMap.put("item", itemMap);
-
-                reportMap.put("serviceRequest", serviceRequestMap);
-
-                // Technician info
-                Map<String, Object> technicianMap = new HashMap<>();
-                technicianMap.put("id", serviceRequest.getTechnician().getId());
-                technicianMap.put("fullName", serviceRequest.getTechnician().getFullName());
-                reportMap.put("technician", technicianMap);
-
-                // Report details
-                reportMap.put(REPAIRDETAILSSTR, report.getRepairDetails());
-                reportMap.put(RESOLUTIONSUMMARYSTR, report.getRepairSummary());
-                reportMap.put(ESTIMATEDCOMPLETIONDATESTR, report.getCompletionDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                reportMap.put(CREATEDATSTR, report.getCreatedDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-
-                reportsList.add(reportMap);
-            }
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("reports", reportsList);
-
-            return new ResponseEntity<>(response, HttpStatus.OK);
-
+            List<Report> reports = fetchReports(reportId, technicianId, dateStart, dateEnd);
+            return ResponseEntity.ok(buildReportsResponse(reports));
+        } catch (ResourceNotFoundException e) {
+            return createErrorResponse(e.getErrorCode(), e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (InvalidInputException e) {
+            return createErrorResponse(e.getErrorCode(), e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put(ERRORCODESTR, 5000);
-            response.put(MESSAGESTR, "Internal server error: " + e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return createErrorResponse(5000, "Internal server error: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Fetches reports based on the given parameters.
+     */
+    private List<Report> fetchReports(UUID reportId, UUID technicianId, String dateStart, String dateEnd) {
+        if (reportId != null) {
+            return Collections.singletonList(getReportById(reportId));
+        }
+
+        if (technicianId != null) {
+            return getReportsByTechnician(technicianId);
+        }
+
+        if (dateStart != null && dateEnd != null) {
+            return getReportsByDateRange(dateStart, dateEnd);
+        }
+
+        return reportService.getAllReports();
+    }
+
+    /**
+     * Gets a report by ID or throws an exception if not found.
+     */
+    private Report getReportById(UUID reportId) {
+        try {
+            return reportService.getReportById(reportId);
+        } catch (IllegalArgumentException e) {
+            throw new ResourceNotFoundException(4041, "Report not found");
+        }
+    }
+
+    /**
+     * Gets reports by technician ID or throws an exception if technician not found.
+     */
+    private List<Report> getReportsByTechnician(UUID technicianId) {
+        try {
+            return reportService.getReportsByTechnician(technicianId);
+        } catch (IllegalArgumentException e) {
+            throw new ResourceNotFoundException(4040, "Technician not found");
+        }
+    }
+
+    /**
+     * Gets reports within a date range or throws an exception if date format is invalid.
+     */
+    private List<Report> getReportsByDateRange(String dateStart, String dateEnd) {
+        try {
+            LocalDate startDate = LocalDate.parse(dateStart);
+            LocalDate endDate = LocalDate.parse(dateEnd);
+            return reportService.getReportsByDateRange(startDate, endDate);
+        } catch (DateTimeParseException e) {
+            int errorCode = e.toString().contains(dateStart) ? 4000 : 4001;
+            throw new InvalidInputException(errorCode, "Invalid date format. Expected format: YYYY-MM-DD");
+        }
+    }
+
+    /**
+     * Builds the response object with the reports data.
+     */
+    private Map<String, Object> buildReportsResponse(List<Report> reports) {
+        List<Map<String, Object>> reportsList = new ArrayList<>();
+
+        for (Report report : reports) {
+            Map<String, Object> reportMap = new HashMap<>();
+            reportMap.put("id", report.getId());
+
+            ServiceRequest serviceRequest = reportService.getServiceRequestByReportId(report.getId());
+
+            reportMap.put("serviceRequest", buildServiceRequestMap(serviceRequest));
+            reportMap.put("technician", buildTechnicianMap(serviceRequest.getTechnician()));
+
+            // Report details
+            reportMap.put(REPAIRDETAILSSTR, report.getRepairDetails());
+            reportMap.put(RESOLUTIONSUMMARYSTR, report.getRepairSummary());
+            reportMap.put(ESTIMATEDCOMPLETIONDATESTR, report.getCompletionDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            reportMap.put(CREATEDATSTR, report.getCreatedDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
+            reportsList.add(reportMap);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("reports", reportsList);
+        return response;
+    }
+
+    /**
+     * Builds a service request map with customer and item info.
+     */
+    private Map<String, Object> buildServiceRequestMap(ServiceRequest serviceRequest) {
+        Map<String, Object> serviceRequestMap = new HashMap<>();
+        serviceRequestMap.put("id", serviceRequest.getId());
+        serviceRequestMap.put("status", serviceRequest.getStateType());
+
+        // Customer info
+        Map<String, Object> customerMap = new HashMap<>();
+        customerMap.put("id", serviceRequest.getCustomer().getId());
+        customerMap.put("fullName", serviceRequest.getCustomer().getFullName());
+        serviceRequestMap.put("customer", customerMap);
+
+        // Item info
+        Map<String, Object> itemMap = new HashMap<>();
+        itemMap.put("name", serviceRequest.getItem().getName());
+        itemMap.put("condition", serviceRequest.getItem().getCondition());
+        itemMap.put("issueDescription", serviceRequest.getItem().getIssueDescription());
+        serviceRequestMap.put("item", itemMap);
+
+        return serviceRequestMap;
+    }
+
+    /**
+     * Builds a technician info map.
+     */
+    private Map<String, Object> buildTechnicianMap(Technician technician) {
+        Map<String, Object> technicianMap = new HashMap<>();
+        technicianMap.put("id", technician.getId());
+        technicianMap.put("fullName", technician.getFullName());
+        return technicianMap;
+    }
+
+    /**
+     * Creates an error response with the given error code, message, and status.
+     */
+    private ResponseEntity<Map<String, Object>> createErrorResponse(int errorCode, String message, HttpStatus status) {
+        Map<String, Object> response = new HashMap<>();
+        response.put(ERRORCODESTR, errorCode);
+        response.put(MESSAGESTR, message);
+        return new ResponseEntity<>(response, status);
+    }
+
+    /**
+     * Custom exception for resource not found errors.
+     */
+    private static class ResourceNotFoundException extends RuntimeException {
+        private final int errorCode;
+
+        public ResourceNotFoundException(int errorCode, String message) {
+            super(message);
+            this.errorCode = errorCode;
+        }
+
+        public int getErrorCode() {
+            return errorCode;
+        }
+    }
+
+    /**
+     * Custom exception for invalid input errors.
+     */
+    private static class InvalidInputException extends RuntimeException {
+        private final int errorCode;
+
+        public InvalidInputException(int errorCode, String message) {
+            super(message);
+            this.errorCode = errorCode;
+        }
+
+        public int getErrorCode() {
+            return errorCode;
         }
     }
 
