@@ -1,8 +1,11 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
+import id.ac.ui.cs.advprog.perbaikiinaja.utils.PriceCalculationUtils;
 import jakarta.persistence.*;
 
 /**
@@ -79,5 +82,35 @@ public class RepairEstimate {
      */
     public boolean isValid() {
         return cost > 0 && completionDate != null;
+    }
+
+    /**
+     * Calculate final cost after applying coupon discount
+     * @param coupon The coupon to apply
+     * @return The final cost after discount
+     */
+    public double getFinalCost(Coupon coupon) {
+        if (coupon == null) {
+            return this.cost;
+        }
+
+        BigDecimal originalCost = BigDecimal.valueOf(this.cost);
+        BigDecimal finalCost = PriceCalculationUtils.calculateFinalPrice(originalCost, coupon);
+        return finalCost.doubleValue();
+    }
+
+    /**
+     * Calculate discount amount from coupon
+     * @param coupon The coupon to apply
+     * @return The discount amount
+     */
+    public double getDiscountAmount(Coupon coupon) {
+        if (coupon == null) {
+            return 0.0;
+        }
+
+        BigDecimal originalCost = BigDecimal.valueOf(this.cost);
+        BigDecimal discountAmount = PriceCalculationUtils.calculateDiscountAmount(originalCost, coupon);
+        return discountAmount.doubleValue();
     }
 }

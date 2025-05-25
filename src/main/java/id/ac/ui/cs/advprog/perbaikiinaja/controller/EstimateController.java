@@ -8,6 +8,7 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Wallet;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.EstimateService;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
+import id.ac.ui.cs.advprog.perbaikiinaja.utils.PriceCalculationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -190,17 +191,27 @@ public class EstimateController {
                 Optional<Wallet> customerWalletOpt = walletService.getWalletByUserId(customerId);
                 if (customerWalletOpt.isPresent()) {
                     Wallet customerWallet = customerWalletOpt.get();
-                    BigDecimal estimateAmount = BigDecimal.valueOf(estimate.getCost());
+                    BigDecimal originalAmount = BigDecimal.valueOf(estimate.getCost());
+                    BigDecimal finalAmount = PriceCalculationUtils.calculateFinalPrice(originalAmount, serviceRequest.getCoupon());
 
-                    if (customerWallet.getBalance().compareTo(estimateAmount) < 0) {
+                    if (customerWallet.getBalance().compareTo(finalAmount) < 0) {
                         Map<String, Object> response = new HashMap<>();
                         response.put("errorCode", 4002);
-                        response.put("message", "Insufficient funds in wallet. Please deposit funds before accepting the estimate.");
+                        response.put("message", String.format(
+                                "Insufficient funds in wallet. Required: %s (Original: %s, Discount: %s). Please deposit funds before accepting the estimate.",
+                                finalAmount.toString(),
+                                originalAmount.toString(),
+                                originalAmount.subtract(finalAmount).toString()
+                        ));
                         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                     }
 
                     serviceRequest = estimateService.acceptEstimate(serviceRequestId, customerId, feedback);
                 }
+
+                // Calculate pricing breakdown
+                BigDecimal originalCost = BigDecimal.valueOf(estimate.getCost());
+                PriceCalculationUtils.PriceBreakdown breakdown = PriceCalculationUtils.calculatePriceBreakdown(originalCost, serviceRequest.getCoupon());
 
                 // Build response
                 Map<String, Object> response = new HashMap<>();
@@ -210,7 +221,9 @@ public class EstimateController {
                 estimateResponse.put("id", estimate.getId());
 
                 estimateResponse.put(SERVICEREQUESTIDSTR, serviceRequest.getId());
-                estimateResponse.put(ESTIMATEDCOSTSTR, estimate.getCost());
+                estimateResponse.put("originalCost", estimate.getCost());
+                estimateResponse.put("discountAmount", breakdown.getDiscountAmount());
+                estimateResponse.put("finalCost", breakdown.getFinalPrice());
                 estimateResponse.put(ESTIMATEDCOMPLETIONTIMESTR, estimate.getCompletionDate());
                 estimateResponse.put(STATUSSTR, ServiceRequestStateType.ACCEPTED);
 

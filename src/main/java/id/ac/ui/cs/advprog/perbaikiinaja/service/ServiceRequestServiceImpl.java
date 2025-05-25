@@ -14,6 +14,7 @@ import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.EstimatedState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.PendingState;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.RejectedState;
+import id.ac.ui.cs.advprog.perbaikiinaja.utils.PriceCalculationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -179,13 +180,14 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         // Process payment - only if there's a valid estimate amount
         if (request.getEstimate() != null && request.getEstimate().getCost() > 0) {
             Customer customer = request.getCustomer();
-            BigDecimal amount = BigDecimal.valueOf(request.getEstimate().getCost());
+            BigDecimal originalAmount = BigDecimal.valueOf(request.getEstimate().getCost());
+            BigDecimal finalAmount = PriceCalculationUtils.calculateFinalPrice(originalAmount, request.getCoupon());
 
             // Process the payment between customer and technician wallets
             walletService.processServicePayment(
                     customer.getId(),
                     technician.getId(),
-                    amount,
+                    finalAmount,
                     request.getId()
             );
         }
