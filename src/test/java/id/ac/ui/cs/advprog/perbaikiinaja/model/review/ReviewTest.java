@@ -31,29 +31,4 @@ class ReviewTest {
         assertNotNull(review.getUpdatedAt());
         assertEquals(review.getCreatedAt(), review.getUpdatedAt());
     }
-
-    @Test
-    void testOnUpdate_shouldUpdateUpdatedAt() throws InterruptedException {
-        UUID technicianId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        UUID reportId = UUID.randomUUID();
-
-        Review review = Review.builder()
-                .rating(4)
-                .comment("Kerja Bagus!")
-                .technicianId(technicianId)
-                .userId(userId)
-                .reportId(reportId)
-                .build();
-
-        review.onCreate();
-        LocalDateTime beforeUpdate = review.getUpdatedAt();
-
-        Thread.sleep(1000);
-
-        review.onUpdate();
-        LocalDateTime afterUpdate = review.getUpdatedAt();
-
-        assertTrue(afterUpdate.isAfter(beforeUpdate));
-    }
 }

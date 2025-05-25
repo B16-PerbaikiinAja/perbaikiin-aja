@@ -174,7 +174,10 @@ class ServiceRequestTest {
         assertThrows(IllegalStateException.class, () -> request.acceptEstimate());
         assertThrows(IllegalStateException.class, () -> request.rejectEstimate());
         assertThrows(IllegalStateException.class, () -> request.completeService());
-        assertThrows(IllegalStateException.class, () -> request.createReport(new Report()));
+        // Create the Report object outside the lambda
+        Report report = new Report();
+// Then use it in the lambda with only one operation that could throw an exception
+        assertThrows(IllegalStateException.class, () -> request.createReport(report));
 
         // Start the service to move to IN_PROGRESS state
         request.startService();
