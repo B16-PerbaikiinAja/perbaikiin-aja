@@ -430,7 +430,7 @@ class WalletControllerTest {
 
         when(authentication.getPrincipal()).thenReturn(technician);
         when(walletService.getWalletByUser(technician)).thenReturn(Optional.of(technicianWallet));
-        when(walletService.withdraw(eq(technicianWallet.getId()), eq(BigDecimal.valueOf(15.0)), eq("Withdrawal")))
+        when(walletService.withdraw(technicianWallet.getId(), BigDecimal.valueOf(15.0),"Withdrawal"))
                 .thenReturn(updatedWallet);
 
         ResponseEntity<Map<String, Object>> response = walletController.withdraw(authentication, requestBody);

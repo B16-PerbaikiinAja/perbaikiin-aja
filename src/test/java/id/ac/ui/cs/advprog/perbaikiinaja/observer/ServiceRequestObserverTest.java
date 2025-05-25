@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
@@ -15,7 +14,6 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Item;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 
 class ServiceRequestObserverTest {
 

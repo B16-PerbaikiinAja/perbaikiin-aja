@@ -1,7 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.state;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
