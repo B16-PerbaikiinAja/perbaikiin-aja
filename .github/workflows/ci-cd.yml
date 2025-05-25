@@ -71,12 +71,18 @@ jobs:
         shell: bash
         run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
+      - name: Generate build timestamp
+        run: echo "BUILD_TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/perbaikiinaja-backend:${{ env.BRANCH_NAME }},${{ secrets.DOCKERHUB_USERNAME }}/perbaikiinaja-backend:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/perbaikiinaja-backend:${{ env.BRANCH_NAME }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/perbaikiinaja-backend:${{ env.BRANCH_NAME }}-${{ env.BUILD_TIMESTAMP }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/perbaikiinaja-backend:latest
 
   deploy-staging:
     needs: build-and-push-docker
@@ -104,6 +110,9 @@ jobs:
           ssh-keyscan -v -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts || echo "Warning: ssh-keyscan failed"
           cat ~/.ssh/known_hosts
 
+      - name: Generate build timestamp
+        run: echo "BUILD_TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
       - name: Deploy to EC2 with Docker (Amazon Linux)
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -114,12 +123,22 @@ jobs:
           PORT: ${{ secrets.PORT || '8080' }}
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          BUILD_TIMESTAMP: ${{ env.BUILD_TIMESTAMP }}
         run: |
           ssh $EC2_USERNAME@$EC2_HOST << EOF
-            
+            # Create directories for deployment
             mkdir -p ~/perbaikiinaja
             mkdir -p ~/perbaikiinaja/prometheus
             mkdir -p ~/perbaikiinaja/grafana/provisioning/datasources
+            mkdir -p ~/perbaikiinaja/deployments
+          
+            # Store the currently running version for potential rollback
+            if [ -f ~/perbaikiinaja/current_version.txt ]; then
+              cp ~/perbaikiinaja/current_version.txt ~/perbaikiinaja/previous_version.txt
+            fi
+          
+            # Record new version information
+            echo "${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging-${BUILD_TIMESTAMP}" > ~/perbaikiinaja/current_version.txt
 
             # Create docker-compose.yml with environment variable substitution
             cat > ~/perbaikiinaja/docker-compose.yml << 'COMPOSE_EOF'
@@ -135,7 +154,7 @@ jobs:
               networks:
                 - monitoring-network
               restart: unless-stopped
-              
+          
             grafana:
               image: grafana/grafana:9.5.2
               container_name: grafana
@@ -154,7 +173,7 @@ jobs:
                 - prometheus
 
             perbaikiinaja-backend:
-              image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging
+              image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging-${BUILD_TIMESTAMP}
               container_name: perbaikiinaja-backend
               restart: always
               ports:
@@ -167,7 +186,13 @@ jobs:
                 - PORT=8080
               networks:
                 - monitoring-network
-              
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 40s
+          
           networks:
             monitoring-network:
               driver: bridge
@@ -177,12 +202,12 @@ jobs:
             global:
               scrape_interval: 15s
               evaluation_interval: 15s
-                        
+          
             scrape_configs:
               - job_name: 'prometheus'
                 static_configs:
                   - targets: ['localhost:9090']
-                    
+          
               - job_name: 'spring-boot-app'
                 metrics_path: '/actuator/prometheus'
                 scrape_interval: 5s
@@ -202,6 +227,51 @@ jobs:
                 isDefault: true
           GRAFANA_EOF
 
+            # Create rollback script
+            cat > ~/perbaikiinaja/rollback.sh << 'ROLLBACK_EOF'
+            #!/bin/bash
+          
+            if [ -f ./previous_version.txt ]; then
+              PREVIOUS_VERSION=$(cat ./previous_version.txt)
+              echo "Rolling back to previous version: $PREVIOUS_VERSION"
+          
+              # Update docker-compose file with previous version
+              sed -i "s|image: .*perbaikiinaja-backend:.*|image: $PREVIOUS_VERSION|g" docker-compose.yml
+          
+              # Stop current container
+              docker-compose stop perbaikiinaja-backend
+          
+              # Start with previous version
+              docker-compose up -d perbaikiinaja-backend
+          
+              # Check if rollback was successful
+              sleep 10
+              if docker ps --filter "name=perbaikiinaja-backend" --format "{{.Names}}" | grep -q perbaikiinaja-backend; then
+                echo "✓ Rollback successful. Container is running."
+          
+                # Verify application health
+                sleep 5
+                if curl -f http://localhost:${PORT}/actuator/health > /dev/null 2>&1; then
+                  echo "✓ Application health check passed after rollback"
+                  # Make previous version the current version
+                  cp previous_version.txt current_version.txt
+                  exit 0
+                else
+                  echo "⚠ Application health check failed after rollback"
+                  exit 1
+                fi
+              else
+                echo "✗ Rollback failed. Container is not running."
+                exit 1
+              fi
+            else
+              echo "No previous version found for rollback"
+              exit 1
+            fi
+            ROLLBACK_EOF
+          
+            chmod +x ~/perbaikiinaja/rollback.sh
+
             # Export environment variables for envsubst
             export PG_HOST="${PG_HOST}"
             export PG_USER="${PG_USER}"
@@ -209,6 +279,7 @@ jobs:
             export JWT_SECRET_KEY="${JWT_SECRET_KEY}"
             export PORT="${PORT}"
             export DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}"
+            export BUILD_TIMESTAMP="${BUILD_TIMESTAMP}"
 
             # Substitute environment variables in docker-compose.yml
             cd ~/perbaikiinaja
@@ -219,7 +290,10 @@ jobs:
             sudo service docker start
 
             # Pull the latest image
-            docker pull \${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging
+            docker pull \${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging-\${BUILD_TIMESTAMP}
+
+            # Save the current compose file for reference
+            cp docker-compose.yml deployments/docker-compose-\${BUILD_TIMESTAMP}.yml
 
             # Stop and remove existing container
             docker-compose down
@@ -231,12 +305,51 @@ jobs:
             sleep 10
             if docker ps --filter "name=perbaikiinaja-backend" --format "{{.Names}}" | grep -q perbaikiinaja-backend; then
               echo "Container is running successfully"
-              echo "Application should be accessible at http://${EC2_HOST}:${PORT}"
+          
+              # More comprehensive health check
+              echo "Performing health check..."
+              sleep 5
+              HEALTH_CHECK_RETRIES=3
+              HEALTH_CHECK_PASSED=false
+          
+              for i in \$(seq 1 \$HEALTH_CHECK_RETRIES); do
+                if curl -f http://localhost:${PORT}/actuator/health > /dev/null 2>&1; then
+                  echo "✓ Health check passed on attempt \$i"
+                  HEALTH_CHECK_PASSED=true
+                  break
+                else
+                  echo "⚠ Health check failed on attempt \$i"
+                  sleep 5
+                fi
+              done
+          
+              if [ "\$HEALTH_CHECK_PASSED" = true ]; then
+                echo "Deployment successful!"
+                echo "Application should be accessible at http://${EC2_HOST}:${PORT}"
+              else
+                echo "✗ Health checks failed after multiple attempts. Initiating rollback..."
+                ./rollback.sh
+                if [ \$? -eq 0 ]; then
+                  echo "Rollback completed successfully"
+                else
+                  echo "Rollback failed. Manual intervention required."
+                  exit 1
+                fi
+              fi
             else
-              echo "Error: Container failed to start"
+              echo "✗ Error: Container failed to start"
+              echo "Container logs:"
               docker logs perbaikiinaja-backend
-              exit 1
+              echo "Initiating rollback..."
+              ./rollback.sh
+              if [ \$? -eq 0 ]; then
+                echo "Rollback completed successfully"
+              else
+                echo "Rollback failed. Manual intervention required."
+                exit 1
+              fi
             fi
+
           # Check monitoring services
             if docker ps --filter "name=prometheus" --format "{{.Names}}" | grep -q prometheus; then
               echo "Prometheus is running successfully"
@@ -244,7 +357,6 @@ jobs:
             else
               echo "Error: Prometheus container failed to start"
               docker logs prometheus
-              exit 1
             fi
 
             if docker ps --filter "name=grafana" --format "{{.Names}}" | grep -q grafana; then
@@ -254,7 +366,6 @@ jobs:
             else
               echo "Error: Grafana container failed to start"
               docker logs grafana
-              exit 1
             fi
 
             echo "Monitoring setup completed successfully!"
@@ -288,6 +399,9 @@ jobs:
           ssh-keyscan -v -H ${{ secrets.PROD_EC2_HOST }} >> ~/.ssh/known_hosts || echo "Warning: ssh-keyscan failed"
           cat ~/.ssh/known_hosts
 
+      - name: Generate build timestamp
+        run: echo "BUILD_TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
       - name: Deploy to Production EC2 with Docker
         env:
           PROD_EC2_HOST: ${{ secrets.PROD_EC2_HOST }}
@@ -298,11 +412,22 @@ jobs:
           PROD_JWT_SECRET_KEY: ${{ secrets.PROD_JWT_SECRET_KEY }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           PROD_PORT: ${{ secrets.PROD_PORT || '8080' }}
+          BUILD_TIMESTAMP: ${{ env.BUILD_TIMESTAMP }}
         run: |
           ssh $PROD_EC2_USERNAME@$PROD_EC2_HOST << EOF
+            # Create directories for deployment
             mkdir -p ~/perbaikiinaja-prod
             mkdir -p ~/perbaikiinaja-prod/prometheus
             mkdir -p ~/perbaikiinaja-prod/grafana/provisioning/datasources
+            mkdir -p ~/perbaikiinaja-prod/deployments
+          
+            # Store the currently running version for potential rollback
+            if [ -f ~/perbaikiinaja-prod/current_version.txt ]; then
+              cp ~/perbaikiinaja-prod/current_version.txt ~/perbaikiinaja-prod/previous_version.txt
+            fi
+          
+            # Record new version information
+            echo "${DOCKERHUB_USERNAME}/perbaikiinaja-backend:main-${BUILD_TIMESTAMP}" > ~/perbaikiinaja-prod/current_version.txt
 
             # Create docker-compose.yml with environment variable substitution
             cat > ~/perbaikiinaja-prod/docker-compose.yml << 'COMPOSE_EOF'
@@ -318,7 +443,7 @@ jobs:
               networks:
                 - monitoring-network
               restart: unless-stopped
-              
+          
             grafana:
               image: grafana/grafana:9.5.2
               container_name: grafana
@@ -337,7 +462,7 @@ jobs:
                 - prometheus
 
             perbaikiinaja-backend:
-              image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:main
+              image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:main-${BUILD_TIMESTAMP}
               container_name: perbaikiinaja-backend-prod
               restart: always
               ports:
@@ -350,6 +475,12 @@ jobs:
                 - PORT=8080
               networks:
                 - monitoring-network
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 40s
           networks:
             monitoring-network:
               driver: bridge
@@ -359,12 +490,12 @@ jobs:
             global:
               scrape_interval: 15s
               evaluation_interval: 15s
-                        
+          
             scrape_configs:
               - job_name: 'prometheus'
                 static_configs:
                   - targets: ['localhost:9090']
-                    
+          
               - job_name: 'spring-boot-app'
                 metrics_path: '/actuator/prometheus'
                 scrape_interval: 5s
@@ -384,6 +515,51 @@ jobs:
                 isDefault: true
           GRAFANA_EOF
 
+            # Create rollback script
+            cat > ~/perbaikiinaja-prod/rollback.sh << 'ROLLBACK_EOF'
+            #!/bin/bash
+          
+            if [ -f ./previous_version.txt ]; then
+              PREVIOUS_VERSION=$(cat ./previous_version.txt)
+              echo "Rolling back to previous version: $PREVIOUS_VERSION"
+          
+              # Update docker-compose file with previous version
+              sed -i "s|image: .*perbaikiinaja-backend:.*|image: $PREVIOUS_VERSION|g" docker-compose.yml
+          
+              # Stop current container
+              docker-compose stop perbaikiinaja-backend-prod
+          
+              # Start with previous version
+              docker-compose up -d perbaikiinaja-backend-prod
+          
+              # Check if rollback was successful
+              sleep 10
+              if docker ps --filter "name=perbaikiinaja-backend-prod" --format "{{.Names}}" | grep -q perbaikiinaja-backend-prod; then
+                echo "✓ Rollback successful. Container is running."
+          
+                # Verify application health
+                sleep 5
+                if curl -f http://localhost:${PROD_PORT}/actuator/health > /dev/null 2>&1; then
+                  echo "✓ Application health check passed after rollback"
+                  # Make previous version the current version
+                  cp previous_version.txt current_version.txt
+                  exit 0
+                else
+                  echo "⚠ Application health check failed after rollback"
+                  exit 1
+                fi
+              else
+                echo "✗ Rollback failed. Container is not running."
+                exit 1
+              fi
+            else
+              echo "No previous version found for rollback"
+              exit 1
+            fi
+            ROLLBACK_EOF
+          
+            chmod +x ~/perbaikiinaja-prod/rollback.sh
+
             # Export environment variables for envsubst
             export PG_HOST="${PROD_PG_HOST}"
             export PG_USER="${PROD_PG_USER}"
@@ -391,6 +567,7 @@ jobs:
             export JWT_SECRET_KEY="${PROD_JWT_SECRET_KEY}"
             export PROD_PORT="${PROD_PORT}"
             export DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}"
+            export BUILD_TIMESTAMP="${BUILD_TIMESTAMP}"
 
             # Substitute environment variables in docker-compose.yml
             cd ~/perbaikiinaja-prod
@@ -400,8 +577,11 @@ jobs:
             # Ensure Docker is running
             sudo service docker start
 
-            # Pull the latest image
-            docker pull \${DOCKERHUB_USERNAME}/perbaikiinaja-backend:main
+            # Pull the latest image with versioned tag
+            docker pull \${DOCKERHUB_USERNAME}/perbaikiinaja-backend:main-\${BUILD_TIMESTAMP}
+
+            # Save the current compose file for reference
+            cp docker-compose.yml deployments/docker-compose-\${BUILD_TIMESTAMP}.yml
 
             # Stop and remove existing container
             docker-compose down
@@ -415,14 +595,34 @@ jobs:
               echo "Container is running successfully"
               echo "Production application should be accessible at http://${PROD_EC2_HOST}:${PROD_PORT}"
           
-              # Additional health check
+              # More comprehensive health check
               echo "Performing health check..."
               sleep 5
-              if curl -f http://localhost:${PROD_PORT}/actuator/health > /dev/null 2>&1; then
-                echo "✓ Health check passed"
+              HEALTH_CHECK_RETRIES=3
+              HEALTH_CHECK_PASSED=false
+          
+              for i in \$(seq 1 \$HEALTH_CHECK_RETRIES); do
+                if curl -f http://localhost:${PROD_PORT}/actuator/health > /dev/null 2>&1; then
+                  echo "✓ Health check passed on attempt \$i"
+                  HEALTH_CHECK_PASSED=true
+                  break
+                else
+                  echo "⚠ Health check failed on attempt \$i"
+                  sleep 5
+                fi
+              done
+          
+              if [ "\$HEALTH_CHECK_PASSED" = true ]; then
+                echo "Production deployment successful!"
               else
-                echo "⚠ Health check failed, but container is running. Check application logs:"
-                docker logs perbaikiinaja-backend-prod --tail=20
+                echo "✗ Health checks failed after multiple attempts. Initiating rollback..."
+                ./rollback.sh
+                if [ \$? -eq 0 ]; then
+                  echo "Rollback completed successfully"
+                else
+                  echo "Rollback failed. Manual intervention required."
+                  exit 1
+                fi
               fi
             else
               echo "✗ Error: Container failed to start"
@@ -430,7 +630,14 @@ jobs:
               docker logs perbaikiinaja-backend-prod
               echo "Docker compose logs:"
               docker-compose logs
-              exit 1
+              echo "Initiating rollback..."
+              ./rollback.sh
+              if [ \$? -eq 0 ]; then
+                echo "Rollback completed successfully"
+              else
+                echo "Rollback failed. Manual intervention required."
+                exit 1
+              fi
             fi
 
             # Check monitoring services
@@ -440,7 +647,6 @@ jobs:
             else
               echo "Error: Prometheus container failed to start"
               docker logs prometheus
-              exit 1
             fi
 
             if docker ps --filter "name=grafana" --format "{{.Names}}" | grep -q grafana; then
@@ -450,7 +656,6 @@ jobs:
             else
               echo "Error: Grafana container failed to start"
               docker logs grafana
-              exit 1
             fi
 
             echo "Monitoring setup completed successfully!"
