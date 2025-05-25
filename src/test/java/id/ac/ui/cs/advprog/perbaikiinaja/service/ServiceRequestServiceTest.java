@@ -453,7 +453,6 @@ class ServiceRequestServiceTest {
         assertNotNull(updatedRequest);
         assertEquals(ServiceRequestStateType.ACCEPTED, updatedRequest.getStateType());
         verify(serviceRequestRepository).findById(requestId);
-        verify(userRepository).findById(customerId);
         verify(serviceRequestRepository).save(updatedRequest);
     }
 
@@ -472,7 +471,6 @@ class ServiceRequestServiceTest {
         assertNotNull(updatedRequest);
         assertEquals(ServiceRequestStateType.REJECTED, updatedRequest.getStateType());
         verify(serviceRequestRepository).findById(requestId);
-        verify(userRepository).findById(customerId);
         verify(serviceRequestRepository).save(updatedRequest);
     }
 
@@ -492,7 +490,6 @@ class ServiceRequestServiceTest {
         assertNotNull(updatedRequest);
         assertEquals(ServiceRequestStateType.IN_PROGRESS, updatedRequest.getStateType());
         verify(serviceRequestRepository).findById(requestId);
-        verify(userRepository).findById(technicianId);
         verify(serviceRequestRepository).save(updatedRequest);
     }
 
@@ -560,7 +557,6 @@ class ServiceRequestServiceTest {
         assertEquals(report, updatedRequest.getReport());
         assertEquals(ServiceRequestStateType.COMPLETED, updatedRequest.getStateType()); // State remains COMPLETED
         verify(serviceRequestRepository).findById(requestId);
-        verify(userRepository).findById(technicianId);
         verify(reportRepository).save(report); // Verify report is saved
         verify(serviceRequestRepository).save(updatedRequest);
     }

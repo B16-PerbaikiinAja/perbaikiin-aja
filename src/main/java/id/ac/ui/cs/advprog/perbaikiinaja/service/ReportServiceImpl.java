@@ -52,7 +52,7 @@ public class ReportServiceImpl implements ReportService {
         return serviceRequests.stream()
                 .filter(sr -> sr.getReport() != null)
                 .map(ServiceRequest::getReport)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -66,7 +66,7 @@ public class ReportServiceImpl implements ReportService {
                     LocalDate completionDate = report.getCompletionDateTime().toLocalDate();
                     return !completionDate.isBefore(startDate) && !completionDate.isAfter(endDate);
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

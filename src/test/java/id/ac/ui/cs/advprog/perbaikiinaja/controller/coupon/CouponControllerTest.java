@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.hasSize;
 
-public class CouponControllerTest {
+class CouponControllerTest {
 
     private MockMvc mockMvc;
 
@@ -49,7 +49,7 @@ public class CouponControllerTest {
     }
 
     @Test
-    public void testCreateCouponSuccess() throws Exception {
+    void testCreateCouponSuccess() throws Exception {
         Date expiryDate = new Date(System.currentTimeMillis() + 100000);
         String couponCode = "unique-code";
         Coupon validCoupon = new Coupon();
@@ -77,7 +77,7 @@ public class CouponControllerTest {
     }
 
     @Test
-    public void testCreateCouponInvalidDiscountValue() throws Exception {
+    void testCreateCouponInvalidDiscountValue() throws Exception {
         Date expiryDate = new Date(System.currentTimeMillis() + 100000);
         String couponCode = "unique-code";
 
@@ -95,7 +95,7 @@ public class CouponControllerTest {
     }
 
     @Test
-    public void testCreateCouponInvalidMaxUsage() throws Exception {
+    void testCreateCouponInvalidMaxUsage() throws Exception {
 
         Date expiryDate = new Date(System.currentTimeMillis() + 100000);
         String couponCode = "unique-code";
@@ -114,7 +114,7 @@ public class CouponControllerTest {
     }
 
     @Test
-    public void testCreateCouponInvalidExpiryDate() throws Exception {
+    void testCreateCouponInvalidExpiryDate() throws Exception {
         Date pastDate = new Date(System.currentTimeMillis() - 100000);
         String couponCode = "unique-code";
 
@@ -133,7 +133,7 @@ public class CouponControllerTest {
     }
 
     @Test
-    public void testGetAllCouponsSuccess() throws Exception {
+    void testGetAllCouponsSuccess() throws Exception {
         List<Coupon> coupons = new ArrayList<>();
         Date expiry1 = new Date(System.currentTimeMillis() + 100000);
         Date expiry2 = new Date(System.currentTimeMillis() + 200000);
@@ -167,7 +167,7 @@ public class CouponControllerTest {
     }
 
     @Test
-    public void testGetAllCouponsEmptyList() throws Exception {
+    void testGetAllCouponsEmptyList() throws Exception {
         when(couponService.getAllCoupons()).thenReturn(new ArrayList<>());
 
         mockMvc.perform(get("/coupons/admin")
@@ -206,7 +206,7 @@ public class CouponControllerTest {
     }
 
     @Test
-    public void testUpdateCouponSuccess() throws Exception {
+    void testUpdateCouponSuccess() throws Exception {
         String couponCode = "existing-code";
         Date expiryDate = new Date(System.currentTimeMillis() + 100000);
         Coupon updatedCoupon = new Coupon();
@@ -233,7 +233,7 @@ public class CouponControllerTest {
     }
 
     @Test
-    public void testUpdateCouponInvalidDiscountValue() throws Exception {
+    void testUpdateCouponInvalidDiscountValue() throws Exception {
         String couponCode = "existing-code";
         Date expiryDate = new Date(System.currentTimeMillis() + 100000);
 
@@ -253,7 +253,7 @@ public class CouponControllerTest {
     }
 
     @Test
-    public void testDeleteCouponSuccess() throws Exception{
+    void testDeleteCouponSuccess() throws Exception{
         String couponCode = "existing-code";
         Date expiryDate = new Date(System.currentTimeMillis() + 100000);
         Coupon deletedCoupon = new Coupon();
@@ -262,7 +262,7 @@ public class CouponControllerTest {
         deletedCoupon.setMaxUsage(15);
         deletedCoupon.setExpiryDate(expiryDate);
 
-        when(couponService.deleteCoupon(eq(couponCode))).thenReturn(Optional.of(deletedCoupon));
+        when(couponService.deleteCoupon(couponCode)).thenReturn(Optional.of(deletedCoupon));
 
         mockMvc.perform(delete("/coupons/admin/" + couponCode)
                 .contentType(MediaType.APPLICATION_JSON))
@@ -272,7 +272,7 @@ public class CouponControllerTest {
     }
 
     @Test
-    public void testDeleteCouponNotFound() throws Exception {
+    void testDeleteCouponNotFound() throws Exception {
         String couponCode = "nonexistent-code";
 
         when(couponService.deleteCoupon(couponCode))

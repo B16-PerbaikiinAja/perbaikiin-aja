@@ -33,12 +33,20 @@ public class ReportController {
         this.reportService = reportService;
     }
 
+    private static final String serviceRequestIdStr = "serviceRequestId";
+    private static final String repairDetailsStr = "repairDetails";
+    private static final String resolutionSummaryStr = "resolutionSummary";
+    private static final String estimateCompletionDateStr = "completionDate";
+    private static final String messageStr = "message";
+    private static final String errorCodeStr = "errorCode";
+    private static final String createdAtStr = "createdAt";
+
     /**
      * Create a report as a technician
      */
     @PostMapping("/technician")
     @PreAuthorize("hasRole('TECHNICIAN')")
-    public ResponseEntity<?> createReport(
+    public ResponseEntity<Map<String, Object>> createReport(
             @RequestBody Map<String, Object> requestBody,
             Authentication authentication) {
 
@@ -46,30 +54,30 @@ public class ReportController {
         UUID technicianId = currentUser.getId();
 
         // Validate required fields
-        if (!requestBody.containsKey("serviceRequestId") ||
-                !requestBody.containsKey("repairDetails") ||
-                !requestBody.containsKey("resolutionSummary") ||
-                !requestBody.containsKey("completionDate")) {
+        if (!requestBody.containsKey(serviceRequestIdStr) ||
+                !requestBody.containsKey(repairDetailsStr) ||
+                !requestBody.containsKey(resolutionSummaryStr) ||
+                !requestBody.containsKey(estimateCompletionDateStr)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
         UUID serviceRequestId;
         try {
-            serviceRequestId = UUID.fromString((String) requestBody.get("serviceRequestId"));
+            serviceRequestId = UUID.fromString((String) requestBody.get(serviceRequestIdStr));
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 4000);
-            response.put("message", "Invalid service request ID");
+            response.put(errorCodeStr, 4000);
+            response.put(messageStr, "Invalid service request ID");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
-        String repairDetails = (String) requestBody.get("repairDetails");
-        String resolutionSummary = (String) requestBody.get("resolutionSummary");
+        String repairDetails = (String) requestBody.get(repairDetailsStr);
+        String resolutionSummary = (String) requestBody.get(resolutionSummaryStr);
 
         // Parse completion date
         LocalDateTime completionDateTime;
         try {
-            String completionDateStr = (String) requestBody.get("completionDate");
+            String completionDateStr = (String) requestBody.get(estimateCompletionDateStr);
             // Try to parse as LocalDateTime
             try {
                 completionDateTime = LocalDateTime.parse(completionDateStr);
@@ -79,8 +87,8 @@ public class ReportController {
             }
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 4000);
-            response.put("message", "Invalid completion date format");
+            response.put(errorCodeStr, 4000);
+            response.put(messageStr, "Invalid completion date format");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -95,8 +103,8 @@ public class ReportController {
             report = reportBuilder.build();
         } catch (IllegalArgumentException | IllegalStateException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 4000);
-            response.put("message", "Invalid report data: " + e.getMessage());
+            response.put(errorCodeStr, 4000);
+            response.put(messageStr, "Invalid report data: " + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -110,11 +118,11 @@ public class ReportController {
 
             Report createdReport = updatedRequest.getReport();
             reportResponse.put("id", createdReport.getId());
-            reportResponse.put("serviceRequestId", serviceRequestId.toString());
-            reportResponse.put("repairDetails", createdReport.getRepairDetails());
-            reportResponse.put("resolutionSummary", createdReport.getRepairSummary());
-            reportResponse.put("completionDate", createdReport.getCompletionDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            reportResponse.put("createdAt", createdReport.getCreatedDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            reportResponse.put(serviceRequestIdStr, serviceRequestId.toString());
+            reportResponse.put(repairDetailsStr, createdReport.getRepairDetails());
+            reportResponse.put(resolutionSummaryStr, createdReport.getRepairSummary());
+            reportResponse.put(estimateCompletionDateStr, createdReport.getCompletionDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            reportResponse.put(createdAtStr, createdReport.getCreatedDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
             response.put("report", reportResponse);
 
@@ -122,13 +130,13 @@ public class ReportController {
 
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 4040);
-            response.put("message", e.getMessage());
+            response.put(errorCodeStr, 4040);
+            response.put(messageStr, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (IllegalStateException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 4090);
-            response.put("message", e.getMessage());
+            response.put(errorCodeStr, 4090);
+            response.put(messageStr, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.CONFLICT);
         }
     }
@@ -138,9 +146,9 @@ public class ReportController {
      */
     @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getReports(
-            @RequestParam(required = false) String date_start,
-            @RequestParam(required = false) String date_end,
+    public ResponseEntity<Map<String, Object>> getReports(
+            @RequestParam(required = false) String dateStart,
+            @RequestParam(required = false) String dateEnd,
             @RequestParam(required = false) UUID technicianId,
             @RequestParam(required = false) UUID reportId) {
 
@@ -154,8 +162,8 @@ public class ReportController {
                     reports = Collections.singletonList(report);
                 } catch (IllegalArgumentException e) {
                     Map<String, Object> response = new HashMap<>();
-                    response.put("errorCode", 4041);
-                    response.put("message", "Report not found");
+                    response.put(errorCodeStr, 4041);
+                    response.put(messageStr, "Report not found");
                     return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
                 }
             } else if (technicianId != null) {
@@ -163,19 +171,19 @@ public class ReportController {
                     reports = reportService.getReportsByTechnician(technicianId);
                 } catch (IllegalArgumentException e) {
                     Map<String, Object> response = new HashMap<>();
-                    response.put("errorCode", 4040);
-                    response.put("message", "Technician not found");
+                    response.put(errorCodeStr, 4040);
+                    response.put(messageStr, "Technician not found");
                     return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
                 }
-            } else if (date_start != null && date_end != null) {
+            } else if (dateStart != null && dateEnd != null) {
                 try {
-                    LocalDate startDate = LocalDate.parse(date_start);
-                    LocalDate endDate = LocalDate.parse(date_end);
+                    LocalDate startDate = LocalDate.parse(dateStart);
+                    LocalDate endDate = LocalDate.parse(dateEnd);
                     reports = reportService.getReportsByDateRange(startDate, endDate);
                 } catch (DateTimeParseException e) {
                     Map<String, Object> response = new HashMap<>();
-                    response.put("errorCode", e.toString().contains(date_start) ? 4000 : 4001);
-                    response.put("message", "Invalid date format. Expected format: YYYY-MM-DD");
+                    response.put(errorCodeStr, e.toString().contains(dateStart) ? 4000 : 4001);
+                    response.put(messageStr, "Invalid date format. Expected format: YYYY-MM-DD");
                     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 }
             } else {
@@ -218,10 +226,10 @@ public class ReportController {
                 reportMap.put("technician", technicianMap);
 
                 // Report details
-                reportMap.put("repairDetails", report.getRepairDetails());
-                reportMap.put("resolutionSummary", report.getRepairSummary());
-                reportMap.put("completionDate", report.getCompletionDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                reportMap.put("createdAt", report.getCreatedDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                reportMap.put(repairDetailsStr, report.getRepairDetails());
+                reportMap.put(resolutionSummaryStr, report.getRepairSummary());
+                reportMap.put(estimateCompletionDateStr, report.getCompletionDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                reportMap.put(createdAtStr, report.getCreatedDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
                 reportsList.add(reportMap);
             }
@@ -233,8 +241,8 @@ public class ReportController {
 
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 5000);
-            response.put("message", "Internal server error: " + e.getMessage());
+            response.put(errorCodeStr, 5000);
+            response.put(messageStr, "Internal server error: " + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -244,7 +252,7 @@ public class ReportController {
      */
     @GetMapping("/technician/{technicianId}")
     @PreAuthorize("hasRole('TECHNICIAN') and authentication.principal.id == #technicianId")
-    public ResponseEntity<?> getTechnicianReports(@PathVariable UUID technicianId) {
+    public ResponseEntity<Map<String, Object>> getTechnicianReports(@PathVariable UUID technicianId) {
         try {
             List<Report> reports = reportService.getReportsByTechnician(technicianId);
 
@@ -253,11 +261,11 @@ public class ReportController {
             for (Report report : reports) {
                 Map<String, Object> reportMap = new HashMap<>();
                 reportMap.put("id", report.getId());
-                reportMap.put("serviceRequestId", reportService.getServiceRequestByReportId(report.getId()).getId());
-                reportMap.put("repairDetails", report.getRepairDetails());
-                reportMap.put("resolutionSummary", report.getRepairSummary());
-                reportMap.put("completionDate", report.getCompletionDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                reportMap.put("createdAt", report.getCreatedDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                reportMap.put(serviceRequestIdStr, reportService.getServiceRequestByReportId(report.getId()).getId());
+                reportMap.put(repairDetailsStr, report.getRepairDetails());
+                reportMap.put(resolutionSummaryStr, report.getRepairSummary());
+                reportMap.put(estimateCompletionDateStr, report.getCompletionDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                reportMap.put(createdAtStr, report.getCreatedDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
                 reportsList.add(reportMap);
             }
@@ -269,8 +277,8 @@ public class ReportController {
 
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 5000);
-            response.put("message", "Error retrieving reports: " + e.getMessage());
+            response.put(errorCodeStr, 5000);
+            response.put(messageStr, "Error retrieving reports: " + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

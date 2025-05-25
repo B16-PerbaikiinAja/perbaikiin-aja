@@ -1,6 +1,5 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.builder.ReportBuilder;
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Item;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
@@ -8,7 +7,6 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Admin;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ReportService;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,14 +21,13 @@ import org.springframework.security.core.Authentication;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ReportControllerTest {
+class ReportControllerTest {
 
     @Mock
     private ServiceRequestService serviceRequestService;

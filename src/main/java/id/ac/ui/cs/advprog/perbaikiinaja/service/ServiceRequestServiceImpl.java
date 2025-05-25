@@ -51,6 +51,8 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     private final WalletService walletService;
     private final ReportRepository reportRepository;
 
+    private static final String notAssignedStr = "This technician is not assigned to this service request";
+
     @Autowired
     public ServiceRequestServiceImpl(
             ServiceRequestRepository serviceRequestRepository,
@@ -77,7 +79,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         List<ServiceRequest> requests = findByTechnician(technicianId);
         return requests.stream()
                 .filter(request -> request.getStateType().equals(status))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -99,7 +101,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         if (request.getTechnician() == null) {
             request.setTechnician(technician);
         } else if (!request.getTechnician().getId().equals(technicianId)) {
-            throw new IllegalArgumentException("This technician is not assigned to this service request");
+            throw new IllegalArgumentException(notAssignedStr);
         }
 
         // Pre-check the estimate values and fix if needed
@@ -126,8 +128,6 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             throw new IllegalStateException("Cannot accept estimate in current state");
         }
 
-        Customer customer = getCustomer(customerId);
-
         // Then check if the customer owns the request
         if (!request.getCustomer().getId().equals(customerId)) {
             throw new IllegalArgumentException("This customer does not own this service request");
@@ -142,7 +142,6 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     @Override
     public ServiceRequest rejectEstimate(UUID requestId, UUID customerId) {
         ServiceRequest request = getServiceRequest(requestId);
-        Customer customer = getCustomer(customerId);
 
         // Ensure the customer owns the request
         if (!request.getCustomer().getId().equals(customerId)) {
@@ -158,11 +157,10 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     @Override
     public ServiceRequest startService(UUID requestId, UUID technicianId) {
         ServiceRequest request = getServiceRequest(requestId);
-        Technician technician = getTechnician(technicianId);
 
         // Ensure the technician is assigned to the request
         if (!request.getTechnician().getId().equals(technicianId)) {
-            throw new IllegalArgumentException("This technician is not assigned to this service request");
+            throw new IllegalArgumentException(notAssignedStr);
         }
 
         // Start the service
@@ -178,7 +176,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
         // Ensure the technician is assigned to the request
         if (!request.getTechnician().getId().equals(technicianId)) {
-            throw new IllegalArgumentException("This technician is not assigned to this service request");
+            throw new IllegalArgumentException(notAssignedStr);
         }
 
         // Complete the service
@@ -204,11 +202,10 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     @Override
     public ServiceRequest createReport(UUID requestId, Report report, UUID technicianId) {
         ServiceRequest request = getServiceRequest(requestId);
-        Technician technician = getTechnician(technicianId);
 
         // Ensure the technician is assigned to the request
         if (!request.getTechnician().getId().equals(technicianId)) {
-            throw new IllegalArgumentException("This technician is not assigned to this service request");
+            throw new IllegalArgumentException(notAssignedStr);
         }
 
         Report savedReport = reportRepository.save(report);
@@ -230,9 +227,8 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
     private PaymentMethod getPaymentMethodById(UUID paymentMethodId) {
         if (paymentMethodId != null) {
-            PaymentMethod paymentMethod = paymentMethodService.findById(paymentMethodId)
+            return paymentMethodService.findById(paymentMethodId)
                     .orElseThrow(() -> new IllegalArgumentException("Payment method not found with ID: " + paymentMethodId));
-            return paymentMethod;
         } else {
             throw new IllegalArgumentException("Payment method ID is required");
         }
@@ -267,8 +263,8 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         Iterable<User> users = userRepository.findAll();
         List<Technician> allTechnicians = new java.util.ArrayList<>();
         for (User u : users) {
-            if (u instanceof Technician) {
-                allTechnicians.add((Technician) u);
+            if (u instanceof Technician technician) {
+                allTechnicians.add(technician);
             }
         }
         if (allTechnicians.isEmpty()) {

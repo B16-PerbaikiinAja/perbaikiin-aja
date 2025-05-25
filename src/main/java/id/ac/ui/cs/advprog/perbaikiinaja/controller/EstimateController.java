@@ -39,13 +39,13 @@ public class EstimateController {
     private static final String estimatedCostStr = "estimatedCost";
     private static final String serviceRequestIdStr = "serviceRequestId";
     private static final String statusStr = "status";
-    private static final String estimatedCompletionTime = "estimatedCompletionTime";
+    private static final String estimatedCompletionTimeStr = "estimatedCompletionTime";
     private static final String notesStr = "notes";
 
     @Autowired
     public EstimateController(
-            ServiceRequestService serviceRequestService, 
-            EstimateService estimateService, 
+            ServiceRequestService serviceRequestService,
+            EstimateService estimateService,
             WalletService walletService) {
         this.serviceRequestService = serviceRequestService;
         this.estimateService = estimateService;
@@ -57,7 +57,7 @@ public class EstimateController {
      */
     @PostMapping("/technician/service-requests/{serviceRequestId}")
     @PreAuthorize("hasRole('TECHNICIAN')")
-    public ResponseEntity<?> createEstimate(
+    public ResponseEntity<Map<String, Object>> createEstimate(
             @PathVariable UUID serviceRequestId,
             @RequestBody Map<String, Object> requestBody,
             Authentication authentication) {
@@ -74,7 +74,7 @@ public class EstimateController {
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
-        LocalDate completionDate = LocalDate.parse((String) requestBody.get(estimatedCompletionTime));
+        LocalDate completionDate = LocalDate.parse((String) requestBody.get(estimatedCompletionTimeStr));
         if (completionDate.isBefore(LocalDate.now())) {
             Map<String, Object> response = new HashMap<>();
             response.put(errorStr, 4001);
@@ -103,7 +103,7 @@ public class EstimateController {
             estimateResponse.put("id", createdEstimate.getId());
             estimateResponse.put(serviceRequestIdStr, serviceRequestId);
             estimateResponse.put(estimatedCostStr, createdEstimate.getCost());
-            estimateResponse.put(estimatedCompletionTime, createdEstimate.getCompletionDate());
+            estimateResponse.put(estimatedCompletionTimeStr, createdEstimate.getCompletionDate());
             estimateResponse.put(notesStr, createdEstimate.getNotes());
             estimateResponse.put(statusStr, ServiceRequestStateType.PENDING);
             estimateResponse.put("createdAt", createdEstimate.getCreatedDate());
@@ -130,7 +130,7 @@ public class EstimateController {
      */
     @PutMapping("/customer/{serviceRequestId}/response")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<?> respondToEstimate(
+    public ResponseEntity<Map<String, Object>> respondToEstimate(
             @PathVariable UUID serviceRequestId,
             @RequestBody Map<String, Object> requestBody,
             Authentication authentication) {
@@ -211,7 +211,7 @@ public class EstimateController {
 
                 estimateResponse.put(serviceRequestIdStr, serviceRequest.getId());
                 estimateResponse.put(estimatedCostStr, estimate.getCost());
-                estimateResponse.put(estimatedCompletionTime, estimate.getCompletionDate());
+                estimateResponse.put(estimatedCompletionTimeStr, estimate.getCompletionDate());
                 estimateResponse.put(statusStr, ServiceRequestStateType.ACCEPTED);
 
                 estimateResponse.put("feedback", feedback);

@@ -1,6 +1,5 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
