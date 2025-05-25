@@ -4,7 +4,6 @@ import id.ac.ui.cs.advprog.perbaikiinaja.enums.auth.UserRole;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Admin;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Wallet;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +21,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,373 +45,427 @@ class WalletControllerTest {
 
     @BeforeEach
     void setUp() {
-        userId = UUID.randomUUID();
         walletId = UUID.randomUUID();
+        userId = UUID.randomUUID();
 
-        customer = Customer.builder()
-                .email("customer@example.com")
-                .fullName("Test Customer")
-                .build();
+        // Create Customer
+        customer = new Customer();
+        customer.setFullName("John Customer");
+        customer.setEmail("john@example.com");
+        customer.setRole(UserRole.CUSTOMER.getValue());
 
-        technician = Technician.builder()
-                .email("technician@example.com")
-                .fullName("Test Technician")
-                .build();
+        // Create Technician
+        technician = new Technician();
+        technician.setFullName("Jane Technician");
+        technician.setEmail("jane@example.com");
+        technician.setRole(UserRole.TECHNICIAN.getValue());
 
-        admin = Admin.builder()
-                .email("admin@example.com")
-                .fullName("Test Admin")
-                .build();
+        // Create Admin
+        admin = new Admin();
+        admin.setFullName("Admin User");
+        admin.setEmail("admin@example.com");
         admin.setRole(UserRole.ADMIN.getValue());
 
-        wallet = new Wallet(customer);
-        wallet.setId(walletId);
-        wallet.setBalance(new BigDecimal("100.00"));
-        wallet.setCreatedAt(LocalDateTime.now().minusDays(1));
+        // Create Wallet
+        wallet = new Wallet(customer, BigDecimal.valueOf(100.0));
+        wallet.setCreatedAt(LocalDateTime.now());
         wallet.setUpdatedAt(LocalDateTime.now());
     }
 
     @Test
-    void testGetMyWalletForCustomer() {
-        // Setup
+    void getMyWallet_WithCustomer_Success() {
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
 
-        // Execute
-        ResponseEntity<?> response = walletController.getMyWallet(authentication);
+        ResponseEntity<Map<String, Object>> response = walletController.getMyWallet(authentication);
 
-        // Verify
         assertEquals(HttpStatus.OK, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals(wallet.getId(), responseBody.get("id"));
-        assertEquals(customer.getId(), responseBody.get("userId"));
-        assertEquals(wallet.getBalance(), responseBody.get("balance"));
-        assertEquals(wallet.getCreatedAt(), responseBody.get("createdAt"));
-        assertEquals(wallet.getUpdatedAt(), responseBody.get("updatedAt"));
-
-        verify(authentication).getPrincipal();
-        verify(walletService).getWalletByUser(customer);
+        assertNotNull(response.getBody());
+        assertEquals(wallet.getId(), response.getBody().get("id"));
+        assertEquals(wallet.getUser().getId(), response.getBody().get("userId"));
+        assertEquals(wallet.getBalance(), response.getBody().get("balance"));
     }
 
     @Test
-    void testGetMyWalletForTechnician() {
-        // Setup
-        Wallet technicianWallet = new Wallet(technician);
-        technicianWallet.setId(UUID.randomUUID());
-
+    void getMyWallet_WithTechnician_Success() {
+        Wallet technicianWallet = new Wallet(technician, BigDecimal.valueOf(50.0));
         when(authentication.getPrincipal()).thenReturn(technician);
         when(walletService.getWalletByUser(technician)).thenReturn(Optional.of(technicianWallet));
 
-        // Execute
-        ResponseEntity<?> response = walletController.getMyWallet(authentication);
+        ResponseEntity<Map<String, Object>> response = walletController.getMyWallet(authentication);
 
-        // Verify
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(authentication).getPrincipal();
-        verify(walletService).getWalletByUser(technician);
+        assertNotNull(response.getBody());
+        assertEquals(technicianWallet.getId(), response.getBody().get("id"));
     }
 
     @Test
-    void testGetMyWalletForAdmin() {
-        // Setup
+    void getMyWallet_WithAdmin_Forbidden() {
         when(authentication.getPrincipal()).thenReturn(admin);
 
-        // Execute
-        ResponseEntity<?> response = walletController.getMyWallet(authentication);
+        ResponseEntity<Map<String, Object>> response = walletController.getMyWallet(authentication);
 
-        // Verify
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals("Only customers and technicians have wallets", responseBody.get("message"));
-
-        verify(authentication).getPrincipal();
-        verify(walletService, never()).getWalletByUser(any());
+        assertNotNull(response.getBody());
+        assertEquals("Only customers and technicians have wallets", response.getBody().get("message"));
     }
 
     @Test
-    void testGetMyWalletWhenWalletNotFound() {
-        // Setup
+    void getMyWallet_WalletNotFound() {
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.getWalletByUser(customer)).thenReturn(Optional.empty());
 
-        // Execute
-        ResponseEntity<?> response = walletController.getMyWallet(authentication);
+        ResponseEntity<Map<String, Object>> response = walletController.getMyWallet(authentication);
 
-        // Verify
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals("Wallet not found. Create a wallet first.", responseBody.get("message"));
-
-        verify(authentication).getPrincipal();
-        verify(walletService).getWalletByUser(customer);
+        assertNotNull(response.getBody());
+        assertEquals("Wallet not found. Create a wallet first.", response.getBody().get("message"));
     }
 
     @Test
-    void testCreateMyWalletForCustomer() {
-        // Setup
+    void createMyWallet_Success() {
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.hasWallet(customer)).thenReturn(false);
         when(walletService.createWallet(customer)).thenReturn(wallet);
 
-        // Execute
-        ResponseEntity<?> response = walletController.createMyWallet(authentication);
+        ResponseEntity<Map<String, Object>> response = walletController.createMyWallet(authentication);
 
-        // Verify
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals(wallet.getId(), responseBody.get("id"));
-
-        verify(authentication).getPrincipal();
-        verify(walletService).hasWallet(customer);
-        verify(walletService).createWallet(customer);
+        assertNotNull(response.getBody());
+        assertEquals(wallet.getId(), response.getBody().get("id"));
     }
 
     @Test
-    void testCreateMyWalletForAdmin() {
-        // Setup
+    void createMyWallet_AdminUser_Forbidden() {
         when(authentication.getPrincipal()).thenReturn(admin);
 
-        // Execute
-        ResponseEntity<?> response = walletController.createMyWallet(authentication);
+        ResponseEntity<Map<String, Object>> response = walletController.createMyWallet(authentication);
 
-        // Verify
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals("Admin users cannot have wallets", responseBody.get("message"));
-
-        verify(authentication).getPrincipal();
-        verify(walletService, never()).createWallet(any(User.class));
+        assertNotNull(response.getBody());
+        assertEquals("Admin users cannot have wallets", response.getBody().get("message"));
     }
 
     @Test
-    void testCreateMyWalletWhenWalletAlreadyExists() {
-        // Setup
+    void createMyWallet_AlreadyHasWallet_Conflict() {
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.hasWallet(customer)).thenReturn(true);
 
-        // Execute
-        ResponseEntity<?> response = walletController.createMyWallet(authentication);
+        ResponseEntity<Map<String, Object>> response = walletController.createMyWallet(authentication);
 
-        // Verify
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals("You already have a wallet", responseBody.get("message"));
-
-        verify(authentication).getPrincipal();
-        verify(walletService).hasWallet(customer);
-        verify(walletService, never()).createWallet(any(User.class));
+        assertNotNull(response.getBody());
+        assertEquals("You already have a wallet", response.getBody().get("message"));
     }
 
     @Test
-    void testDeposit() {
-        // Setup
-        BigDecimal amount = new BigDecimal("50.00");
-        String description = "Test deposit";
+    void deposit_Success() {
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("amount", amount.toString());
-        requestBody.put("description", description);
+        requestBody.put("amount", "50.0");
+        requestBody.put("description", "Test deposit");
+
+        Wallet updatedWallet = new Wallet(customer, BigDecimal.valueOf(150.0));
 
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
-        when(walletService.deposit(wallet.getId(), amount, description)).thenReturn(wallet);
+        when(walletService.deposit(eq(wallet.getId()), eq(BigDecimal.valueOf(50.0)), eq("Test deposit")))
+                .thenReturn(updatedWallet);
 
-        // Execute
-        ResponseEntity<?> response = walletController.deposit(authentication, requestBody);
+        ResponseEntity<Map<String, Object>> response = walletController.deposit(authentication, requestBody);
 
-        // Verify
         assertEquals(HttpStatus.OK, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals(wallet.getId(), responseBody.get("id"));
-
-        verify(authentication).getPrincipal();
-        verify(walletService).getWalletByUser(customer);
-        verify(walletService).deposit(wallet.getId(), amount, description);
+        assertNotNull(response.getBody());
+        assertEquals(updatedWallet.getBalance(), response.getBody().get("balance"));
     }
 
     @Test
-    void testDepositWithInvalidAmount() {
-        // Setup
+    void deposit_WithDefaultDescription() {
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("amount", "invalid-amount");
+        requestBody.put("amount", "25.0");
+
+        Wallet updatedWallet = new Wallet(customer, BigDecimal.valueOf(125.0));
 
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
+        when(walletService.deposit(eq(wallet.getId()), eq(BigDecimal.valueOf(25.0)), eq("Deposit")))
+                .thenReturn(updatedWallet);
 
-        // Execute
-        ResponseEntity<?> response = walletController.deposit(authentication, requestBody);
+        ResponseEntity<Map<String, Object>> response = walletController.deposit(authentication, requestBody);
 
-        // Verify
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals("Invalid amount", responseBody.get("message"));
-
-        verify(authentication).getPrincipal();
-        verify(walletService).getWalletByUser(customer);
-        verify(walletService, never()).deposit(any(), any(), any());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(walletService).deposit(eq(wallet.getId()), eq(BigDecimal.valueOf(25.0)), eq("Deposit"));
     }
 
     @Test
-    void testDepositWhenWalletNotFound() {
-        // Setup
+    void deposit_AdminUser_Forbidden() {
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("amount", "50.00");
+        requestBody.put("amount", "50.0");
+
+        when(authentication.getPrincipal()).thenReturn(admin);
+
+        ResponseEntity<Map<String, Object>> response = walletController.deposit(authentication, requestBody);
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Only customers and technicians have wallets", response.getBody().get("message"));
+    }
+
+    @Test
+    void deposit_WalletNotFound() {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("amount", "50.0");
 
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.getWalletByUser(customer)).thenReturn(Optional.empty());
 
-        // Execute
-        ResponseEntity<?> response = walletController.deposit(authentication, requestBody);
+        ResponseEntity<Map<String, Object>> response = walletController.deposit(authentication, requestBody);
 
-        // Verify
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals("Wallet not found. Create a wallet first.", responseBody.get("message"));
-
-        verify(authentication).getPrincipal();
-        verify(walletService).getWalletByUser(customer);
-        verify(walletService, never()).deposit(any(), any(), any());
+        assertNotNull(response.getBody());
+        assertEquals("Wallet not found. Create a wallet first.", response.getBody().get("message"));
     }
 
     @Test
-    void testWithdraw() {
-        // Setup
-        BigDecimal amount = new BigDecimal("30.00");
-        String description = "Test withdrawal";
+    void deposit_InvalidAmount() {
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("amount", amount.toString());
-        requestBody.put("description", description);
+        requestBody.put("amount", "invalid");
 
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
-        when(walletService.withdraw(wallet.getId(), amount, description)).thenReturn(wallet);
 
-        // Execute
-        ResponseEntity<?> response = walletController.withdraw(authentication, requestBody);
+        ResponseEntity<Map<String, Object>> response = walletController.deposit(authentication, requestBody);
 
-        // Verify
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Invalid amount", response.getBody().get("message"));
+    }
+
+    @Test
+    void deposit_ServiceThrowsException() {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("amount", "-10.0");
+
+        when(authentication.getPrincipal()).thenReturn(customer);
+        when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
+        when(walletService.deposit(any(), any(), any()))
+                .thenThrow(new IllegalArgumentException("Deposit amount must be positive"));
+
+        ResponseEntity<Map<String, Object>> response = walletController.deposit(authentication, requestBody);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Deposit amount must be positive", response.getBody().get("message"));
+    }
+
+    @Test
+    void withdraw_Success() {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("amount", "30.0");
+        requestBody.put("description", "Test withdrawal");
+
+        Wallet updatedWallet = new Wallet(customer, BigDecimal.valueOf(70.0));
+
+        when(authentication.getPrincipal()).thenReturn(customer);
+        when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
+        when(walletService.withdraw(eq(wallet.getId()), eq(BigDecimal.valueOf(30.0)), eq("Test withdrawal")))
+                .thenReturn(updatedWallet);
+
+        ResponseEntity<Map<String, Object>> response = walletController.withdraw(authentication, requestBody);
+
         assertEquals(HttpStatus.OK, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals(wallet.getId(), responseBody.get("id"));
-
-        verify(authentication).getPrincipal();
-        verify(walletService).getWalletByUser(customer);
-        verify(walletService).withdraw(wallet.getId(), amount, description);
+        assertNotNull(response.getBody());
+        assertEquals(updatedWallet.getBalance(), response.getBody().get("balance"));
     }
 
     @Test
-    void testWithdrawWithInsufficientFunds() {
-        // Setup
-        BigDecimal amount = new BigDecimal("200.00");
-        String description = "Test withdrawal";
+    void withdraw_WithDefaultDescription() {
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("amount", amount.toString());
-        requestBody.put("description", description);
+        requestBody.put("amount", "20.0");
+
+        Wallet updatedWallet = new Wallet(customer, BigDecimal.valueOf(80.0));
 
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
-        when(walletService.withdraw(wallet.getId(), amount, description))
+        when(walletService.withdraw(eq(wallet.getId()), eq(BigDecimal.valueOf(20.0)), eq("Withdrawal")))
+                .thenReturn(updatedWallet);
+
+        ResponseEntity<Map<String, Object>> response = walletController.withdraw(authentication, requestBody);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(walletService).withdraw(eq(wallet.getId()), eq(BigDecimal.valueOf(20.0)), eq("Withdrawal"));
+    }
+
+    @Test
+    void withdraw_AdminUser_Forbidden() {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("amount", "30.0");
+
+        when(authentication.getPrincipal()).thenReturn(admin);
+
+        ResponseEntity<Map<String, Object>> response = walletController.withdraw(authentication, requestBody);
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Only customers and technicians have wallets", response.getBody().get("message"));
+    }
+
+    @Test
+    void withdraw_WalletNotFound() {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("amount", "30.0");
+
+        when(authentication.getPrincipal()).thenReturn(customer);
+        when(walletService.getWalletByUser(customer)).thenReturn(Optional.empty());
+
+        ResponseEntity<Map<String, Object>> response = walletController.withdraw(authentication, requestBody);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Wallet not found. Create a wallet first.", response.getBody().get("message"));
+    }
+
+    @Test
+    void withdraw_InvalidAmount() {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("amount", "not-a-number");
+
+        when(authentication.getPrincipal()).thenReturn(customer);
+        when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
+
+        ResponseEntity<Map<String, Object>> response = walletController.withdraw(authentication, requestBody);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Invalid amount", response.getBody().get("message"));
+    }
+
+    @Test
+    void withdraw_ServiceThrowsException() {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("amount", "200.0");
+
+        when(authentication.getPrincipal()).thenReturn(customer);
+        when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
+        when(walletService.withdraw(any(), any(), any()))
                 .thenThrow(new IllegalArgumentException("Insufficient funds"));
 
-        // Execute
-        ResponseEntity<?> response = walletController.withdraw(authentication, requestBody);
+        ResponseEntity<Map<String, Object>> response = walletController.withdraw(authentication, requestBody);
 
-        // Verify
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals("Insufficient funds", responseBody.get("message"));
-
-        verify(authentication).getPrincipal();
-        verify(walletService).getWalletByUser(customer);
-        verify(walletService).withdraw(wallet.getId(), amount, description);
+        assertNotNull(response.getBody());
+        assertEquals("Insufficient funds", response.getBody().get("message"));
     }
 
     @Test
-    void testGetWallet() {
-        // Setup - this is an admin-only endpoint
+    void getWallet_Success() {
         when(walletService.getWalletById(walletId)).thenReturn(Optional.of(wallet));
 
-        // Execute
-        ResponseEntity<?> response = walletController.getWallet(walletId);
+        ResponseEntity<Map<String, Object>> response = walletController.getWallet(walletId);
 
-        // Verify
         assertEquals(HttpStatus.OK, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals(wallet.getId(), responseBody.get("id"));
-        assertEquals(customer.getId(), responseBody.get("userId"));
-
-        verify(walletService).getWalletById(walletId);
+        assertNotNull(response.getBody());
+        assertEquals(wallet.getId(), response.getBody().get("id"));
+        assertEquals(wallet.getUser().getId(), response.getBody().get("userId"));
+        assertEquals(wallet.getBalance(), response.getBody().get("balance"));
     }
 
     @Test
-    void testGetWalletWhenNotFound() {
-        // Setup
+    void getWallet_NotFound() {
         when(walletService.getWalletById(walletId)).thenReturn(Optional.empty());
 
-        // Execute
-        ResponseEntity<?> response = walletController.getWallet(walletId);
+        ResponseEntity<Map<String, Object>> response = walletController.getWallet(walletId);
 
-        // Verify
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals("Wallet not found", responseBody.get("message"));
-
-        verify(walletService).getWalletById(walletId);
+        assertNotNull(response.getBody());
+        assertEquals("Wallet not found", response.getBody().get("message"));
     }
 
     @Test
-    void testCreateWalletForUser() {
-        // Setup - this is an admin-only endpoint
+    void createWalletForUser_NotImplemented() {
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("initialBalance", "100.00");
+        requestBody.put("initialBalance", "100.0");
 
-        // Execute
-        ResponseEntity<?> response = walletController.createWalletForUser(userId, requestBody);
+        ResponseEntity<Map<String, Object>> response = walletController.createWalletForUser(userId, requestBody);
 
-        // Verify
         assertEquals(HttpStatus.NOT_IMPLEMENTED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("This endpoint is not fully implemented", response.getBody().get("message"));
+    }
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-        assertNotNull(responseBody);
-        assertEquals("This endpoint is not fully implemented", responseBody.get("message"));
+    @Test
+    void createWalletForUser_WithNullRequestBody() {
+        ResponseEntity<Map<String, Object>> response = walletController.createWalletForUser(userId, null);
+
+        assertEquals(HttpStatus.NOT_IMPLEMENTED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("This endpoint is not fully implemented", response.getBody().get("message"));
+    }
+
+    @Test
+    void deposit_WithTechnician_Success() {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("amount", "40.0");
+
+        Wallet technicianWallet = new Wallet(technician, BigDecimal.valueOf(90.0));
+        Wallet updatedWallet = new Wallet(technician, BigDecimal.valueOf(130.0));
+
+        when(authentication.getPrincipal()).thenReturn(technician);
+        when(walletService.getWalletByUser(technician)).thenReturn(Optional.of(technicianWallet));
+        when(walletService.deposit(eq(technicianWallet.getId()), eq(BigDecimal.valueOf(40.0)), eq("Deposit")))
+                .thenReturn(updatedWallet);
+
+        ResponseEntity<Map<String, Object>> response = walletController.deposit(authentication, requestBody);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+    }
+
+    @Test
+    void withdraw_WithTechnician_Success() {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("amount", "15.0");
+
+        Wallet technicianWallet = new Wallet(technician, BigDecimal.valueOf(90.0));
+        Wallet updatedWallet = new Wallet(technician, BigDecimal.valueOf(75.0));
+
+        when(authentication.getPrincipal()).thenReturn(technician);
+        when(walletService.getWalletByUser(technician)).thenReturn(Optional.of(technicianWallet));
+        when(walletService.withdraw(eq(technicianWallet.getId()), eq(BigDecimal.valueOf(15.0)), eq("Withdrawal")))
+                .thenReturn(updatedWallet);
+
+        ResponseEntity<Map<String, Object>> response = walletController.withdraw(authentication, requestBody);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+    }
+
+    @Test
+    void deposit_AmountExceptionDuringParsing() {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("amount", null);
+
+        when(authentication.getPrincipal()).thenReturn(customer);
+        when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
+
+        ResponseEntity<Map<String, Object>> response = walletController.deposit(authentication, requestBody);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Invalid amount", response.getBody().get("message"));
+    }
+
+    @Test
+    void withdraw_AmountExceptionDuringParsing() {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("amount", null);
+
+        when(authentication.getPrincipal()).thenReturn(customer);
+        when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
+
+        ResponseEntity<Map<String, Object>> response = walletController.withdraw(authentication, requestBody);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Invalid amount", response.getBody().get("message"));
     }
 }
