@@ -12,34 +12,49 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
  */
 public class RejectedState implements ServiceRequestState {
 
+    private static final String TERMINAL_STATE_MESSAGE = "request in rejected state cannot be changed";
+
+    /**
+     * Helper method to throw the standard error for any operation in rejected state
+     *
+     * @param action The action being attempted
+     * @return
+     * @throws IllegalStateException Always thrown with appropriate message
+     */
+    private ServiceRequestState throwTerminalStateException(String action) {
+        throw new IllegalStateException(
+                String.format("Cannot %s in rejected state: %s", action, TERMINAL_STATE_MESSAGE)
+        );
+    }
+
     @Override
     public ServiceRequestState provideEstimate(ServiceRequest request, RepairEstimate estimate) {
-        throw new IllegalStateException("Cannot provide estimate in rejected state: request in rejected state cannot be changed");
+        return throwTerminalStateException("provide estimate");
     }
 
     @Override
     public ServiceRequestState acceptEstimate(ServiceRequest request) {
-        throw new IllegalStateException("Cannot accept estimate in rejected state: request in rejected state cannot be changed");
+        return throwTerminalStateException("accept estimate");
     }
 
     @Override
     public ServiceRequestState rejectEstimate(ServiceRequest request) {
-        throw new IllegalStateException("Cannot reject estimate in rejected state: request in rejected state cannot be changed");
+        return throwTerminalStateException("reject estimate");
     }
 
     @Override
     public ServiceRequestState startService(ServiceRequest request) {
-        throw new IllegalStateException("Cannot start service in rejected state: request in rejected state cannot be changed");
+        return throwTerminalStateException("start service");
     }
 
     @Override
     public ServiceRequestState completeService(ServiceRequest request) {
-        throw new IllegalStateException("Cannot complete service in rejected state: request in rejected state cannot be changed");
+        return throwTerminalStateException("complete service");
     }
 
     @Override
     public void createReport(ServiceRequest request, Report report) {
-        throw new IllegalStateException("Cannot create report in rejected state: request in rejected state cannot be changed");
+        throwTerminalStateException("create report");
     }
 
     @Override
