@@ -16,9 +16,11 @@ import java.util.*;
 @RestController
 @RequestMapping("/coupons")
 public class CouponController {
+    private final CouponService couponService;
 
-    @Autowired
-    private CouponService couponService;
+    public CouponController(CouponService couponService) {
+        this.couponService = couponService;
+    }
 
     /**
      * Create a coupon as an admin

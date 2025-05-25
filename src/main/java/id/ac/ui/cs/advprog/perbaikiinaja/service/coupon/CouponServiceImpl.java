@@ -13,8 +13,11 @@ import java.util.Optional;
 
 @Service
 public class CouponServiceImpl implements CouponService {
-    @Autowired
-    private CouponRepository couponRepository;
+    private final CouponRepository couponRepository;
+
+    public CouponServiceImpl(CouponRepository couponRepository) {
+        this.couponRepository = couponRepository;
+    }
 
     @Override
     public Coupon createCoupon(Coupon coupon) {
