@@ -187,7 +187,7 @@ jobs:
                 metrics_path: '/actuator/prometheus'
                 scrape_interval: 5s
                 static_configs:
-                  - targets: ['perbaikiinaja-backend:8080']
+                  - targets: ['localhost:8080']
                     labels:
                       application: 'Perbaikiinaja Spring Boot Application'
           PROM_EOF
@@ -369,7 +369,7 @@ jobs:
                 metrics_path: '/actuator/prometheus'
                 scrape_interval: 5s
                 static_configs:
-                  - targets: ['perbaikiinaja-backend:8080']
+                  - targets: ['localhost:8080']
                     labels:
                       application: 'Perbaikiinaja Spring Boot Application'
           PROM_EOF

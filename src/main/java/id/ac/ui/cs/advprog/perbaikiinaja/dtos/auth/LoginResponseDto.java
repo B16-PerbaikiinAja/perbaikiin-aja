@@ -1,6 +1,5 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.dtos.auth;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.enums.auth.UserRole;
 import lombok.Getter;
 import lombok.Setter;
 

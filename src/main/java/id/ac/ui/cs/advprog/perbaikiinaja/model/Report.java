@@ -1,6 +1,5 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.model;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -18,16 +17,20 @@ public class Report {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
+
+    @Column(nullable = false, length = 2000)
     private String repairDetails;
+
+    @Column(nullable = false, length = 500)
     private String repairSummary;
+
+    @Column(nullable = false)
     private LocalDateTime completionDateTime;
+
+    @Column(nullable = false)
     private LocalDateTime createdDateTime;
 
-    @OneToOne(mappedBy = "report")
-    private ServiceRequest serviceRequest;
-
     public Report() {
-        this.id = UUID.randomUUID();
         this.createdDateTime = LocalDateTime.now();
     }
 
@@ -62,14 +65,6 @@ public class Report {
 
     public LocalDateTime getCreatedDateTime() {
         return createdDateTime;
-    }
-
-    public ServiceRequest getServiceRequest() {
-        return serviceRequest;
-    }
-
-    public void setServiceRequest(ServiceRequest serviceRequest) {
-        this.serviceRequest = serviceRequest;
     }
 
     /**

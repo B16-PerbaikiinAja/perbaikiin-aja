@@ -10,8 +10,6 @@ public interface EstimateService {
 
     Optional<RepairEstimate> findById(UUID estimateId);
 
-    ServiceRequest getServiceRequest(RepairEstimate estimate);
-
     ServiceRequest acceptEstimate(UUID estimateId, UUID customerId, String feedback);
 
     UUID rejectEstimate(UUID estimateId, UUID customerId, String feedback);

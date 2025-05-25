@@ -1,7 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.controller.wallet;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.TransactionType;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Transaction;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Wallet;
@@ -53,11 +52,6 @@ class TransactionControllerTest {
 
     @BeforeEach
     void setUp() {
-//        Customer customer = Customer.builder()
-//                .email("customer@example.com")
-//                .fullName("Test Customer")
-//                .build();
-
         walletId = UUID.randomUUID();
         wallet = new Wallet(user);
         wallet.setId(walletId);

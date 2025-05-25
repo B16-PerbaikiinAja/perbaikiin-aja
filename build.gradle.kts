@@ -32,6 +32,8 @@ repositories {
 
 val junitJupiterVersion = "5.9.1"
 val jjwtVersion = "0.11.5"
+val prometheusVersion = "1.9.1"
+val postgresqlVersion = "42.6.0"
 
 
 dependencies {
@@ -49,11 +51,11 @@ dependencies {
     // Monitoring dependancies
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("io.micrometer:micrometer-registry-prometheus:1.9.1")
+    implementation("io.micrometer:micrometer-registry-prometheus:${prometheusVersion}")
 
     
     // Database dependencies
-    runtimeOnly("org.postgresql:postgresql:42.6.0")
+    runtimeOnly("org.postgresql:postgresql:${postgresqlVersion}")
     runtimeOnly("com.h2database:h2")
     
     // Lombok for code reduction
@@ -68,9 +70,9 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
     testImplementation("org.mockito:mockito-core")
+    testImplementation("org.springframework.security:spring-security-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-    testImplementation("org.springframework.security:spring-security-test")
 }
 
 // Test configurations

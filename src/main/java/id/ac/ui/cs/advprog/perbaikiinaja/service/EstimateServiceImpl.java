@@ -7,10 +7,8 @@ import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.StreamSupport;
 
 @Service
 public class EstimateServiceImpl implements EstimateService {
@@ -23,33 +21,22 @@ public class EstimateServiceImpl implements EstimateService {
     }
 
     @Override
-    public Optional<RepairEstimate> findById(UUID estimateId) {
-        // In a real implementation, there would be an EstimateRepository
-        // For now, we'll search through all service requests to find the estimate
-        return StreamSupport.stream(serviceRequestRepository.findAll().spliterator(), false)
-                .filter(request -> request.getEstimate() != null)
-                .filter(request -> request.getEstimate().getId().equals(estimateId))
-                .map(ServiceRequest::getEstimate)
-                .findFirst();
+    public Optional<RepairEstimate> findById(UUID serviceRequestId) {
+        Optional<ServiceRequest> serviceRequest = serviceRequestRepository.findById(serviceRequestId);
+        if (serviceRequest.isPresent() && serviceRequest.get().getEstimate() != null) {
+            return Optional.of(serviceRequest.get().getEstimate());
+        }
+        return Optional.empty();
     }
 
     @Override
-    public ServiceRequest getServiceRequest(RepairEstimate estimate) {
-        // In a real implementation, the RepairEstimate would have a reference to its ServiceRequest
-        // For now, we'll search through all service requests to find the one with this estimate
-        return StreamSupport.stream(serviceRequestRepository.findAll().spliterator(), false)
-                .filter(request -> request.getEstimate() != null)
-                .filter(request -> request.getEstimate().getId().equals(estimate.getId()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Service request not found for estimate: " + estimate.getId()));
-    }
+    public ServiceRequest acceptEstimate(UUID serviceRequestId, UUID customerId, String feedback) {
+        ServiceRequest serviceRequest = serviceRequestRepository.findById(serviceRequestId)
+                .orElseThrow(() -> new IllegalArgumentException("Service request not found with ID: " + serviceRequestId));
 
-    @Override
-    public ServiceRequest acceptEstimate(UUID estimateId, UUID customerId, String feedback) {
-        RepairEstimate estimate = findById(estimateId)
-                .orElseThrow(() -> new IllegalArgumentException("Estimate not found with ID: " + estimateId));
-
-        ServiceRequest serviceRequest = getServiceRequest(estimate);
+        if (serviceRequest.getEstimate() == null) {
+            throw new IllegalArgumentException("No estimate available for service request: " + serviceRequestId);
+        }
 
         // Check if customer is the owner of the service request
         if (!serviceRequest.getCustomer().getId().equals(customerId)) {
@@ -66,27 +53,23 @@ public class EstimateServiceImpl implements EstimateService {
         // Accept the estimate
         serviceRequest.acceptEstimate();
 
-        // Set feedback (in a real implementation, this would be a field in the estimate)
-        // For now, we'll just pretend it's stored
-
         // Save the updated service request
         return serviceRequestRepository.save(serviceRequest);
     }
 
     @Override
-    public UUID rejectEstimate(UUID estimateId, UUID customerId, String feedback) {
-        RepairEstimate estimate = findById(estimateId)
-                .orElseThrow(() -> new IllegalArgumentException("Estimate not found with ID: " + estimateId));
+    public UUID rejectEstimate(UUID serviceRequestId, UUID customerId, String feedback) {
+        ServiceRequest serviceRequest = serviceRequestRepository.findById(serviceRequestId)
+                .orElseThrow(() -> new IllegalArgumentException("Service request not found with ID: " + serviceRequestId));
 
-        ServiceRequest serviceRequest = getServiceRequest(estimate);
+        if (serviceRequest.getEstimate() == null) {
+            throw new IllegalArgumentException("No estimate available for service request: " + serviceRequestId);
+        }
 
         // Check if customer is the owner of the service request
         if (!serviceRequest.getCustomer().getId().equals(customerId)) {
             throw new IllegalArgumentException("Customer is not the owner of this service request");
         }
-
-        // Store the service request ID before deleting
-        UUID serviceRequestId = serviceRequest.getId();
 
         // Reject the estimate (in the state pattern, this transitions to REJECTED state)
         serviceRequest.rejectEstimate();
