@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class DefaultReviewValidationStrategyTest {
 
@@ -62,36 +65,12 @@ class DefaultReviewValidationStrategyTest {
         assertTrue(exception.getMessage().contains("Rating harus antara 1 dan 5"));
     }
 
-    @Test
-    void validate_WithNullComment_ShouldThrowException() {
+    @ParameterizedTest
+    @NullAndEmptySource  // Tests null and empty string
+    @ValueSource(strings = {"   "})  // Tests blank string
+    void validate_WithInvalidComment_ShouldThrowException(String comment) {
         // Arrange
-        validReview.setComment(null);
-
-        // Act & Assert
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            validationStrategy.validate(validReview);
-        });
-
-        assertTrue(exception.getMessage().contains("Komentar tidak boleh kosong"));
-    }
-
-    @Test
-    void validate_WithEmptyComment_ShouldThrowException() {
-        // Arrange
-        validReview.setComment("");
-
-        // Act & Assert
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            validationStrategy.validate(validReview);
-        });
-
-        assertTrue(exception.getMessage().contains("Komentar tidak boleh kosong"));
-    }
-
-    @Test
-    void validate_WithBlankComment_ShouldThrowException() {
-        // Arrange
-        validReview.setComment("   ");
+        validReview.setComment(comment);
 
         // Act & Assert
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
