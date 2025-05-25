@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,8 +50,8 @@ public class PaymentMethodController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PaymentMethod> getById(@PathVariable UUID id, Authentication authentication) {
-        authorizeAdmin(authentication); // Manual authorization check
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<PaymentMethod> getById(@PathVariable UUID id) {
         Optional<PaymentMethod> paymentMethodOptional = paymentMethodService.findById(id);
         return paymentMethodOptional
                 .map(ResponseEntity::ok)
@@ -58,8 +59,8 @@ public class PaymentMethodController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<List<PaymentMethod>> getAll(Authentication authentication) {
-        authorizeAdmin(authentication); // Manual authorization check
         List<PaymentMethod> paymentMethods = paymentMethodService.findAll();
         return ResponseEntity.ok(paymentMethods);
     }
@@ -87,7 +88,7 @@ public class PaymentMethodController {
             paymentMethodService.deleteById(id);
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

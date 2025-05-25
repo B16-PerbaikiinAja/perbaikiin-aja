@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,12 +23,21 @@ import java.util.*;
 public class ServiceRequestController {
 
     private final ServiceRequestService serviceRequestService;
+    private final ServiceRequestRepository serviceRequestRepository;
     private final Set<ServiceRequestStateType> validStatusValues =
             EnumSet.allOf(ServiceRequestStateType.class);
 
+    private static final String STATUSSTR = "status";
+    private static final String MESSAGESTR = "message";
+    private static final String ERRORCODESTR = "errorCode";
+    private static final String SUCCESSSTR = "SUCCESS";
+    private static final String SERVICEREQUESTSSTR = "serviceRequests";
+    private static final String FINALPRICESTR = "finalPrice";
+
     @Autowired
-    public ServiceRequestController(ServiceRequestService serviceRequestService) {
+    public ServiceRequestController(ServiceRequestService serviceRequestService, ServiceRequestRepository serviceRequestRepository) {
         this.serviceRequestService = serviceRequestService;
+        this.serviceRequestRepository = serviceRequestRepository;
     }
 
     /**
@@ -35,15 +45,15 @@ public class ServiceRequestController {
      */
     @GetMapping("/technician/{technicianId}")
     @PreAuthorize("hasRole('TECHNICIAN') and authentication.principal.id == #technicianId")
-    public ResponseEntity<?> getTechnicianServiceRequests(
+    public ResponseEntity<Map<String, Object>> getTechnicianServiceRequests(
             @PathVariable UUID technicianId,
             @RequestParam(required = false) ServiceRequestStateType status) {
 
         // Validate status parameter if provided
         if (status != null && !validStatusValues.contains(status)) {
             Map<String, Object> response = new HashMap<>();
-            response.put("status", 400);
-            response.put("message", "INVALID_STATUS_PARAMETER");
+            response.put(STATUSSTR, 400);
+            response.put(MESSAGESTR, "INVALID_STATUS_PARAMETER");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -57,9 +67,9 @@ public class ServiceRequestController {
 
         // Build response
         Map<String, Object> response = new HashMap<>();
-        response.put("status", 200);
-        response.put("message", "SUCCESS");
-        response.put("serviceRequests", serviceRequests);
+        response.put(STATUSSTR, 200);
+        response.put(MESSAGESTR, SUCCESSSTR);
+        response.put(SERVICEREQUESTSSTR, serviceRequests);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -69,13 +79,13 @@ public class ServiceRequestController {
      */
     @GetMapping("/customer/{customerId}")
     @PreAuthorize("hasRole('CUSTOMER') and authentication.principal.id == #customerId")
-    public ResponseEntity<?> getCustomerServiceRequests(@PathVariable UUID customerId) {
+    public ResponseEntity<Map<String, Object>> getCustomerServiceRequests(@PathVariable UUID customerId) {
         List<ServiceRequest> serviceRequests = serviceRequestService.findByCustomer(customerId);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("status", 200);
-        response.put("message", "SUCCESS");
-        response.put("serviceRequests", serviceRequests);
+        response.put(STATUSSTR, 200);
+        response.put(MESSAGESTR, SUCCESSSTR);
+        response.put(SERVICEREQUESTSSTR, serviceRequests);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -85,7 +95,7 @@ public class ServiceRequestController {
      */
     @PutMapping("/{serviceRequestId}/technician/status")
     @PreAuthorize("hasRole('TECHNICIAN')")
-    public ResponseEntity<?> updateServiceRequestStatus(
+    public ResponseEntity<Map<String, Object>> updateServiceRequestStatus(
             @PathVariable UUID serviceRequestId,
             @RequestBody Map<String, Object> requestBody,
             Authentication authentication) {
@@ -97,8 +107,8 @@ public class ServiceRequestController {
         Optional<ServiceRequest> serviceRequestOpt = serviceRequestService.findById(serviceRequestId);
         if (serviceRequestOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 4040);
-            response.put("message", "Service request not found");
+            response.put(ERRORCODESTR, 4040);
+            response.put(MESSAGESTR, "Service request not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
@@ -107,26 +117,26 @@ public class ServiceRequestController {
         // Check if technician is assigned to this service request
         if (!serviceRequest.getTechnician().getId().equals(technicianId)) {
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 4030);
-            response.put("message", "User is not the assigned technician for this service request");
+            response.put(ERRORCODESTR, 4030);
+            response.put(MESSAGESTR, "User is not the assigned technician for this service request");
             return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
         }
 
         // Validate status
         ServiceRequestStateType status = null;
         try {
-            if (requestBody.get("status") instanceof String) {
+            if (requestBody.get(STATUSSTR) instanceof String string) {
                 // Convert String to enum
-                status = ServiceRequestStateType.valueOf((String) requestBody.get("status"));
+                status = ServiceRequestStateType.valueOf(string);
             } else {
                 // Try direct cast (for test cases that may pass the actual enum)
-                status = (ServiceRequestStateType) requestBody.get("status");
+                status = (ServiceRequestStateType) requestBody.get(STATUSSTR);
             }
         } catch (IllegalArgumentException | ClassCastException e) {
             // Handles both invalid enum strings and casting errors
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 4000);
-            response.put("message", "Invalid status. Valid values are: " + Arrays.toString(ServiceRequestStateType.values()));
+            response.put(ERRORCODESTR, 4000);
+            response.put(MESSAGESTR, "Invalid status. Valid values are: " + Arrays.toString(ServiceRequestStateType.values()));
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -134,16 +144,16 @@ public class ServiceRequestController {
                 new HashSet<>(Arrays.asList(ServiceRequestStateType.IN_PROGRESS, ServiceRequestStateType.COMPLETED));
         if (status == null || !validTechnicianStatusValues.contains(status)) {
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 4000);
-            response.put("message", "Invalid status. Valid values are: " + validTechnicianStatusValues);
+            response.put(ERRORCODESTR, 4000);
+            response.put(MESSAGESTR, "Invalid status. Valid values are: " + validTechnicianStatusValues);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
         // If status is COMPLETED, finalPrice is required
-        if (ServiceRequestStateType.COMPLETED.equals(status) && !requestBody.containsKey("finalPrice")) {
+        if (ServiceRequestStateType.COMPLETED.equals(status) && !requestBody.containsKey(FINALPRICESTR)) {
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 4001);
-            response.put("message", "Final price is required when status is COMPLETED");
+            response.put(ERRORCODESTR, 4001);
+            response.put(MESSAGESTR, "Final price is required when status is COMPLETED");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -161,10 +171,10 @@ public class ServiceRequestController {
             // Service request info
             Map<String, Object> serviceRequestResponse = new HashMap<>();
             serviceRequestResponse.put("id", updatedRequest.getId());
-            serviceRequestResponse.put("status", updatedRequest.getStateType());
+            serviceRequestResponse.put(STATUSSTR, updatedRequest.getStateType());
             if (ServiceRequestStateType.COMPLETED.equals(status)) {
-                Number finalPrice = (Number) requestBody.get("finalPrice");
-                serviceRequestResponse.put("finalPrice", finalPrice);
+                Number finalPrice = (Number) requestBody.get(FINALPRICESTR);
+                serviceRequestResponse.put(FINALPRICESTR, finalPrice);
             }
             serviceRequestResponse.put("updatedAt", LocalDateTime.now());
 
@@ -182,8 +192,8 @@ public class ServiceRequestController {
 
         } catch (IllegalStateException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("errorCode", 4002);
-            response.put("message", e.getMessage());
+            response.put(ERRORCODESTR, 4002);
+            response.put(MESSAGESTR, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
@@ -193,22 +203,20 @@ public class ServiceRequestController {
      */
     @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getAllServiceRequests() {
-        List<ServiceRequest> serviceRequests = new ArrayList<>();
-        // You would need to implement a method to get all service requests
-        // serviceRequests = serviceRequestService.findAll();
+    public ResponseEntity<Map<String, Object>> getAllServiceRequests() {
+        List<ServiceRequest> serviceRequests = (List<ServiceRequest>) serviceRequestRepository.findAll();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("status", 200);
-        response.put("message", "SUCCESS");
-        response.put("serviceRequests", serviceRequests);
+        response.put(STATUSSTR, 200);
+        response.put(MESSAGESTR, SUCCESSSTR);
+        response.put(SERVICEREQUESTSSTR, serviceRequests);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping("/customer")
-    public ResponseEntity<?> getServiceRequests(@AuthenticationPrincipal User user) {
+    public ResponseEntity<List<ServiceRequest>> getServiceRequests(@AuthenticationPrincipal User user) {
         var requests = serviceRequestService.findByCustomer(user.getId());
         return ResponseEntity.ok(requests);
     }
@@ -222,7 +230,7 @@ public class ServiceRequestController {
         return ResponseEntity.ok(created);
     }
     @PreAuthorize("hasRole('CUSTOMER')")
-    @PutMapping("/customer")
+    @PutMapping("/customer/{id}")
     public ResponseEntity<ServiceRequest> updateServiceRequest(
             @PathVariable UUID id,
             @RequestBody CustomerServiceRequestDto dto,
@@ -232,7 +240,7 @@ public class ServiceRequestController {
         return ResponseEntity.ok(updated);
     }
     @PreAuthorize("hasRole('CUSTOMER')")
-    @DeleteMapping("/customer")
+    @DeleteMapping("/customer/{id}")
     public ResponseEntity<Void> deleteServiceRequest(
             @PathVariable UUID id,
             @AuthenticationPrincipal User user

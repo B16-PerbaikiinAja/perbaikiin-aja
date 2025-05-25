@@ -3,7 +3,10 @@ package id.ac.ui.cs.advprog.perbaikiinaja.service;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.User;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.ReportRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ServiceRequestRepository;
+import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +29,12 @@ public class ReportServiceTest {
 
     @Mock
     private ServiceRequestRepository serviceRequestRepository;
+
+    @Mock
+    private ReportRepository reportRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private ReportServiceImpl reportService;
@@ -61,25 +71,24 @@ public class ReportServiceTest {
 
         // Set up service requests
         serviceRequest1 = mock(ServiceRequest.class);
-        when(serviceRequest1.getReport()).thenReturn(report1);
+        lenient().when(serviceRequest1.getReport()).thenReturn(report1);
         lenient().when(serviceRequest1.getTechnician()).thenReturn(technician);
-        lenient().when(report1.getServiceRequest()).thenReturn(serviceRequest1);
 
         serviceRequest2 = mock(ServiceRequest.class);
-        when(serviceRequest2.getReport()).thenReturn(report2);
+        lenient().when(serviceRequest2.getReport()).thenReturn(report2);
         lenient().when(serviceRequest2.getTechnician()).thenReturn(technician);
-        lenient().when(report2.getServiceRequest()).thenReturn(serviceRequest2);
 
         serviceRequestWithoutReport = mock(ServiceRequest.class);
         lenient().when(serviceRequestWithoutReport.getReport()).thenReturn(null);
+
+        // Mock userRepository to return the technician as a User
+        lenient().when(userRepository.findAll()).thenReturn(Arrays.asList((User) technician));
     }
 
     @Test
-    void getAllReports_ShouldReturnAllReportsFromServiceRequests() {
+    void getAllReports_ShouldReturnAllReportsFromReportRepository() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(
-                Arrays.asList(serviceRequest1, serviceRequest2, serviceRequestWithoutReport)
-        );
+        when(reportRepository.findAll()).thenReturn(Arrays.asList(report1, report2));
 
         // Act
         List<Report> reports = reportService.getAllReports();
@@ -88,14 +97,13 @@ public class ReportServiceTest {
         assertEquals(2, reports.size());
         assertTrue(reports.contains(report1));
         assertTrue(reports.contains(report2));
+        verify(reportRepository).findAll();
     }
 
     @Test
     void getReportById_WithValidId_ShouldReturnReport() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(
-                Arrays.asList(serviceRequest1, serviceRequest2)
-        );
+        when(reportRepository.findById(reportId)).thenReturn(java.util.Optional.of(report1));
 
         // Act
         Report result = reportService.getReportById(reportId);
@@ -103,6 +111,20 @@ public class ReportServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(reportId, result.getId());
+        verify(reportRepository).findById(reportId);
+    }
+
+    @Test
+    void getReportById_WithInvalidId_ShouldThrowException() {
+        // Arrange
+        UUID invalidId = UUID.randomUUID();
+        when(reportRepository.findById(invalidId)).thenReturn(java.util.Optional.empty());
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            reportService.getReportById(invalidId);
+        });
+        verify(reportRepository).findById(invalidId);
     }
 
     @Test
@@ -118,14 +140,13 @@ public class ReportServiceTest {
         assertEquals(2, reports.size());
         assertTrue(reports.contains(report1));
         assertTrue(reports.contains(report2));
+        verify(serviceRequestRepository).findByTechnicianId(technicianId);
     }
 
     @Test
     void getReportsByDateRange_ShouldFilterByDateRange() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(
-                Arrays.asList(serviceRequest1, serviceRequest2)
-        );
+        when(reportRepository.findAll()).thenReturn(Arrays.asList(report1, report2));
 
         LocalDate startDate = baseDateTime.minusDays(7).toLocalDate();
         LocalDate endDate = baseDateTime.toLocalDate();
@@ -136,14 +157,13 @@ public class ReportServiceTest {
         // Assert
         assertEquals(1, reports.size());
         assertTrue(reports.contains(report1)); // Only report1 falls within the date range
+        verify(reportRepository).findAll();
     }
 
     @Test
     void getReportsByDateRange_WithEmptyDateRange_ShouldReturnEmptyList() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(
-                Arrays.asList(serviceRequest1, serviceRequest2)
-        );
+        when(reportRepository.findAll()).thenReturn(Arrays.asList(report1, report2));
 
         LocalDate futureStartDate = baseDateTime.plusDays(1).toLocalDate();
         LocalDate futureEndDate = baseDateTime.plusDays(7).toLocalDate();
@@ -153,19 +173,66 @@ public class ReportServiceTest {
 
         // Assert
         assertTrue(reports.isEmpty());
+        verify(reportRepository).findAll();
     }
 
     @Test
-    void getReportById_WithInvalidId_ShouldThrowException() {
+    void getServiceRequestByReportId_WithValidId_ShouldReturnServiceRequest() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(
-                Arrays.asList(serviceRequest1, serviceRequest2)
-        );
-        UUID invalidId = UUID.randomUUID();
+        when(serviceRequestRepository.findByTechnicianId(technicianId))
+                .thenReturn(Arrays.asList(serviceRequest1, serviceRequest2));
+
+        // Act
+        ServiceRequest result = reportService.getServiceRequestByReportId(reportId);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(serviceRequest1, result);
+        verify(userRepository).findAll();
+        verify(serviceRequestRepository).findByTechnicianId(technicianId);
+    }
+
+    @Test
+    void getServiceRequestByReportId_WithInvalidId_ShouldThrowException() {
+        // Arrange
+        UUID invalidReportId = UUID.randomUUID();
+        when(serviceRequestRepository.findByTechnicianId(technicianId))
+                .thenReturn(Arrays.asList(serviceRequest1, serviceRequest2));
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> {
-            reportService.getReportById(invalidId);
+            reportService.getServiceRequestByReportId(invalidReportId);
         });
+        verify(userRepository).findAll();
+        verify(serviceRequestRepository).findByTechnicianId(technicianId);
+    }
+
+    @Test
+    void getReportsByTechnician_WithNoReports_ShouldReturnEmptyList() {
+        // Arrange
+        when(serviceRequestWithoutReport.getReport()).thenReturn(null);
+
+        when(serviceRequestRepository.findByTechnicianId(technicianId))
+                .thenReturn(Arrays.asList(serviceRequestWithoutReport));
+
+        // Act
+        List<Report> reports = reportService.getReportsByTechnician(technicianId);
+
+        // Assert
+        assertTrue(reports.isEmpty());
+        verify(serviceRequestRepository).findByTechnicianId(technicianId);
+    }
+
+    @Test
+    void getAllReports_WithNoReports_ShouldReturnEmptyList() {
+        // Arrange
+        when(reportRepository.findAll()).thenReturn(Collections.emptyList());
+
+        // Act
+        List<Report> reports = reportService.getAllReports();
+
+        // Assert
+        assertTrue(reports.isEmpty());
+        verify(reportRepository).findAll();
     }
 }

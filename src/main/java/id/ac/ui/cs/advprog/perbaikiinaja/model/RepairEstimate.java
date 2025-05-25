@@ -15,15 +15,19 @@ import jakarta.persistence.*;
 public class RepairEstimate {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
-    private double cost;
-    private LocalDate completionDate;
-    private String notes;
-    private LocalDate createdDate;
 
-    @OneToOne(mappedBy = "estimate")
-    private ServiceRequest serviceRequest;
+    @Column(nullable = false)
+    private double cost;
+
+    @Column(nullable = false)
+    private LocalDate completionDate;
+
+    @Column(nullable = true)
+    private String notes;
+
+    @Column(nullable = false)
+    private LocalDate createdDate;
 
     public RepairEstimate() {
         this.id = UUID.randomUUID();
@@ -51,7 +55,7 @@ public class RepairEstimate {
     }
 
     public void setCompletionDate(LocalDate completionDate) {
-        if (completionDate.isBefore(LocalDate.now())) {
+        if (completionDate != null && completionDate.isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Completion date cannot be in the past");
         }
         this.completionDate = completionDate;
@@ -74,6 +78,6 @@ public class RepairEstimate {
      * @return true if the estimate is valid, false otherwise
      */
     public boolean isValid() {
-        return cost > 0 && completionDate != null && completionDate.isAfter(LocalDate.now());
+        return cost > 0 && completionDate != null;
     }
 }

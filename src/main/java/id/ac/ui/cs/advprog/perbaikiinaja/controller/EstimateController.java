@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,11 +33,20 @@ public class EstimateController {
     private final EstimateService estimateService;
     private final WalletService walletService;
 
-    private final String MESSAGE_STR = "message";
-    private final String ERR_STR = "errorCode";
+    private static final String MESSAGESTR = "message";
+    private static final String ERRORSTR = "errorCode";
+
+    private static final String ESTIMATEDCOSTSTR = "estimatedCost";
+    private static final String SERVICEREQUESTIDSTR = "serviceRequestId";
+    private static final String STATUSSTR = "status";
+    private static final String ESTIMATEDCOMPLETIONTIMESTR = "estimatedCompletionTime";
+    private static final String NOTESSTR = "notes";
 
     @Autowired
-    public EstimateController(ServiceRequestService serviceRequestService, EstimateService estimateService, WalletService walletService) {
+    public EstimateController(
+            ServiceRequestService serviceRequestService,
+            EstimateService estimateService,
+            WalletService walletService) {
         this.serviceRequestService = serviceRequestService;
         this.estimateService = estimateService;
         this.walletService = walletService;
@@ -49,7 +57,7 @@ public class EstimateController {
      */
     @PostMapping("/technician/service-requests/{serviceRequestId}")
     @PreAuthorize("hasRole('TECHNICIAN')")
-    public ResponseEntity<?> createEstimate(
+    public ResponseEntity<Map<String, Object>> createEstimate(
             @PathVariable UUID serviceRequestId,
             @RequestBody Map<String, Object> requestBody,
             Authentication authentication) {
@@ -58,19 +66,19 @@ public class EstimateController {
         UUID technicianId = currentUser.getId();
 
         // Validate estimate data
-        Double estimatedCost = ((Number) requestBody.get("estimatedCost")).doubleValue();
+        Double estimatedCost = ((Number) requestBody.get(ESTIMATEDCOSTSTR)).doubleValue();
         if (estimatedCost < 0) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4000);
-            response.put(MESSAGE_STR, "Estimated cost cannot be negative");
+            response.put(ERRORSTR, 4000);
+            response.put(MESSAGESTR, "Estimated cost cannot be negative");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
-        LocalDate completionDate = LocalDate.parse((String) requestBody.get("estimatedCompletionTime"));
+        LocalDate completionDate = LocalDate.parse((String) requestBody.get(ESTIMATEDCOMPLETIONTIMESTR));
         if (completionDate.isBefore(LocalDate.now())) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4001);
-            response.put(MESSAGE_STR, "Estimated completion date cannot be in the past");
+            response.put(ERRORSTR, 4001);
+            response.put(MESSAGESTR, "Estimated completion date cannot be in the past");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -79,8 +87,8 @@ public class EstimateController {
         estimate.setCost(estimatedCost);
         estimate.setCompletionDate(completionDate);
 
-        if (requestBody.containsKey("notes")) {
-            estimate.setNotes((String) requestBody.get("notes"));
+        if (requestBody.containsKey(NOTESSTR)) {
+            estimate.setNotes((String) requestBody.get(NOTESSTR));
         }
 
         try {
@@ -93,11 +101,11 @@ public class EstimateController {
 
             RepairEstimate createdEstimate = updatedRequest.getEstimate();
             estimateResponse.put("id", createdEstimate.getId());
-            estimateResponse.put("serviceRequestId", serviceRequestId);
-            estimateResponse.put("estimatedCost", createdEstimate.getCost());
-            estimateResponse.put("estimatedCompletionTime", createdEstimate.getCompletionDate());
-            estimateResponse.put("notes", createdEstimate.getNotes());
-            estimateResponse.put("status", ServiceRequestStateType.PENDING);
+            estimateResponse.put(SERVICEREQUESTIDSTR, serviceRequestId);
+            estimateResponse.put(ESTIMATEDCOSTSTR, createdEstimate.getCost());
+            estimateResponse.put(ESTIMATEDCOMPLETIONTIMESTR, createdEstimate.getCompletionDate());
+            estimateResponse.put(NOTESSTR, createdEstimate.getNotes());
+            estimateResponse.put(STATUSSTR, ServiceRequestStateType.PENDING);
             estimateResponse.put("createdAt", createdEstimate.getCreatedDate());
 
             response.put("estimate", estimateResponse);
@@ -106,13 +114,13 @@ public class EstimateController {
 
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4040);
-            response.put(MESSAGE_STR, e.getMessage());
+            response.put(ERRORSTR, 4040);
+            response.put(MESSAGESTR, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (IllegalStateException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4090);
-            response.put(MESSAGE_STR, e.getMessage());
+            response.put(ERRORSTR, 4090);
+            response.put(MESSAGESTR, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.CONFLICT);
         }
     }
@@ -120,10 +128,10 @@ public class EstimateController {
     /**
      * Respond to an estimate (accept/reject) as a customer
      */
-    @PutMapping("/customer/{estimateId}/response")
+    @PutMapping("/customer/{serviceRequestId}/response")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<?> respondToEstimate(
-            @PathVariable UUID estimateId,
+    public ResponseEntity<Map<String, Object>> respondToEstimate(
+            @PathVariable UUID serviceRequestId,
             @RequestBody Map<String, Object> requestBody,
             Authentication authentication) {
 
@@ -134,46 +142,49 @@ public class EstimateController {
         String action = (String) requestBody.get("action");
         if (action == null || (!action.equals("ACCEPT") && !action.equals("REJECT"))) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4000);
-            response.put(MESSAGE_STR, "Action must be ACCEPT or REJECT");
+            response.put(ERRORSTR, 4000);
+            response.put(MESSAGESTR, "Action must be ACCEPT or REJECT");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
         // Get feedback (optional)
         String feedback = (String) requestBody.getOrDefault("feedback", "");
 
-        // Find estimate
-        Optional<RepairEstimate> estimateOpt = estimateService.findById(estimateId);
+        // Find service request and its estimate
+        Optional<RepairEstimate> estimateOpt = estimateService.findById(serviceRequestId);
         if (estimateOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4040);
-            response.put(MESSAGE_STR, "Estimate not found");
+
+            response.put(ERRORSTR, 4040);
+            response.put(MESSAGESTR, "Estimate not found");
+
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
         RepairEstimate estimate = estimateOpt.get();
 
-        // Check if customer owns the service request
+        // Try to get service request
         ServiceRequest serviceRequest;
         try {
-            serviceRequest = estimateService.getServiceRequest(estimate);
+            serviceRequest = serviceRequestService.findById(serviceRequestId)
+                    .orElseThrow(() -> new IllegalArgumentException("Service request not found"));
+
             if (!serviceRequest.getCustomer().getId().equals(customerId)) {
                 Map<String, Object> response = new HashMap<>();
-                response.put(ERR_STR, 4030);
-                response.put(MESSAGE_STR, "User is not the owner of the service request");
+                response.put(ERRORSTR, 4030);
+                response.put(MESSAGESTR, "User is not the owner of the service request");
                 return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
             }
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4041);
-            response.put(MESSAGE_STR, "Service request not found");
+            response.put(ERRORSTR, 4041);
+            response.put(MESSAGESTR, "Service request not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
         try {
             // Process response based on action
             if ("ACCEPT".equals(action)) {
-                serviceRequest = estimateService.acceptEstimate(estimateId, customerId, feedback);
 
                 // Check if customer has sufficient balance
                 Optional<Wallet> customerWalletOpt = walletService.getWalletByUserId(customerId);
@@ -187,6 +198,8 @@ public class EstimateController {
                         response.put("message", "Insufficient funds in wallet. Please deposit funds before accepting the estimate.");
                         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                     }
+
+                    serviceRequest = estimateService.acceptEstimate(serviceRequestId, customerId, feedback);
                 }
 
                 // Build response
@@ -195,17 +208,19 @@ public class EstimateController {
                 // Estimate info
                 Map<String, Object> estimateResponse = new HashMap<>();
                 estimateResponse.put("id", estimate.getId());
-                estimateResponse.put("serviceRequestId", serviceRequest.getId());
-                estimateResponse.put("estimatedCost", estimate.getCost());
-                estimateResponse.put("estimatedCompletionTime", estimate.getCompletionDate());
-                estimateResponse.put("status", ServiceRequestStateType.ACCEPTED);
+
+                estimateResponse.put(SERVICEREQUESTIDSTR, serviceRequest.getId());
+                estimateResponse.put(ESTIMATEDCOSTSTR, estimate.getCost());
+                estimateResponse.put(ESTIMATEDCOMPLETIONTIMESTR, estimate.getCompletionDate());
+                estimateResponse.put(STATUSSTR, ServiceRequestStateType.ACCEPTED);
+
                 estimateResponse.put("feedback", feedback);
                 estimateResponse.put("updatedAt", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
                 // Service request info
                 Map<String, Object> serviceRequestResponse = new HashMap<>();
                 serviceRequestResponse.put("id", serviceRequest.getId());
-                serviceRequestResponse.put("status", serviceRequest.getStateType());
+                serviceRequestResponse.put(STATUSSTR, serviceRequest.getStateType());
 
                 response.put("estimate", estimateResponse);
                 response.put("serviceRequest", serviceRequestResponse);
@@ -213,26 +228,26 @@ public class EstimateController {
                 return new ResponseEntity<>(response, HttpStatus.OK);
 
             } else { // REJECT
-                UUID serviceRequestId = estimateService.rejectEstimate(estimateId, customerId, feedback);
+                UUID rejectedServiceRequestId = estimateService.rejectEstimate(serviceRequestId, customerId, feedback);
 
                 // Build response
                 Map<String, Object> response = new HashMap<>();
-                response.put(MESSAGE_STR, "Estimate rejected and service request deleted successfully");
-                response.put("estimateId", estimateId.toString());
-                response.put("serviceRequestId", serviceRequestId.toString());
+
+                response.put(MESSAGESTR, "Estimate rejected and service request deleted successfully");
+                response.put(SERVICEREQUESTIDSTR, rejectedServiceRequestId.toString());
 
                 return new ResponseEntity<>(response, HttpStatus.OK);
             }
 
         } catch (IllegalStateException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4090);
-            response.put(MESSAGE_STR, e.getMessage());
+            response.put(ERRORSTR, 4090);
+            response.put(MESSAGESTR, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.CONFLICT);
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(ERR_STR, 4000);
-            response.put(MESSAGE_STR, e.getMessage());
+            response.put(ERRORSTR, 4000);
+            response.put(MESSAGESTR, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }

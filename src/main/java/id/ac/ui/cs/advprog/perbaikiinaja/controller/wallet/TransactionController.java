@@ -30,8 +30,8 @@ public class TransactionController {
 
     private final TransactionService transactionService;
     private final WalletService walletService;
-    private final String MESSAGE_STR = "message";
-    private final String WALLET_NOT_FOUND_STR = "Wallet not found. Create a wallet first.";
+    private static final String MESSAGESTR = "message";
+    private static final String WALLETNOTFOUNDSTR = "Wallet not found. Create a wallet first.";
 
     @Autowired
     public TransactionController(
@@ -63,7 +63,7 @@ public class TransactionController {
 
         if (walletOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put(MESSAGE_STR, WALLET_NOT_FOUND_STR);
+            response.put(MESSAGESTR, WALLETNOTFOUNDSTR);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
@@ -91,7 +91,7 @@ public class TransactionController {
 
         if (walletOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put(MESSAGE_STR, WALLET_NOT_FOUND_STR);
+            response.put(MESSAGESTR, WALLETNOTFOUNDSTR);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
@@ -118,7 +118,7 @@ public class TransactionController {
 
         if (walletOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put(MESSAGE_STR, WALLET_NOT_FOUND_STR);
+            response.put(MESSAGESTR, WALLETNOTFOUNDSTR);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
@@ -141,7 +141,7 @@ public class TransactionController {
 
         if (transactionOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put(MESSAGE_STR, "Transaction not found");
+            response.put(MESSAGESTR, "Transaction not found");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 

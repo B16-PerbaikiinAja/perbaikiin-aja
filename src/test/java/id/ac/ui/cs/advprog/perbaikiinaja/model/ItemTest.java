@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ItemTest {
+class ItemTest {
     
     private Item item;
     
@@ -16,9 +16,9 @@ public class ItemTest {
     
     @Test
     void testSetAndGetName() {
-        String Name = "Headphone";
-        item.setName(Name);
-        assertEquals(Name, item.getName());
+        String name = "Headphone";
+        item.setName(name);
+        assertEquals(name, item.getName());
     }
     
     @Test
