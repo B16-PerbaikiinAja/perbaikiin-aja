@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 
-public class PaymentMethodServiceImplTest {
+class PaymentMethodServiceImplTest {
 
     private PaymentMethodServiceImpl service;
     private EntityManager entityManager;

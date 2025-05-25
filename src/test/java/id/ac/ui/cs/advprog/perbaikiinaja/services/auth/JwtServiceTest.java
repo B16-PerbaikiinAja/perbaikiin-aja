@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.services.auth;
 
+import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.User;
@@ -77,7 +78,7 @@ class JwtServiceTest {
         String token = jwtService.generateToken(userDetails);
 
         assertTrue(jwtService.isTokenValid(token, userDetails));
-        String subject = jwtService.extractClaim(token, claims -> claims.getSubject());
+        String subject = jwtService.extractClaim(token, Claims::getSubject);
         assertEquals("user@mail.com", subject);
 
         String constant = jwtService.extractClaim(token, claims -> "constant");
@@ -92,7 +93,7 @@ class JwtServiceTest {
         UserDetails userDetails = new User("user@mail.com", "password", Collections.emptyList());
         String token = jwtService.generateToken(userDetails);
 
-        assertNotNull(jwtService.extractClaim(token, claims -> claims.getExpiration()));
+        assertNotNull(jwtService.extractClaim(token, Claims::getExpiration));
     }
 
     @Test

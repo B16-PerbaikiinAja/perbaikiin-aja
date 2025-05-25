@@ -6,6 +6,7 @@ import java.security.InvalidParameterException;
 import java.util.Date;
 
 public class CouponValidation {
+    public CouponValidation() {}
     public static void validateDiscountValue(double discountValue) {
         if (discountValue <= 0 || discountValue > 1) {
             throw new InvalidParameterException("Discount must be greater than 0 and at most 1");

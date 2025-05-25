@@ -1,13 +1,11 @@
 package id.ac.ui.cs.advprog.perbaikiinaja.repository.coupon;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.CouponBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
@@ -18,7 +16,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
-public class CouponRepositoryTest {
+class CouponRepositoryTest {
 
     @TestConfiguration
     @EntityScan(basePackages = "id.ac.ui.cs.advprog.perbaikiinaja.model.coupon")

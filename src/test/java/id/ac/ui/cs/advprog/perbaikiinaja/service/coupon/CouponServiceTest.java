@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class CouponServiceTest {
+class CouponServiceTest {
 
     @Mock
     private CouponRepository couponRepository;
@@ -28,7 +28,7 @@ public class CouponServiceTest {
 
     private Coupon coupon1;
     private Coupon coupon2;
-    private final Date future = new Date(System.currentTimeMillis() + 86400000);
+    private final Date futureDate = new Date(System.currentTimeMillis() + 86400000);
 
     @BeforeEach
     void setUp() {
@@ -52,7 +52,7 @@ public class CouponServiceTest {
         Coupon couponToCreate = new CouponBuilder()
                 .discountValue(0.30)
                 .maxUsage(5)
-                .expiryDate(future)
+                .expiryDate(futureDate)
                 .build();
 
         Coupon savedCoupon = new CouponBuilder()
@@ -123,7 +123,7 @@ public class CouponServiceTest {
         Coupon updatedDetails = new CouponBuilder()
                 .discountValue(0.4)
                 .maxUsage(40)
-                .expiryDate(future)
+                .expiryDate(futureDate)
                 .build();
 
         when(couponRepository.findByCode(coupon1.getCode())).thenReturn(Optional.of(coupon1));
@@ -145,7 +145,7 @@ public class CouponServiceTest {
         Coupon updatedDetails = new CouponBuilder()
                 .discountValue(0.4)
                 .maxUsage(40)
-                .expiryDate(future)
+                .expiryDate(futureDate)
                 .build();
 
         when(couponRepository.findByCode(nonExistingCode)).thenReturn(Optional.empty());

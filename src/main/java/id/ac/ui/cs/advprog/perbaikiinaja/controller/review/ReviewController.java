@@ -73,7 +73,7 @@ public class ReviewController {
         List<Review> reviews = reviewService.getReviewsForTechnician(techId);
         List<ReviewResponseDto> dtoList = reviews.stream()
                 .map(this::toDto)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtoList);
     }
 

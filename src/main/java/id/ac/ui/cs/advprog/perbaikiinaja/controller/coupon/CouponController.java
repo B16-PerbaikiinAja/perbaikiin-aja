@@ -18,6 +18,8 @@ import java.util.*;
 public class CouponController {
     private final CouponService couponService;
 
+    private static final String COUPONNOTFOUNDSTR = "Coupon not found";
+
     public CouponController(CouponService couponService) {
         this.couponService = couponService;
     }
@@ -62,7 +64,7 @@ public class CouponController {
         Optional<Coupon> coupon = couponService.getCouponByCode(code);
         return coupon
                 .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coupon not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPONNOTFOUNDSTR));
     }
 
     @PutMapping("/use/{code}")
@@ -92,7 +94,7 @@ public class CouponController {
             Optional<Coupon> updatedCoupon = couponService.updateCoupon(code, coupontoUpdate);
             return updatedCoupon
                     .map(ResponseEntity::ok)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coupon not found"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPONNOTFOUNDSTR));
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
@@ -111,6 +113,6 @@ public class CouponController {
             return ResponseEntity.ok(response);
         }
 
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Coupon not found");
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, COUPONNOTFOUNDSTR);
     }
 }

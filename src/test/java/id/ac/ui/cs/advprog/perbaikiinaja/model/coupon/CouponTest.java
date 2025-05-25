@@ -7,7 +7,7 @@ import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class CouponTest {
+class CouponTest {
     Coupon coupon1 = new CouponBuilder().build();
 
     @Test

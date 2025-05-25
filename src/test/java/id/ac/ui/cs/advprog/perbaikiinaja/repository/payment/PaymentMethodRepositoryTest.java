@@ -4,14 +4,13 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.payment.PaymentMethod;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PaymentMethodRepositoryTest {
+class PaymentMethodRepositoryTest {
 
     private PaymentMethodRepository repository;
     private PaymentMethod method;
