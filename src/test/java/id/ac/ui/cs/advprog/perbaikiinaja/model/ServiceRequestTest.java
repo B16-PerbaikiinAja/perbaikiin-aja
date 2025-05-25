@@ -380,7 +380,7 @@ class ServiceRequestTest {
         noTechRequest.acceptEstimate();
 
         // Try to start service without technician - should throw exception
-        assertThrows(IllegalStateException.class, () -> noTechRequest.startService());
+        assertThrows(IllegalStateException.class, noTechRequest::startService);
 
         // Now assign a technician
         noTechRequest.setTechnician(technician);
