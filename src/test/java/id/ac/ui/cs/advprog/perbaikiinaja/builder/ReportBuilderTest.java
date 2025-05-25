@@ -52,42 +52,6 @@ class ReportBuilderTest {
         assertTrue(report.isValid());
     }
 
-//    @Test
-//    void testCannotBuildInvalidReport_MissingFields() {
-//        // Act & Assert - Missing all fields
-//        Exception exception = assertThrows(IllegalStateException.class, () -> {
-//            builder.build();
-//        });
-//        assertTrue(exception.getMessage().contains("Cannot build an invalid report"));
-//
-//        // Act & Assert - Missing repair summary
-//        exception = assertThrows(IllegalStateException.class, () -> {
-//            builder
-//                    .withRepairDetails("Replaced screen with a new one")
-//                    .completedNow()
-//                    .build();
-//        });
-//        assertTrue(exception.getMessage().contains("Cannot build an invalid report"));
-//
-//        // Act & Assert - Missing repair details
-//        exception = assertThrows(IllegalStateException.class, () -> {
-//            builder
-//                    .withRepairSummary("Fixed the cracked screen")
-//                    .completedNow()
-//                    .build();
-//        });
-//        assertTrue(exception.getMessage().contains("Cannot build an invalid report"));
-//
-//        // Act & Assert - Missing completion date/time
-//        exception = assertThrows(IllegalStateException.class, () -> {
-//            builder
-//                    .withRepairDetails("Replaced screen with a new one")
-//                    .withRepairSummary("Fixed the cracked screen")
-//                    .build();
-//        });
-//        assertTrue(exception.getMessage().contains("Cannot build an invalid report"));
-//    }
-
     @Test
     void testInvalidInputs() {
         // Act & Assert - Null repair details

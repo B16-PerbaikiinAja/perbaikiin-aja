@@ -48,49 +48,36 @@ public class EstimateServiceTest {
 
         // Set up estimate
         estimate = mock(RepairEstimate.class);
-        when(estimate.getId()).thenReturn(estimateId);
+        lenient().when(estimate.getId()).thenReturn(estimateId);
 
         // Set up service request
         serviceRequest = mock(ServiceRequest.class);
         lenient().when(serviceRequest.getId()).thenReturn(serviceRequestId);
-        when(serviceRequest.getEstimate()).thenReturn(estimate);
+        lenient().when(serviceRequest.getEstimate()).thenReturn(estimate);
         lenient().when(serviceRequest.getCustomer()).thenReturn(customer);
     }
 
     @Test
     void findById_WithValidId_ShouldReturnEstimate() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
+        when(serviceRequestRepository.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
 
         // Act
-        Optional<RepairEstimate> result = estimateService.findById(estimateId);
+        Optional<RepairEstimate> result = estimateService.findById(serviceRequestId);
 
         // Assert
         assertTrue(result.isPresent());
-        assertEquals(estimateId, result.get().getId());
-    }
-
-    @Test
-    void getServiceRequest_WithValidEstimate_ShouldReturnServiceRequest() {
-        // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
-
-        // Act
-        ServiceRequest result = estimateService.getServiceRequest(estimate);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(serviceRequestId, result.getId());
+        assertEquals(estimate, result.get());
     }
 
     @Test
     void acceptEstimate_WithValidParams_ShouldAcceptEstimate() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
+        when(serviceRequestRepository.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
         when(serviceRequestRepository.save(serviceRequest)).thenReturn(serviceRequest);
 
         // Act
-        ServiceRequest result = estimateService.acceptEstimate(estimateId, customerId, "Great estimate!");
+        ServiceRequest result = estimateService.acceptEstimate(serviceRequestId, customerId, "Great estimate!");
 
         // Assert
         assertNotNull(result);
@@ -102,11 +89,11 @@ public class EstimateServiceTest {
     @Test
     void rejectEstimate_WithValidParams_ShouldRejectAndDeleteServiceRequest() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
+        when(serviceRequestRepository.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
         doNothing().when(serviceRequestRepository).delete(serviceRequest);
 
         // Act
-        UUID result = estimateService.rejectEstimate(estimateId, customerId, "Too expensive");
+        UUID result = estimateService.rejectEstimate(serviceRequestId, customerId, "Too expensive");
 
         // Assert
         assertEquals(serviceRequestId, result);
@@ -117,87 +104,85 @@ public class EstimateServiceTest {
     @Test
     void findById_WithInvalidId_ShouldReturnEmpty() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
-        UUID invalidId = UUID.randomUUID();
+        when(serviceRequestRepository.findById(serviceRequestId)).thenReturn(Optional.empty());
 
         // Act
-        Optional<RepairEstimate> result = estimateService.findById(invalidId);
+        Optional<RepairEstimate> result = estimateService.findById(serviceRequestId);
 
         // Assert
         assertFalse(result.isPresent());
     }
 
     @Test
-    void getServiceRequest_WithInvalidEstimate_ShouldThrowException() {
+    void acceptEstimate_WithInvalidServiceRequestId_ShouldThrowException() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
-        RepairEstimate invalidEstimate = mock(RepairEstimate.class);
-        UUID invalidEstimateId = UUID.randomUUID();
-        when(invalidEstimate.getId()).thenReturn(invalidEstimateId);
+        UUID invalidServiceRequestId = UUID.randomUUID();
+        when(serviceRequestRepository.findById(invalidServiceRequestId)).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> {
-            estimateService.getServiceRequest(invalidEstimate);
-        });
-    }
-
-    @Test
-    void acceptEstimate_WithInvalidEstimateId_ShouldThrowException() {
-        // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
-        UUID invalidEstimateId = UUID.randomUUID();
-
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> {
-            estimateService.acceptEstimate(invalidEstimateId, customerId, "Great estimate!");
+            estimateService.acceptEstimate(invalidServiceRequestId, customerId, "Great estimate!");
         });
     }
 
     @Test
     void acceptEstimate_WithInvalidCustomerId_ShouldThrowException() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
         UUID invalidCustomerId = UUID.randomUUID();
+        when(serviceRequestRepository.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> {
-            estimateService.acceptEstimate(estimateId, invalidCustomerId, "Great estimate!");
+            estimateService.acceptEstimate(serviceRequestId, invalidCustomerId, "Great estimate!");
         });
     }
 
     @Test
     void acceptEstimate_WithAlreadyAcceptedEstimate_ShouldThrowException() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
+        when(serviceRequestRepository.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
         when(serviceRequest.getStateType()).thenReturn(ServiceRequestStateType.ACCEPTED);
 
         // Act & Assert
         assertThrows(IllegalStateException.class, () -> {
-            estimateService.acceptEstimate(estimateId, customerId, "Great estimate!");
+            estimateService.acceptEstimate(serviceRequestId, customerId, "Great estimate!");
         });
     }
 
     @Test
-    void rejectEstimate_WithInvalidEstimateId_ShouldThrowException() {
+    void rejectEstimate_WithInvalidServiceRequestId_ShouldThrowException() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
-        UUID invalidEstimateId = UUID.randomUUID();
+        UUID invalidServiceRequestId = UUID.randomUUID();
+        when(serviceRequestRepository.findById(invalidServiceRequestId)).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> {
-            estimateService.rejectEstimate(invalidEstimateId, customerId, "Too expensive");
+            estimateService.rejectEstimate(invalidServiceRequestId, customerId, "Too expensive");
         });
     }
 
     @Test
     void rejectEstimate_WithInvalidCustomerId_ShouldThrowException() {
         // Arrange
-        when(serviceRequestRepository.findAll()).thenReturn(Arrays.asList(serviceRequest));
         UUID invalidCustomerId = UUID.randomUUID();
+        when(serviceRequestRepository.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> {
-            estimateService.rejectEstimate(estimateId, invalidCustomerId, "Too expensive");
+            estimateService.rejectEstimate(serviceRequestId, invalidCustomerId, "Too expensive");
         });
+    }
+
+    @Test
+    void findById_WithServiceRequestWithoutEstimate_ShouldReturnEmpty() {
+        // Arrange
+        when(serviceRequest.getEstimate()).thenReturn(null);
+        when(serviceRequestRepository.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
+
+        // Act
+        Optional<RepairEstimate> result = estimateService.findById(serviceRequestId);
+
+        // Assert
+        assertFalse(result.isPresent());
     }
 }

@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.RepairEstimate;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Technician;
+import id.ac.ui.cs.advprog.perbaikiinaja.model.wallet.Wallet;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.EstimateService;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.ServiceRequestService;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -25,7 +27,7 @@ import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
-public class EstimateControllerTest {
+class EstimateControllerTest {
 
     @Mock
     private ServiceRequestService serviceRequestService;
@@ -45,7 +47,6 @@ public class EstimateControllerTest {
     private UUID technicianId;
     private UUID customerId;
     private UUID serviceRequestId;
-    private UUID estimateId;
     private Technician technician;
     private Customer customer;
     private ServiceRequest serviceRequest;
@@ -57,7 +58,6 @@ public class EstimateControllerTest {
         technicianId = UUID.randomUUID();
         customerId = UUID.randomUUID();
         serviceRequestId = UUID.randomUUID();
-        estimateId = UUID.randomUUID();
 
         // Mock technician
         technician = mock(Technician.class);
@@ -71,7 +71,6 @@ public class EstimateControllerTest {
 
         // Mock estimate
         estimate = mock(RepairEstimate.class);
-        lenient().when(estimate.getId()).thenReturn(estimateId);
         lenient().when(estimate.getCost()).thenReturn(100.0);
         lenient().when(estimate.getCompletionDate()).thenReturn(LocalDate.now().plusDays(3));
         lenient().when(estimate.getNotes()).thenReturn("Test notes");
@@ -113,7 +112,6 @@ public class EstimateControllerTest {
         @SuppressWarnings("unchecked")
         Map<String, Object> estimateResponse = (Map<String, Object>) responseBody.get("estimate");
         assertNotNull(estimateResponse);
-        assertEquals(estimateId, estimateResponse.get("id"));
         assertEquals(serviceRequestId, estimateResponse.get("serviceRequestId"));
         assertEquals(100.0, estimateResponse.get("estimatedCost"));
         assertEquals(ServiceRequestStateType.PENDING, estimateResponse.get("status"));
@@ -217,16 +215,21 @@ public class EstimateControllerTest {
     void respondToEstimate_Accept_Success() {
         // Arrange
         when(authentication.getPrincipal()).thenReturn(customer);
-        when(estimateService.findById(estimateId)).thenReturn(Optional.of(estimate));
-        when(estimateService.getServiceRequest(estimate)).thenReturn(serviceRequest);
-        when(estimateService.acceptEstimate(estimateId, customerId, "Great estimate!")).thenReturn(serviceRequest);
+        when(estimateService.findById(serviceRequestId)).thenReturn(Optional.of(estimate));
+        when(serviceRequestService.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
+        when(estimateService.acceptEstimate(serviceRequestId, customerId, "Great estimate!")).thenReturn(serviceRequest);
+
+        // Mock wallet check
+        Wallet customerWallet = mock(Wallet.class);
+        when(customerWallet.getBalance()).thenReturn(new BigDecimal("200.00"));
+        when(walletService.getWalletByUserId(customerId)).thenReturn(Optional.of(customerWallet));
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("action", "ACCEPT");
         requestBody.put("feedback", "Great estimate!");
 
         // Act
-        ResponseEntity<?> response = controller.respondToEstimate(estimateId, requestBody, authentication);
+        ResponseEntity<?> response = controller.respondToEstimate(serviceRequestId, requestBody, authentication);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -241,23 +244,53 @@ public class EstimateControllerTest {
         assertEquals(ServiceRequestStateType.ACCEPTED, estimateResponse.get("status"));
         assertEquals("Great estimate!", estimateResponse.get("feedback"));
 
-        verify(estimateService).acceptEstimate(estimateId, customerId, "Great estimate!");
+        verify(estimateService).acceptEstimate(serviceRequestId, customerId, "Great estimate!");
+    }
+
+    @Test
+    void respondToEstimate_Accept_InsufficientFunds_ReturnsBadRequest() {
+        // Arrange
+        when(authentication.getPrincipal()).thenReturn(customer);
+        when(estimateService.findById(serviceRequestId)).thenReturn(Optional.of(estimate));
+        when(serviceRequestService.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
+
+        // Mock wallet with insufficient funds
+        Wallet customerWallet = mock(Wallet.class);
+        when(customerWallet.getBalance()).thenReturn(new BigDecimal("50.00")); // Less than estimate cost
+        when(walletService.getWalletByUserId(customerId)).thenReturn(Optional.of(customerWallet));
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("action", "ACCEPT");
+        requestBody.put("feedback", "Great estimate!");
+
+        // Act
+        ResponseEntity<?> response = controller.respondToEstimate(serviceRequestId, requestBody, authentication);
+
+        // Assert
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+        assertNotNull(responseBody);
+        assertEquals(4002, responseBody.get("errorCode"));
+
+        verify(estimateService, never()).acceptEstimate(any(), any(), any());
     }
 
     @Test
     void respondToEstimate_Reject_Success() {
         // Arrange
         when(authentication.getPrincipal()).thenReturn(customer);
-        when(estimateService.findById(estimateId)).thenReturn(Optional.of(estimate));
-        when(estimateService.getServiceRequest(estimate)).thenReturn(serviceRequest);
-        when(estimateService.rejectEstimate(estimateId, customerId, "Too expensive")).thenReturn(serviceRequestId);
+        when(estimateService.findById(serviceRequestId)).thenReturn(Optional.of(estimate));
+        when(serviceRequestService.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
+        when(estimateService.rejectEstimate(serviceRequestId, customerId, "Too expensive")).thenReturn(serviceRequestId);
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("action", "REJECT");
         requestBody.put("feedback", "Too expensive");
 
         // Act
-        ResponseEntity<?> response = controller.respondToEstimate(estimateId, requestBody, authentication);
+        ResponseEntity<?> response = controller.respondToEstimate(serviceRequestId, requestBody, authentication);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -266,10 +299,9 @@ public class EstimateControllerTest {
         Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
         assertNotNull(responseBody);
         assertEquals("Estimate rejected and service request deleted successfully", responseBody.get("message"));
-        assertEquals(estimateId.toString(), responseBody.get("estimateId"));
         assertEquals(serviceRequestId.toString(), responseBody.get("serviceRequestId"));
 
-        verify(estimateService).rejectEstimate(estimateId, customerId, "Too expensive");
+        verify(estimateService).rejectEstimate(serviceRequestId, customerId, "Too expensive");
     }
 
     @Test
@@ -281,7 +313,7 @@ public class EstimateControllerTest {
         requestBody.put("action", "INVALID_ACTION");
 
         // Act
-        ResponseEntity<?> response = controller.respondToEstimate(estimateId, requestBody, authentication);
+        ResponseEntity<?> response = controller.respondToEstimate(serviceRequestId, requestBody, authentication);
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -298,13 +330,13 @@ public class EstimateControllerTest {
     void respondToEstimate_EstimateNotFound_ReturnsNotFound() {
         // Arrange
         when(authentication.getPrincipal()).thenReturn(customer);
-        when(estimateService.findById(estimateId)).thenReturn(Optional.empty());
+        when(estimateService.findById(serviceRequestId)).thenReturn(Optional.empty());
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("action", "ACCEPT");
 
         // Act
-        ResponseEntity<?> response = controller.respondToEstimate(estimateId, requestBody, authentication);
+        ResponseEntity<?> response = controller.respondToEstimate(serviceRequestId, requestBody, authentication);
 
         // Assert
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -327,14 +359,14 @@ public class EstimateControllerTest {
         lenient().when(differentCustomer.getRole()).thenReturn("CUSTOMER");
 
         when(authentication.getPrincipal()).thenReturn(differentCustomer);
-        when(estimateService.findById(estimateId)).thenReturn(Optional.of(estimate));
-        when(estimateService.getServiceRequest(estimate)).thenReturn(serviceRequest);
+        when(estimateService.findById(serviceRequestId)).thenReturn(Optional.of(estimate));
+        when(serviceRequestService.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("action", "ACCEPT");
 
         // Act
-        ResponseEntity<?> response = controller.respondToEstimate(estimateId, requestBody, authentication);
+        ResponseEntity<?> response = controller.respondToEstimate(serviceRequestId, requestBody, authentication);
 
         // Assert
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
@@ -351,14 +383,14 @@ public class EstimateControllerTest {
     void respondToEstimate_ServiceRequestNotFound_ReturnsNotFound() {
         // Arrange
         when(authentication.getPrincipal()).thenReturn(customer);
-        when(estimateService.findById(estimateId)).thenReturn(Optional.of(estimate));
-        when(estimateService.getServiceRequest(estimate)).thenThrow(new IllegalArgumentException("Service request not found"));
+        when(estimateService.findById(serviceRequestId)).thenReturn(Optional.of(estimate));
+        when(serviceRequestService.findById(serviceRequestId)).thenReturn(Optional.empty());
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("action", "ACCEPT");
 
         // Act
-        ResponseEntity<?> response = controller.respondToEstimate(estimateId, requestBody, authentication);
+        ResponseEntity<?> response = controller.respondToEstimate(serviceRequestId, requestBody, authentication);
 
         // Assert
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -375,15 +407,20 @@ public class EstimateControllerTest {
     void respondToEstimate_InvalidState_ReturnsConflict() {
         // Arrange
         when(authentication.getPrincipal()).thenReturn(customer);
-        when(estimateService.findById(estimateId)).thenReturn(Optional.of(estimate));
-        when(estimateService.getServiceRequest(estimate)).thenReturn(serviceRequest);
-        when(estimateService.acceptEstimate(estimateId, customerId, "")).thenThrow(new IllegalStateException("Estimate already accepted"));
+        when(estimateService.findById(serviceRequestId)).thenReturn(Optional.of(estimate));
+        when(serviceRequestService.findById(serviceRequestId)).thenReturn(Optional.of(serviceRequest));
+        when(estimateService.acceptEstimate(serviceRequestId, customerId, "")).thenThrow(new IllegalStateException("Estimate already accepted"));
+
+        // Mock wallet with sufficient funds
+        Wallet customerWallet = mock(Wallet.class);
+        when(customerWallet.getBalance()).thenReturn(new BigDecimal("200.00"));
+        when(walletService.getWalletByUserId(customerId)).thenReturn(Optional.of(customerWallet));
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("action", "ACCEPT");
 
         // Act
-        ResponseEntity<?> response = controller.respondToEstimate(estimateId, requestBody, authentication);
+        ResponseEntity<?> response = controller.respondToEstimate(serviceRequestId, requestBody, authentication);
 
         // Assert
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());

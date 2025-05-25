@@ -14,10 +14,6 @@ public class TechnicianStatsUpdater implements ServiceCompletionObserver {
             // Update technician statistics
             request.getTechnician().incrementCompletedJobCount();
             request.getTechnician().addEarnings(request.getEstimate().getCost());
-
-            System.out.println("Updated statistics for technician: " + request.getTechnician().getFullName() +
-                    ". Total completed jobs: " + request.getTechnician().getCompletedJobCount() +
-                    ", Total earnings: " + request.getTechnician().getTotalEarnings());
         }
     }
 }

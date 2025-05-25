@@ -102,15 +102,95 @@ class ReviewControllerTest {
                 .createdAt(now.minusDays(1))
                 .updatedAt(now.minusDays(1))
                 .build();
+    }
 
-        review2 = Review.builder()
-                .id(UUID.randomUUID())
-                .userId(UUID.randomUUID()) // Different user
-                .technicianId(technicianId1)
-                .comment("Okay service.")
-                .rating(3)
-                .createdAt(now)
-                .updatedAt(now)
+    @Test
+    void createReview_ShouldReturnCreatedReview() {
+        // Arrange
+        when(reviewService.createReview(eq(requestDto.getUserId()), eq(requestDto.getReportId()), any(Review.class)))
+                .thenReturn(review);
+
+        // Act
+        ResponseEntity<ReviewResponseDto> response = reviewController.createReview(requestDto);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(review.getId(), response.getBody().getId());
+        assertEquals(review.getUserId(), response.getBody().getUserId());
+        assertEquals(review.getTechnicianId(), response.getBody().getTechnicianId());
+        assertEquals(review.getReportId(), response.getBody().getReportId());
+        assertEquals(review.getComment(), response.getBody().getComment());
+        assertEquals(review.getRating(), response.getBody().getRating());
+
+        verify(reviewService, times(1)).createReview(
+                eq(requestDto.getUserId()),
+                eq(requestDto.getReportId()),
+                any(Review.class)
+        );
+    }
+
+    @Test
+    void updateReview_ShouldReturnUpdatedReview() {
+        // Arrange
+        when(reviewService.updateReview(
+                eq(requestDto.getUserId()),
+                eq(reviewId),
+                any(Review.class))
+        ).thenReturn(review);
+
+        // Act
+        ResponseEntity<ReviewResponseDto> response = reviewController.updateReview(reviewId, requestDto);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(review.getId(), response.getBody().getId());
+        assertEquals(review.getUserId(), response.getBody().getUserId());
+        assertEquals(review.getTechnicianId(), response.getBody().getTechnicianId());
+        assertEquals(review.getReportId(), response.getBody().getReportId());
+        assertEquals(review.getComment(), response.getBody().getComment());
+        assertEquals(review.getRating(), response.getBody().getRating());
+
+        verify(reviewService, times(1)).updateReview(
+                eq(requestDto.getUserId()),
+                eq(reviewId),
+                any(Review.class)
+        );
+    }
+
+    @Test
+    void deleteReview_ShouldReturnNoContent() {
+
+        DeleteReviewRequest request = new DeleteReviewRequest(userId);
+        doNothing().when(reviewService).deleteReview(reviewId, userId);
+
+        // Act
+        ResponseEntity<Void> response = reviewController.deleteReview(reviewId, request);
+
+        // Assert
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        assertNull(response.getBody());
+
+        // Verify 
+        verify(reviewService, times(1)).deleteReview(reviewId, userId);
+    }
+
+    @Test
+    void getReviewsByTechnician_ShouldReturnListOfReviews() {
+        UUID secondUserId = UUID.randomUUID();
+        UUID secondReportId = UUID.randomUUID();
+        UUID secondReviewId = UUID.randomUUID();
+
+        Review review2 = Review.builder()
+                .id(secondReviewId)
+                .userId(secondUserId)
+                .technicianId(technicianId)
+                .reportId(secondReportId)
+                .comment("Good job")
+                .rating(4)
+                .createdAt(LocalDateTime.now())
+>>>>>>> 0db0e87a76ec1cdaebbfe243257417854270ba48
                 .build();
 
         // Mock service calls for DTO transformation
