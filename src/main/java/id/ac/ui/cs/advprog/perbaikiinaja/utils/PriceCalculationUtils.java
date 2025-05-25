@@ -6,6 +6,8 @@ import java.math.RoundingMode;
 
 public class PriceCalculationUtils {
 
+    private PriceCalculationUtils(){}
+
     /**
      * Calculate final price after applying coupon discount
      * @param originalPrice The original price before discount
