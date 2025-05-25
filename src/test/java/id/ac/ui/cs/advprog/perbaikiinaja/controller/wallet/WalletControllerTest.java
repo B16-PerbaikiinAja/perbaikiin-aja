@@ -168,7 +168,7 @@ class WalletControllerTest {
 
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
-        when(walletService.deposit(eq(wallet.getId()), eq(BigDecimal.valueOf(50.0)), eq("Test deposit")))
+        when(walletService.deposit(wallet.getId(), BigDecimal.valueOf(50.0),"Test deposit"))
                 .thenReturn(updatedWallet);
 
         ResponseEntity<Map<String, Object>> response = walletController.deposit(authentication, requestBody);
@@ -187,13 +187,13 @@ class WalletControllerTest {
 
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
-        when(walletService.deposit(eq(wallet.getId()), eq(BigDecimal.valueOf(25.0)), eq("Deposit")))
+        when(walletService.deposit(wallet.getId(), BigDecimal.valueOf(25.0),"Deposit"))
                 .thenReturn(updatedWallet);
 
         ResponseEntity<Map<String, Object>> response = walletController.deposit(authentication, requestBody);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(walletService).deposit(eq(wallet.getId()), eq(BigDecimal.valueOf(25.0)), eq("Deposit"));
+        verify(walletService).deposit(wallet.getId(), BigDecimal.valueOf(25.0), "Deposit");
     }
 
     @Test
@@ -267,7 +267,7 @@ class WalletControllerTest {
 
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
-        when(walletService.withdraw(eq(wallet.getId()), eq(BigDecimal.valueOf(30.0)), eq("Test withdrawal")))
+        when(walletService.withdraw(wallet.getId(), BigDecimal.valueOf(30.0),"Test withdrawal"))
                 .thenReturn(updatedWallet);
 
         ResponseEntity<Map<String, Object>> response = walletController.withdraw(authentication, requestBody);
@@ -286,13 +286,13 @@ class WalletControllerTest {
 
         when(authentication.getPrincipal()).thenReturn(customer);
         when(walletService.getWalletByUser(customer)).thenReturn(Optional.of(wallet));
-        when(walletService.withdraw(eq(wallet.getId()), eq(BigDecimal.valueOf(20.0)), eq("Withdrawal")))
+        when(walletService.withdraw(wallet.getId(), BigDecimal.valueOf(20.0),"Withdrawal"))
                 .thenReturn(updatedWallet);
 
         ResponseEntity<Map<String, Object>> response = walletController.withdraw(authentication, requestBody);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(walletService).withdraw(eq(wallet.getId()), eq(BigDecimal.valueOf(20.0)), eq("Withdrawal"));
+        verify(walletService).withdraw(wallet.getId(),BigDecimal.valueOf(20.0),"Withdrawal");
     }
 
     @Test
@@ -411,7 +411,7 @@ class WalletControllerTest {
 
         when(authentication.getPrincipal()).thenReturn(technician);
         when(walletService.getWalletByUser(technician)).thenReturn(Optional.of(technicianWallet));
-        when(walletService.deposit(eq(technicianWallet.getId()), eq(BigDecimal.valueOf(40.0)), eq("Deposit")))
+        when(walletService.deposit(technicianWallet.getId(), BigDecimal.valueOf(40.0),"Deposit"))
                 .thenReturn(updatedWallet);
 
         ResponseEntity<Map<String, Object>> response = walletController.deposit(authentication, requestBody);
