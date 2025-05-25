@@ -8,6 +8,7 @@ import org.mockito.Mockito;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.auth.Customer;
@@ -115,10 +116,37 @@ class ServiceRequestObserverTest {
 
     @Test
     void testNullObserverHandling() {
+        // Create a fresh subject instance to avoid interference from setUp() method
+        ServiceRequestSubject freshSubject = new ServiceRequestSubject();
+
+        // Create a mock observer to verify it's still notified properly
+        ServiceCompletionObserver mockObserver = Mockito.mock(ServiceCompletionObserver.class);
+        freshSubject.addObserver(mockObserver);
+
         // Adding null observer should not throw exception
-        subject.addObserver(null);
+        freshSubject.addObserver(null);
 
         // Should be able to notify without error
-        subject.notifyServiceCompleted(request);
+        freshSubject.notifyServiceCompleted(request);
+
+        // Assert that the valid observer was still notified despite the null observer
+        Mockito.verify(mockObserver).onServiceCompleted(request);
+
+        // Assert that the observer list size is 1 (null shouldn't be added)
+        int observerCount = getObserverListSize(freshSubject);
+        assertEquals(1, observerCount, "Only one valid observer should be in the list");
+    }
+
+    // Helper method to get the observer list size using reflection
+    private int getObserverListSize(ServiceRequestSubject subject) {
+        try {
+            java.lang.reflect.Field field = ServiceRequestSubject.class.getDeclaredField("completionObservers");
+            field.setAccessible(true);
+            List<?> observers = (List<?>) field.get(subject);
+            return observers.size();
+        } catch (Exception e) {
+            fail("Could not access completionObservers field: " + e.getMessage());
+            return -1;
+        }
     }
 }

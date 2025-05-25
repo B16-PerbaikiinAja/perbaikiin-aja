@@ -27,12 +27,12 @@ public class ServiceRequestController {
     private final Set<ServiceRequestStateType> validStatusValues =
             EnumSet.allOf(ServiceRequestStateType.class);
 
-    private static final String statusStr = "status";
-    private static final String messageStr = "message";
-    private static final String errorCodeStr = "errorCode";
-    private static final String successStr = "SUCCESS";
-    private static final String serviceRequestsStr = "serviceRequests";
-    private static final String finalPriceStr = "finalPrice";
+    private static final String STATUSSTR = "status";
+    private static final String MESSAGESTR = "message";
+    private static final String ERRORCODESTR = "errorCode";
+    private static final String SUCCESSSTR = "SUCCESS";
+    private static final String SERVICEREQUESTSSTR = "serviceRequests";
+    private static final String FINALPRICESTR = "finalPrice";
 
     @Autowired
     public ServiceRequestController(ServiceRequestService serviceRequestService, ServiceRequestRepository serviceRequestRepository) {
@@ -52,8 +52,8 @@ public class ServiceRequestController {
         // Validate status parameter if provided
         if (status != null && !validStatusValues.contains(status)) {
             Map<String, Object> response = new HashMap<>();
-            response.put(statusStr, 400);
-            response.put(messageStr, "INVALID_STATUS_PARAMETER");
+            response.put(STATUSSTR, 400);
+            response.put(MESSAGESTR, "INVALID_STATUS_PARAMETER");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -67,9 +67,9 @@ public class ServiceRequestController {
 
         // Build response
         Map<String, Object> response = new HashMap<>();
-        response.put(statusStr, 200);
-        response.put(messageStr, successStr);
-        response.put(serviceRequestsStr, serviceRequests);
+        response.put(STATUSSTR, 200);
+        response.put(MESSAGESTR, SUCCESSSTR);
+        response.put(SERVICEREQUESTSSTR, serviceRequests);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -83,9 +83,9 @@ public class ServiceRequestController {
         List<ServiceRequest> serviceRequests = serviceRequestService.findByCustomer(customerId);
 
         Map<String, Object> response = new HashMap<>();
-        response.put(statusStr, 200);
-        response.put(messageStr, successStr);
-        response.put(serviceRequestsStr, serviceRequests);
+        response.put(STATUSSTR, 200);
+        response.put(MESSAGESTR, SUCCESSSTR);
+        response.put(SERVICEREQUESTSSTR, serviceRequests);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -107,8 +107,8 @@ public class ServiceRequestController {
         Optional<ServiceRequest> serviceRequestOpt = serviceRequestService.findById(serviceRequestId);
         if (serviceRequestOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorCodeStr, 4040);
-            response.put(messageStr, "Service request not found");
+            response.put(ERRORCODESTR, 4040);
+            response.put(MESSAGESTR, "Service request not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
@@ -117,26 +117,26 @@ public class ServiceRequestController {
         // Check if technician is assigned to this service request
         if (!serviceRequest.getTechnician().getId().equals(technicianId)) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorCodeStr, 4030);
-            response.put(messageStr, "User is not the assigned technician for this service request");
+            response.put(ERRORCODESTR, 4030);
+            response.put(MESSAGESTR, "User is not the assigned technician for this service request");
             return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
         }
 
         // Validate status
         ServiceRequestStateType status = null;
         try {
-            if (requestBody.get(statusStr) instanceof String) {
+            if (requestBody.get(STATUSSTR) instanceof String string) {
                 // Convert String to enum
-                status = ServiceRequestStateType.valueOf((String) requestBody.get(statusStr));
+                status = ServiceRequestStateType.valueOf(string);
             } else {
                 // Try direct cast (for test cases that may pass the actual enum)
-                status = (ServiceRequestStateType) requestBody.get(statusStr);
+                status = (ServiceRequestStateType) requestBody.get(STATUSSTR);
             }
         } catch (IllegalArgumentException | ClassCastException e) {
             // Handles both invalid enum strings and casting errors
             Map<String, Object> response = new HashMap<>();
-            response.put(errorCodeStr, 4000);
-            response.put(messageStr, "Invalid status. Valid values are: " + Arrays.toString(ServiceRequestStateType.values()));
+            response.put(ERRORCODESTR, 4000);
+            response.put(MESSAGESTR, "Invalid status. Valid values are: " + Arrays.toString(ServiceRequestStateType.values()));
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -144,16 +144,16 @@ public class ServiceRequestController {
                 new HashSet<>(Arrays.asList(ServiceRequestStateType.IN_PROGRESS, ServiceRequestStateType.COMPLETED));
         if (status == null || !validTechnicianStatusValues.contains(status)) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorCodeStr, 4000);
-            response.put(messageStr, "Invalid status. Valid values are: " + validTechnicianStatusValues);
+            response.put(ERRORCODESTR, 4000);
+            response.put(MESSAGESTR, "Invalid status. Valid values are: " + validTechnicianStatusValues);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
         // If status is COMPLETED, finalPrice is required
-        if (ServiceRequestStateType.COMPLETED.equals(status) && !requestBody.containsKey(finalPriceStr)) {
+        if (ServiceRequestStateType.COMPLETED.equals(status) && !requestBody.containsKey(FINALPRICESTR)) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorCodeStr, 4001);
-            response.put(messageStr, "Final price is required when status is COMPLETED");
+            response.put(ERRORCODESTR, 4001);
+            response.put(MESSAGESTR, "Final price is required when status is COMPLETED");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -171,10 +171,10 @@ public class ServiceRequestController {
             // Service request info
             Map<String, Object> serviceRequestResponse = new HashMap<>();
             serviceRequestResponse.put("id", updatedRequest.getId());
-            serviceRequestResponse.put(statusStr, updatedRequest.getStateType());
+            serviceRequestResponse.put(STATUSSTR, updatedRequest.getStateType());
             if (ServiceRequestStateType.COMPLETED.equals(status)) {
-                Number finalPrice = (Number) requestBody.get(finalPriceStr);
-                serviceRequestResponse.put(finalPriceStr, finalPrice);
+                Number finalPrice = (Number) requestBody.get(FINALPRICESTR);
+                serviceRequestResponse.put(FINALPRICESTR, finalPrice);
             }
             serviceRequestResponse.put("updatedAt", LocalDateTime.now());
 
@@ -192,8 +192,8 @@ public class ServiceRequestController {
 
         } catch (IllegalStateException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorCodeStr, 4002);
-            response.put(messageStr, e.getMessage());
+            response.put(ERRORCODESTR, 4002);
+            response.put(MESSAGESTR, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
@@ -207,9 +207,9 @@ public class ServiceRequestController {
         List<ServiceRequest> serviceRequests = (List<ServiceRequest>) serviceRequestRepository.findAll();
 
         Map<String, Object> response = new HashMap<>();
-        response.put(statusStr, 200);
-        response.put(messageStr, successStr);
-        response.put(serviceRequestsStr, serviceRequests);
+        response.put(STATUSSTR, 200);
+        response.put(MESSAGESTR, SUCCESSSTR);
+        response.put(SERVICEREQUESTSSTR, serviceRequests);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

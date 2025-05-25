@@ -4,8 +4,6 @@ import id.ac.ui.cs.advprog.perbaikiinaja.model.Report;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 /**

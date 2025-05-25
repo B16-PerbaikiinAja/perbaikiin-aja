@@ -5,13 +5,10 @@ import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.concurrent.ThreadLocalRandom;
 import java.time.LocalDate;
 
 import id.ac.ui.cs.advprog.perbaikiinaja.dtos.CustomerServiceRequestDto;
 import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
-import id.ac.ui.cs.advprog.perbaikiinaja.repository.RepairEstimateRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.repository.ReportRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.wallet.WalletService;
 import id.ac.ui.cs.advprog.perbaikiinaja.state.EstimatedState;
@@ -33,9 +30,6 @@ import id.ac.ui.cs.advprog.perbaikiinaja.repository.auth.UserRepository;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.coupon.CouponService;
 import id.ac.ui.cs.advprog.perbaikiinaja.service.payment.PaymentMethodService;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.Coupon;
-import id.ac.ui.cs.advprog.perbaikiinaja.model.coupon.CouponBuilder;
-
-import java.sql.Date;
 
 /**
  * Implementation of the ServiceRequestService interface.
@@ -51,7 +45,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     private final WalletService walletService;
     private final ReportRepository reportRepository;
 
-    private static final String notAssignedStr = "This technician is not assigned to this service request";
+    private static final String NOTASSIGNEDSTR = "This technician is not assigned to this service request";
 
     @Autowired
     public ServiceRequestServiceImpl(
@@ -101,7 +95,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         if (request.getTechnician() == null) {
             request.setTechnician(technician);
         } else if (!request.getTechnician().getId().equals(technicianId)) {
-            throw new IllegalArgumentException(notAssignedStr);
+            throw new IllegalArgumentException(NOTASSIGNEDSTR);
         }
 
         // Pre-check the estimate values and fix if needed
@@ -160,7 +154,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
         // Ensure the technician is assigned to the request
         if (!request.getTechnician().getId().equals(technicianId)) {
-            throw new IllegalArgumentException(notAssignedStr);
+            throw new IllegalArgumentException(NOTASSIGNEDSTR);
         }
 
         // Start the service
@@ -176,7 +170,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
         // Ensure the technician is assigned to the request
         if (!request.getTechnician().getId().equals(technicianId)) {
-            throw new IllegalArgumentException(notAssignedStr);
+            throw new IllegalArgumentException(NOTASSIGNEDSTR);
         }
 
         // Complete the service
@@ -205,7 +199,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
         // Ensure the technician is assigned to the request
         if (!request.getTechnician().getId().equals(technicianId)) {
-            throw new IllegalArgumentException(notAssignedStr);
+            throw new IllegalArgumentException(NOTASSIGNEDSTR);
         }
 
         Report savedReport = reportRepository.save(report);

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class AuthExceptionHandler {
-    private static final String descriptionStr = "description";
+    private static final String DESCRIPTIONSTR = "description";
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleSecurityException(Exception exception) {
@@ -20,34 +20,34 @@ public class AuthExceptionHandler {
 
         if (exception instanceof BadCredentialsException) {
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), exception.getMessage());
-            errorDetail.setProperty(descriptionStr, "The username or password is incorrect");
+            errorDetail.setProperty(DESCRIPTIONSTR, "The username or password is incorrect");
 
             return errorDetail;
         }
 
         if (exception instanceof AccountStatusException) {
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-            errorDetail.setProperty(descriptionStr, "The account is locked");
+            errorDetail.setProperty(DESCRIPTIONSTR, "The account is locked");
         }
 
         if (exception instanceof AccessDeniedException) {
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-            errorDetail.setProperty(descriptionStr, "You are not authorized to access this resource");
+            errorDetail.setProperty(DESCRIPTIONSTR, "You are not authorized to access this resource");
         }
 
         if (exception instanceof SignatureException) {
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-            errorDetail.setProperty(descriptionStr, "The JWT signature is invalid");
+            errorDetail.setProperty(DESCRIPTIONSTR, "The JWT signature is invalid");
         }
 
         if (exception instanceof ExpiredJwtException) {
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-            errorDetail.setProperty(descriptionStr, "The JWT token has expired");
+            errorDetail.setProperty(DESCRIPTIONSTR, "The JWT token has expired");
         }
 
         if (errorDetail == null) {
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), exception.getMessage());
-            errorDetail.setProperty(descriptionStr, "Unknown internal server error.");
+            errorDetail.setProperty(DESCRIPTIONSTR, "Unknown internal server error.");
         }
 
         return errorDetail;

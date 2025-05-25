@@ -33,14 +33,14 @@ public class EstimateController {
     private final EstimateService estimateService;
     private final WalletService walletService;
 
-    private static final String messageStr = "message";
-    private static final String errorStr = "errorCode";
+    private static final String MESSAGESTR = "message";
+    private static final String ERRORSTR = "errorCode";
 
-    private static final String estimatedCostStr = "estimatedCost";
-    private static final String serviceRequestIdStr = "serviceRequestId";
-    private static final String statusStr = "status";
-    private static final String estimatedCompletionTimeStr = "estimatedCompletionTime";
-    private static final String notesStr = "notes";
+    private static final String ESTIMATEDCOSTSTR = "estimatedCost";
+    private static final String SERVICEREQUESTIDSTR = "serviceRequestId";
+    private static final String STATUSSTR = "status";
+    private static final String ESTIMATEDCOMPLETIONTIMESTR = "estimatedCompletionTime";
+    private static final String NOTESSTR = "notes";
 
     @Autowired
     public EstimateController(
@@ -66,19 +66,19 @@ public class EstimateController {
         UUID technicianId = currentUser.getId();
 
         // Validate estimate data
-        Double estimatedCost = ((Number) requestBody.get(estimatedCostStr)).doubleValue();
+        Double estimatedCost = ((Number) requestBody.get(ESTIMATEDCOSTSTR)).doubleValue();
         if (estimatedCost < 0) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorStr, 4000);
-            response.put(messageStr, "Estimated cost cannot be negative");
+            response.put(ERRORSTR, 4000);
+            response.put(MESSAGESTR, "Estimated cost cannot be negative");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
-        LocalDate completionDate = LocalDate.parse((String) requestBody.get(estimatedCompletionTimeStr));
+        LocalDate completionDate = LocalDate.parse((String) requestBody.get(ESTIMATEDCOMPLETIONTIMESTR));
         if (completionDate.isBefore(LocalDate.now())) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorStr, 4001);
-            response.put(messageStr, "Estimated completion date cannot be in the past");
+            response.put(ERRORSTR, 4001);
+            response.put(MESSAGESTR, "Estimated completion date cannot be in the past");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -87,8 +87,8 @@ public class EstimateController {
         estimate.setCost(estimatedCost);
         estimate.setCompletionDate(completionDate);
 
-        if (requestBody.containsKey(notesStr)) {
-            estimate.setNotes((String) requestBody.get(notesStr));
+        if (requestBody.containsKey(NOTESSTR)) {
+            estimate.setNotes((String) requestBody.get(NOTESSTR));
         }
 
         try {
@@ -101,11 +101,11 @@ public class EstimateController {
 
             RepairEstimate createdEstimate = updatedRequest.getEstimate();
             estimateResponse.put("id", createdEstimate.getId());
-            estimateResponse.put(serviceRequestIdStr, serviceRequestId);
-            estimateResponse.put(estimatedCostStr, createdEstimate.getCost());
-            estimateResponse.put(estimatedCompletionTimeStr, createdEstimate.getCompletionDate());
-            estimateResponse.put(notesStr, createdEstimate.getNotes());
-            estimateResponse.put(statusStr, ServiceRequestStateType.PENDING);
+            estimateResponse.put(SERVICEREQUESTIDSTR, serviceRequestId);
+            estimateResponse.put(ESTIMATEDCOSTSTR, createdEstimate.getCost());
+            estimateResponse.put(ESTIMATEDCOMPLETIONTIMESTR, createdEstimate.getCompletionDate());
+            estimateResponse.put(NOTESSTR, createdEstimate.getNotes());
+            estimateResponse.put(STATUSSTR, ServiceRequestStateType.PENDING);
             estimateResponse.put("createdAt", createdEstimate.getCreatedDate());
 
             response.put("estimate", estimateResponse);
@@ -114,13 +114,13 @@ public class EstimateController {
 
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorStr, 4040);
-            response.put(messageStr, e.getMessage());
+            response.put(ERRORSTR, 4040);
+            response.put(MESSAGESTR, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (IllegalStateException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorStr, 4090);
-            response.put(messageStr, e.getMessage());
+            response.put(ERRORSTR, 4090);
+            response.put(MESSAGESTR, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.CONFLICT);
         }
     }
@@ -142,8 +142,8 @@ public class EstimateController {
         String action = (String) requestBody.get("action");
         if (action == null || (!action.equals("ACCEPT") && !action.equals("REJECT"))) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorStr, 4000);
-            response.put(messageStr, "Action must be ACCEPT or REJECT");
+            response.put(ERRORSTR, 4000);
+            response.put(MESSAGESTR, "Action must be ACCEPT or REJECT");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -155,8 +155,8 @@ public class EstimateController {
         if (estimateOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
 
-            response.put(errorStr, 4040);
-            response.put(messageStr, "Estimate not found");
+            response.put(ERRORSTR, 4040);
+            response.put(MESSAGESTR, "Estimate not found");
 
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
@@ -171,14 +171,14 @@ public class EstimateController {
 
             if (!serviceRequest.getCustomer().getId().equals(customerId)) {
                 Map<String, Object> response = new HashMap<>();
-                response.put(errorStr, 4030);
-                response.put(messageStr, "User is not the owner of the service request");
+                response.put(ERRORSTR, 4030);
+                response.put(MESSAGESTR, "User is not the owner of the service request");
                 return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
             }
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorStr, 4041);
-            response.put(messageStr, "Service request not found");
+            response.put(ERRORSTR, 4041);
+            response.put(MESSAGESTR, "Service request not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
@@ -209,10 +209,10 @@ public class EstimateController {
                 Map<String, Object> estimateResponse = new HashMap<>();
                 estimateResponse.put("id", estimate.getId());
 
-                estimateResponse.put(serviceRequestIdStr, serviceRequest.getId());
-                estimateResponse.put(estimatedCostStr, estimate.getCost());
-                estimateResponse.put(estimatedCompletionTimeStr, estimate.getCompletionDate());
-                estimateResponse.put(statusStr, ServiceRequestStateType.ACCEPTED);
+                estimateResponse.put(SERVICEREQUESTIDSTR, serviceRequest.getId());
+                estimateResponse.put(ESTIMATEDCOSTSTR, estimate.getCost());
+                estimateResponse.put(ESTIMATEDCOMPLETIONTIMESTR, estimate.getCompletionDate());
+                estimateResponse.put(STATUSSTR, ServiceRequestStateType.ACCEPTED);
 
                 estimateResponse.put("feedback", feedback);
                 estimateResponse.put("updatedAt", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
@@ -220,7 +220,7 @@ public class EstimateController {
                 // Service request info
                 Map<String, Object> serviceRequestResponse = new HashMap<>();
                 serviceRequestResponse.put("id", serviceRequest.getId());
-                serviceRequestResponse.put(statusStr, serviceRequest.getStateType());
+                serviceRequestResponse.put(STATUSSTR, serviceRequest.getStateType());
 
                 response.put("estimate", estimateResponse);
                 response.put("serviceRequest", serviceRequestResponse);
@@ -233,21 +233,21 @@ public class EstimateController {
                 // Build response
                 Map<String, Object> response = new HashMap<>();
 
-                response.put(messageStr, "Estimate rejected and service request deleted successfully");
-                response.put(serviceRequestIdStr, serviceRequestId.toString());
+                response.put(MESSAGESTR, "Estimate rejected and service request deleted successfully");
+                response.put(SERVICEREQUESTIDSTR, rejectedServiceRequestId.toString());
 
                 return new ResponseEntity<>(response, HttpStatus.OK);
             }
 
         } catch (IllegalStateException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorStr, 4090);
-            response.put(messageStr, e.getMessage());
+            response.put(ERRORSTR, 4090);
+            response.put(MESSAGESTR, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.CONFLICT);
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put(errorStr, 4000);
-            response.put(messageStr, e.getMessage());
+            response.put(ERRORSTR, 4000);
+            response.put(MESSAGESTR, e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }

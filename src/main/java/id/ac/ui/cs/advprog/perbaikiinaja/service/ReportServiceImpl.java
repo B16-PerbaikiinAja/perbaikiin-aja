@@ -76,8 +76,8 @@ public class ReportServiceImpl implements ReportService {
         Iterable<User> allUsers = userRepository.findAll();
 
         return StreamSupport.stream(allUsers.spliterator(), false)
-                .filter(user -> user instanceof Technician)
-                .map(user -> (Technician) user)
+                .filter(Technician.class::isInstance)
+                .map(Technician.class::cast)
                 .collect(Collectors.toList());
     }
 
