@@ -143,7 +143,8 @@ class ServiceRequestTest {
         assertThrows(IllegalStateException.class, () -> request.rejectEstimate());
         assertThrows(IllegalStateException.class, () -> request.startService());
         assertThrows(IllegalStateException.class, () -> request.completeService());
-        assertThrows(IllegalStateException.class, () -> request.createReport(new Report()));
+        Report report = new Report();
+        assertThrows(IllegalStateException.class, () -> request.createReport(report));
     }
 
     @Test
@@ -153,7 +154,8 @@ class ServiceRequestTest {
         assertThrows(IllegalStateException.class, () -> request.rejectEstimate());
         assertThrows(IllegalStateException.class, () -> request.startService());
         assertThrows(IllegalStateException.class, () -> request.completeService());
-        assertThrows(IllegalStateException.class, () -> request.createReport(new Report()));
+        Report report2 = new Report();
+        assertThrows(IllegalStateException.class, () -> request.createReport(report2));
 
         // Provide an estimate to move to ESTIMATED state
         RepairEstimate estimate = new RepairEstimate();
@@ -164,7 +166,8 @@ class ServiceRequestTest {
         // Test invalid actions in ESTIMATED state
         assertThrows(IllegalStateException.class, () -> request.startService());
         assertThrows(IllegalStateException.class, () -> request.completeService());
-        assertThrows(IllegalStateException.class, () -> request.createReport(new Report()));
+        Report report = new Report();
+        assertThrows(IllegalStateException.class, () -> request.createReport(report));
 
         // Accept the estimate to move to ACCEPTED state
         request.acceptEstimate();
@@ -174,10 +177,8 @@ class ServiceRequestTest {
         assertThrows(IllegalStateException.class, () -> request.acceptEstimate());
         assertThrows(IllegalStateException.class, () -> request.rejectEstimate());
         assertThrows(IllegalStateException.class, () -> request.completeService());
-        // Create the Report object outside the lambda
-        Report report = new Report();
-// Then use it in the lambda with only one operation that could throw an exception
-        assertThrows(IllegalStateException.class, () -> request.createReport(report));
+        Report report1 = new Report();
+        assertThrows(IllegalStateException.class, () -> request.createReport(report1));
 
         // Start the service to move to IN_PROGRESS state
         request.startService();
@@ -187,7 +188,8 @@ class ServiceRequestTest {
         assertThrows(IllegalStateException.class, () -> request.acceptEstimate());
         assertThrows(IllegalStateException.class, () -> request.rejectEstimate());
         assertThrows(IllegalStateException.class, () -> request.startService());
-        assertThrows(IllegalStateException.class, () -> request.createReport(new Report()));
+        Report newReport = new Report();
+        assertThrows(IllegalStateException.class, () -> request.createReport(newReport));
 
         // Complete the service to move to COMPLETED state
         request.completeService();

@@ -2,9 +2,6 @@ package id.ac.ui.cs.advprog.perbaikiinaja.model.review;
 
 import org.junit.jupiter.api.Test;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.model.review.Review;
-
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
