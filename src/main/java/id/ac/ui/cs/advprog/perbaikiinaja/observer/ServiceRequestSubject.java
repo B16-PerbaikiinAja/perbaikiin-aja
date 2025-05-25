@@ -3,7 +3,6 @@ package id.ac.ui.cs.advprog.perbaikiinaja.observer;
 import java.util.ArrayList;
 import java.util.List;
 
-import id.ac.ui.cs.advprog.perbaikiinaja.enums.ServiceRequestStateType;
 import id.ac.ui.cs.advprog.perbaikiinaja.model.ServiceRequest;
 
 /**
@@ -23,8 +22,8 @@ public class ServiceRequestSubject {
             return;
         }
 
-        if (observer instanceof ServiceCompletionObserver && !completionObservers.contains(observer)) {
-            completionObservers.add((ServiceCompletionObserver) observer);
+        if (observer instanceof ServiceCompletionObserver serviceCompletionObserver && !completionObservers.contains(observer)) {
+            completionObservers.add(serviceCompletionObserver);
         }
     }
 

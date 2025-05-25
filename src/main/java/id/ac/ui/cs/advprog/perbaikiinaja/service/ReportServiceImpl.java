@@ -78,7 +78,7 @@ public class ReportServiceImpl implements ReportService {
         return StreamSupport.stream(allUsers.spliterator(), false)
                 .filter(Technician.class::isInstance)
                 .map(Technician.class::cast)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

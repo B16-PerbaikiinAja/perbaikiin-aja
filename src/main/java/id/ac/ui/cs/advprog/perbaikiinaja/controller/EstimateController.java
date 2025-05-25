@@ -196,8 +196,8 @@ public class EstimateController {
 
                     if (customerWallet.getBalance().compareTo(finalAmount) < 0) {
                         Map<String, Object> response = new HashMap<>();
-                        response.put("errorCode", 4002);
-                        response.put("message", String.format(
+                        response.put(ERRORSTR, 4002);
+                        response.put(MESSAGESTR, String.format(
                                 "Insufficient funds in wallet. Required: %s (Original: %s, Discount: %s). Please deposit funds before accepting the estimate.",
                                 finalAmount.toString(),
                                 originalAmount.toString(),
