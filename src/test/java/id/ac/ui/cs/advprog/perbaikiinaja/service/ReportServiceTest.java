@@ -210,7 +210,6 @@ public class ReportServiceTest {
     @Test
     void getReportsByTechnician_WithNoReports_ShouldReturnEmptyList() {
         // Arrange
-        ServiceRequest mockedServiceRequestWithoutReport = mock(ServiceRequest.class);
         when(serviceRequestWithoutReport.getReport()).thenReturn(null);
 
         when(serviceRequestRepository.findByTechnicianId(technicianId))
