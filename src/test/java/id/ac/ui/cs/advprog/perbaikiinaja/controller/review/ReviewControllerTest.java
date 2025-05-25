@@ -35,7 +35,6 @@ class ReviewControllerTest {
 
     private ReviewRequestDto requestDto;
     private Review review;
-    private ReviewResponseDto responseDto;
     private UUID userId;
     private UUID technicianId;
     private UUID reportId;
@@ -64,11 +63,6 @@ class ReviewControllerTest {
                 .rating(5)
                 .createdAt(LocalDateTime.now())
                 .build();
-
-        responseDto = new ReviewResponseDto(
-                reviewId, userId, technicianId, reportId,
-                "Great service!", 5, review.getCreatedAt()
-        );
     }
 
     @Test

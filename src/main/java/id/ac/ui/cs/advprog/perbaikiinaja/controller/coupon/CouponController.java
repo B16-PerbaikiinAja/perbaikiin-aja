@@ -16,8 +16,6 @@ import java.util.*;
 @RestController
 @RequestMapping("/coupons")
 public class CouponController {
-
-    @Autowired
     private CouponService couponService;
 
     /**
