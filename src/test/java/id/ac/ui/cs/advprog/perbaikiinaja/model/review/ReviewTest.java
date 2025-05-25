@@ -49,9 +49,11 @@ class ReviewTest {
         review.onCreate();
         LocalDateTime beforeUpdate = review.getUpdatedAt();
 
+        Thread.sleep(1000);
+
         review.onUpdate();
         LocalDateTime afterUpdate = review.getUpdatedAt();
 
-        assertFalse(afterUpdate.isAfter(beforeUpdate));
+        assertTrue(afterUpdate.isAfter(beforeUpdate));
     }
 }
