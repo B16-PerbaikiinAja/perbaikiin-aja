@@ -198,25 +198,6 @@ jobs:
               driver: bridge
           COMPOSE_EOF
 
-          cat > ~/perbaikiinaja/prometheus/prometheus.yml << 'PROM_EOF'
-            global:
-              scrape_interval: 15s
-              evaluation_interval: 15s
-          
-            scrape_configs:
-              - job_name: 'prometheus'
-                static_configs:
-                  - targets: ['localhost:9090']
-          
-              - job_name: 'spring-boot-app'
-                metrics_path: '/actuator/prometheus'
-                scrape_interval: 5s
-                static_configs:
-                  - targets: ['localhost:8080']
-                    labels:
-                      application: 'Perbaikiinaja Spring Boot Application'
-          PROM_EOF
-
           cat > ~/perbaikiinaja/grafana/provisioning/datasources/datasources.yml << 'GRAFANA_EOF'
             apiVersion: 1
             datasources:
@@ -485,25 +466,6 @@ jobs:
             monitoring-network:
               driver: bridge
           COMPOSE_EOF
-
-          cat > ~/perbaikiinaja-prod/prometheus/prometheus.yml << 'PROM_EOF'
-            global:
-              scrape_interval: 15s
-              evaluation_interval: 15s
-          
-            scrape_configs:
-              - job_name: 'prometheus'
-                static_configs:
-                  - targets: ['localhost:9090']
-          
-              - job_name: 'spring-boot-app'
-                metrics_path: '/actuator/prometheus'
-                scrape_interval: 5s
-                static_configs:
-                  - targets: ['localhost:8080']
-                    labels:
-                      application: 'Perbaikiinaja Spring Boot Application'
-          PROM_EOF
 
           cat > ~/perbaikiinaja-prod/grafana/provisioning/datasources/datasources.yml << 'GRAFANA_EOF'
             apiVersion: 1
