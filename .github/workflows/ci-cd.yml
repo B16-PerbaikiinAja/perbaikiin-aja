@@ -607,14 +607,9 @@ jobs:
               if [ "\$HEALTH_CHECK_PASSED" = true ]; then
                 echo "Production deployment successful!"
               else
-                echo "✗ Health checks failed after multiple attempts. Initiating rollback..."
-                ./rollback.sh
-                if [ \$? -eq 0 ]; then
-                  echo "Rollback completed successfully"
-                else
-                  echo "Rollback failed. Manual intervention required."
-                  exit 1
-                fi
+                echo "✗ Health checks failed after multiple attempts."
+                echo "Manual intervention required."
+                exit 1
               fi
             else
               echo "✗ Error: Container failed to start"
@@ -622,14 +617,8 @@ jobs:
               docker logs perbaikiinaja-backend-prod
               echo "Docker compose logs:"
               docker-compose logs
-              echo "Initiating rollback..."
-              ./rollback.sh
-              if [ \$? -eq 0 ]; then
-                echo "Rollback completed successfully"
-              else
-                echo "Rollback failed. Manual intervention required."
-                exit 1
-              fi
+              echo "Manual intervention required."
+              exit 1
             fi
 
             # Check monitoring services
