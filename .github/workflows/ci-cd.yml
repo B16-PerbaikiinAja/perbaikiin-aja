@@ -136,7 +136,7 @@ jobs:
           
             # Store the currently running version for potential rollback
             if [ -f ~/perbaikiinaja/current_version.txt ]; then
-              echo "I was here $(pwd)"
+              echo "I was here \$(pwd)"
               cp ~/perbaikiinaja/current_version.txt ~/perbaikiinaja/previous_version.txt
             fi
           
@@ -236,8 +236,8 @@ jobs:
           cat > ~/perbaikiinaja/rollback.sh << 'ROLLBACK_EOF'
           #!/bin/bash
           
-          if [ -f /home/ec2-user/perbaikiinaja/previous_version.txt ]; then
-            PREVIOUS_VERSION=$(cat /home/ec2-user/perbaikiinaja/previous_version.txt)
+          if [ -f ~/perbaikiinaja/previous_version.txt ]; then
+            PREVIOUS_VERSION=$(cat ~/perbaikiinaja/previous_version.txt)
             echo "Rolling back to previous version: $PREVIOUS_VERSION"
         
             # Update docker-compose file with previous version
