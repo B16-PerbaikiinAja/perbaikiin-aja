@@ -236,8 +236,8 @@ jobs:
           cat > ~/perbaikiinaja/rollback.sh << 'ROLLBACK_EOF'
           #!/bin/bash
           
-          if [ -f ~/perbaikiinaja/previous_version.txt ]; then
-            PREVIOUS_VERSION=$(cat ~/perbaikiinaja/previous_version.txt)
+          if [ -f "\$HOME/perbaikiinaja/previous_version.txt" ]; then
+            PREVIOUS_VERSION=$(cat "\$HOME/perbaikiinaja/previous_version.txt")
             echo "Rolling back to previous version: $PREVIOUS_VERSION"
         
             # Update docker-compose file with previous version
