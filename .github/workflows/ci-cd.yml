@@ -231,13 +231,15 @@ jobs:
           GRAFANA_EOF
           
           echo "Current working directory: $(pwd)"
+          echo "Listing /home/ec2-user contents:"
+          ls -la /home/ec2-user
 
           # Create rollback script
           cat > ~/perbaikiinaja/rollback.sh << 'ROLLBACK_EOF'
           #!/bin/bash
           
-          if [ -f \$HOME/perbaikiinaja/previous_version.txt ]; then
-            PREVIOUS_VERSION=$(cat \$HOME/perbaikiinaja/previous_version.txt)
+          if [ -f /home/ec2-user/perbaikiinaja/previous_version.txt ]; then
+            PREVIOUS_VERSION=$(cat /home/ec2-user/perbaikiinaja/previous_version.txt)
             echo "Rolling back to previous version: $PREVIOUS_VERSION"
         
             # Update docker-compose file with previous version
