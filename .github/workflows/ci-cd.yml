@@ -131,17 +131,6 @@ jobs:
             mkdir -p ~/perbaikiinaja/prometheus
             mkdir -p ~/perbaikiinaja/grafana/provisioning/datasources
             mkdir -p ~/perbaikiinaja/deployments
-          
-            echo "hi there"
-          
-            # Store the currently running version for potential rollback
-            if [ -f ~/perbaikiinaja/current_version.txt ]; then
-              echo "I was here \$(pwd)"
-              cp ~/perbaikiinaja/current_version.txt ~/perbaikiinaja/previous_version.txt
-            fi
-          
-            # Record new version information
-            echo "${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging-${BUILD_TIMESTAMP}" > ~/perbaikiinaja/current_version.txt
 
             # Create docker-compose.yml with environment variable substitution
             cat > ~/perbaikiinaja/docker-compose.yml << 'COMPOSE_EOF'
@@ -229,56 +218,6 @@ jobs:
                 url: http://prometheus:9090
                 isDefault: true
           GRAFANA_EOF
-          
-          echo "Current working directory: $(pwd)"
-          echo "Listing /home/ec2-user/perbaikiinaja contents:"
-          ls -la /home/ec2-user/perbaikiinaja
-          cat ~/perbaikiinaja/previous_version.txt || echo "File not found"
-
-          # Create rollback script
-          cat > ~/perbaikiinaja/rollback.sh << 'ROLLBACK_EOF'
-          #!/bin/bash
-          
-          if [ -f /home/ec2-user/perbaikiinaja/previous_version.txt ]; then
-            PREVIOUS_VERSION=$(cat /home/ec2-user/perbaikiinaja/previous_version.txt)
-            echo "Rolling back to previous version: $PREVIOUS_VERSION"
-        
-            # Update docker-compose file with previous version
-            sed -i "s|image: .*perbaikiinaja-backend:.*|image: $PREVIOUS_VERSION|g" docker-compose.yml
-        
-            # Stop current container
-            docker-compose stop perbaikiinaja-backend
-        
-            # Start with previous version
-            docker-compose up -d perbaikiinaja-backend
-        
-            # Check if rollback was successful
-            sleep 10
-            if docker ps --filter "name=perbaikiinaja-backend" --format "{{.Names}}" | grep -q perbaikiinaja-backend; then
-              echo "✓ Rollback successful. Container is running."
-        
-              # Verify application health
-              sleep 5
-              if curl -f http://localhost:${PORT}/actuator/health > /dev/null 2>&1; then
-                echo "✓ Application health check passed after rollback"
-                # Make previous version the current version
-                cp previous_version.txt current_version.txt
-                exit 0
-              else
-                echo "⚠ Application health check failed after rollback"
-                exit 1
-              fi
-            else
-              echo "✗ Rollback failed. Container is not running."
-              exit 1
-            fi
-          else
-            echo "No previous version found for rollback"
-            exit 1
-          fi
-          ROLLBACK_EOF
-          
-            chmod +x ~/perbaikiinaja/rollback.sh
 
             # Export environment variables for envsubst
             export PG_HOST="${PG_HOST}"
@@ -335,27 +274,16 @@ jobs:
                 echo "Deployment successful!"
                 echo "Application should be accessible at http://${EC2_HOST}:${PORT}"
               else
-                echo "✗ Health checks failed after multiple attempts. Initiating rollback..."
-                /home/ec2-user/perbaikiinaja/rollback.sh
-                if [ \$? -eq 0 ]; then
-                  echo "Rollback completed successfully"
-                else
-                  echo "Rollback failed. Manual intervention required."
-                  exit 1
-                fi
+                echo "✗ Health checks failed after multiple attempts."
+                echo "Manual intervention required."
+                exit 1
               fi
             else
               echo "✗ Error: Container failed to start"
               echo "Container logs:"
               docker logs perbaikiinaja-backend
-              echo "Initiating rollback..."
-              /home/ec2-user/perbaikiinaja/rollback.sh
-              if [ \$? -eq 0 ]; then
-                echo "Rollback completed successfully"
-              else
-                echo "Rollback failed. Manual intervention required."
-                exit 1
-              fi
+              echo "Manual intervention required."
+              exit 1
             fi
 
           # Check monitoring services
