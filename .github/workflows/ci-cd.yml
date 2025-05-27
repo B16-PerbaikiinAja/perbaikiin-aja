@@ -231,8 +231,9 @@ jobs:
           GRAFANA_EOF
           
           echo "Current working directory: $(pwd)"
-          echo "Listing /home/ec2-user contents:"
+          echo "Listing /home/ec2-user/perbaikiinaja contents:"
           ls -la /home/ec2-user/perbaikiinaja
+          cat ~/perbaikiinaja/previous_version.txt || echo "File not found"
 
           # Create rollback script
           cat > ~/perbaikiinaja/rollback.sh << 'ROLLBACK_EOF'
@@ -335,7 +336,7 @@ jobs:
                 echo "Application should be accessible at http://${EC2_HOST}:${PORT}"
               else
                 echo "✗ Health checks failed after multiple attempts. Initiating rollback..."
-                ./rollback.sh
+                /home/ec2-user/perbaikiinaja/rollback.sh
                 if [ \$? -eq 0 ]; then
                   echo "Rollback completed successfully"
                 else
@@ -348,7 +349,7 @@ jobs:
               echo "Container logs:"
               docker logs perbaikiinaja-backend
               echo "Initiating rollback..."
-              ./rollback.sh
+              /home/ec2-user/perbaikiinaja/rollback.sh
               if [ \$? -eq 0 ]; then
                 echo "Rollback completed successfully"
               else
