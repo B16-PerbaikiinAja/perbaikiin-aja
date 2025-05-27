@@ -51,10 +51,13 @@ public class SecurityConfiguration {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("https://perbaikiin-aja-fe-production.up.railway.app", "http://localhost:3000"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000",
+                "https://perbaikiin-aja-fe-production.up.railway.app"));
         configuration.setAllowCredentials(true);
-        configuration.setAllowedMethods(List.of("GET","POST", "PUT", "DELETE"));
+        configuration.setAllowedMethods(List.of("GET","POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*")); // ALLOW ALL
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
