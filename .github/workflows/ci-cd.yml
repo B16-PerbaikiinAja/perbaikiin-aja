@@ -142,61 +142,61 @@ jobs:
 
             # Create docker-compose.yml with environment variable substitution
             cat > ~/perbaikiinaja/docker-compose.yml << 'COMPOSE_EOF'
-          version: '3'
-          services:
-            prometheus:
-              image: prom/prometheus:v2.44.0
-              container_name: prometheus
-              ports:
-                - "9090:9090"
-              volumes:
-                - ./prometheus:/etc/prometheus
+              version: '3'
+              services:
+                prometheus:
+                  image: prom/prometheus:v2.44.0
+                  container_name: prometheus
+                  ports:
+                    - "9090:9090"
+                  volumes:
+                    - ./prometheus:/etc/prometheus
+                  networks:
+                    - monitoring-network
+                  restart: unless-stopped
+              
+                grafana:
+                  image: grafana/grafana:9.5.2
+                  container_name: grafana
+                  ports:
+                    - "3000:3000"
+                  volumes:
+                    - ./grafana/provisioning:/etc/grafana/provisioning
+                  environment:
+                    - GF_SECURITY_ADMIN_USER=admin
+                    - GF_SECURITY_ADMIN_PASSWORD=admin
+                    - GF_USERS_ALLOW_SIGN_UP=false
+                  networks:
+                    - monitoring-network
+                  restart: unless-stopped
+                  depends_on:
+                    - prometheus
+    
+                perbaikiinaja-backend:
+                  image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging-${BUILD_TIMESTAMP}
+                  container_name: perbaikiinaja-backend
+                  restart: always
+                  ports:
+                    - "${PORT}:8080"
+                  environment:
+                    - PG_HOST=${PG_HOST}
+                    - PG_USER=${PG_USER}
+                    - PG_PASS=${PG_PASS}
+                    - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+                    - PORT=8080
+                  networks:
+                    - monitoring-network
+                  healthcheck:
+                    test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+                    interval: 30s
+                    timeout: 10s
+                    retries: 3
+                    start_period: 40s
+              
               networks:
-                - monitoring-network
-              restart: unless-stopped
-          
-            grafana:
-              image: grafana/grafana:9.5.2
-              container_name: grafana
-              ports:
-                - "3000:3000"
-              volumes:
-                - ./grafana/provisioning:/etc/grafana/provisioning
-              environment:
-                - GF_SECURITY_ADMIN_USER=admin
-                - GF_SECURITY_ADMIN_PASSWORD=admin
-                - GF_USERS_ALLOW_SIGN_UP=false
-              networks:
-                - monitoring-network
-              restart: unless-stopped
-              depends_on:
-                - prometheus
-
-            perbaikiinaja-backend:
-              image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging-${BUILD_TIMESTAMP}
-              container_name: perbaikiinaja-backend
-              restart: always
-              ports:
-                - "${PORT}:8080"
-              environment:
-                - PG_HOST=${PG_HOST}
-                - PG_USER=${PG_USER}
-                - PG_PASS=${PG_PASS}
-                - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-                - PORT=8080
-              networks:
-                - monitoring-network
-              healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
-                start_period: 40s
-          
-          networks:
-            monitoring-network:
-              driver: bridge
-          COMPOSE_EOF
+                monitoring-network:
+                  driver: bridge
+            COMPOSE_EOF
 
           cat > ~/perbaikiinaja/prometheus/prometheus.yml << 'PROM_EOF'
             global:
@@ -227,9 +227,9 @@ jobs:
                 isDefault: true
           GRAFANA_EOF
 
-            # Create rollback script
-            cat > ~/perbaikiinaja/rollback.sh << 'ROLLBACK_EOF'
-            #!/bin/bash
+          # Create rollback script
+          cat > ~/perbaikiinaja/rollback.sh << 'ROLLBACK_EOF'
+          #!/bin/bash
           
             if [ -f ./previous_version.txt ]; then
               PREVIOUS_VERSION=$(cat ./previous_version.txt)
@@ -268,7 +268,7 @@ jobs:
               echo "No previous version found for rollback"
               exit 1
             fi
-            ROLLBACK_EOF
+          ROLLBACK_EOF
           
             chmod +x ~/perbaikiinaja/rollback.sh
 
