@@ -71,9 +71,6 @@ jobs:
         shell: bash
         run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
-      - name: Generate build timestamp
-        run: echo "BUILD_TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -81,7 +78,6 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/perbaikiinaja-backend:${{ env.BRANCH_NAME }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/perbaikiinaja-backend:${{ env.BRANCH_NAME }}-${{ env.BUILD_TIMESTAMP }}
             ${{ secrets.DOCKERHUB_USERNAME }}/perbaikiinaja-backend:latest
 
   deploy-staging:
@@ -110,9 +106,6 @@ jobs:
           ssh-keyscan -v -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts || echo "Warning: ssh-keyscan failed"
           cat ~/.ssh/known_hosts
 
-      - name: Generate build timestamp
-        run: echo "BUILD_TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
-
       - name: Deploy to EC2 with Docker (Amazon Linux)
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -123,7 +116,6 @@ jobs:
           PORT: ${{ secrets.PORT || '8080' }}
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          BUILD_TIMESTAMP: ${{ env.BUILD_TIMESTAMP }}
         run: |
           ssh $EC2_USERNAME@$EC2_HOST << EOF
             # Create directories for deployment
@@ -165,7 +157,7 @@ jobs:
                   - prometheus
   
               perbaikiinaja-backend:
-                image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging-${BUILD_TIMESTAMP}
+                image: ${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging
                 container_name: perbaikiinaja-backend
                 restart: always
                 ports:
@@ -226,7 +218,6 @@ jobs:
             export JWT_SECRET_KEY="${JWT_SECRET_KEY}"
             export PORT="${PORT}"
             export DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}"
-            export BUILD_TIMESTAMP="${BUILD_TIMESTAMP}"
 
             # Substitute environment variables in docker-compose.yml
             cd ~/perbaikiinaja
@@ -237,7 +228,7 @@ jobs:
             sudo service docker start
 
             # Pull the latest image
-            docker pull \${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging-\${BUILD_TIMESTAMP}
+            docker pull \${DOCKERHUB_USERNAME}/perbaikiinaja-backend:staging
 
             # Save the current compose file for reference
             cp docker-compose.yml deployments/docker-compose-\${BUILD_TIMESTAMP}.yml
