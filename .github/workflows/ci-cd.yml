@@ -226,6 +226,8 @@ jobs:
                 url: http://prometheus:9090
                 isDefault: true
           GRAFANA_EOF
+          
+          echo "Current working directory: $(pwd)"
 
           # Create rollback script
           cat > ~/perbaikiinaja/rollback.sh << 'ROLLBACK_EOF'
