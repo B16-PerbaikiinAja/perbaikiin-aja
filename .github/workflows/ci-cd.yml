@@ -232,7 +232,7 @@ jobs:
           
           echo "Current working directory: $(pwd)"
           echo "Listing /home/ec2-user contents:"
-          ls -la /home/ec2-user
+          ls -la /home/ec2-user/perbaikiinaja
 
           # Create rollback script
           cat > ~/perbaikiinaja/rollback.sh << 'ROLLBACK_EOF'
