@@ -132,8 +132,11 @@ jobs:
             mkdir -p ~/perbaikiinaja/grafana/provisioning/datasources
             mkdir -p ~/perbaikiinaja/deployments
           
+            echo "hi there"
+          
             # Store the currently running version for potential rollback
             if [ -f ~/perbaikiinaja/current_version.txt ]; then
+              echo "I was here $(pwd)"
               cp ~/perbaikiinaja/current_version.txt ~/perbaikiinaja/previous_version.txt
             fi
           
