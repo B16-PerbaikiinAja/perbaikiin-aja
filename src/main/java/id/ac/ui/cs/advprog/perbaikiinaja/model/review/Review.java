@@ -18,33 +18,37 @@ import java.util.UUID;
 public class Review {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID) 
     @Column(columnDefinition = "uuid", updatable = false, nullable = false)
     private UUID id;
 
     @Min(1)
     @Max(5)
+    @Column(nullable = false) 
     private int rating;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT") 
     private String comment;
 
     @Column(nullable = false)
-    private UUID technicianId;
+    private UUID technicianId; 
 
-    @Column(nullable = false)
-    private UUID userId;
+    @Column(nullable = false, updatable = false) 
+    private UUID userId; 
 
-    @Column(nullable = false)
-    private UUID reportId;
-
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = createdAt;
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now;
+        if (this.id == null) { 
+            this.id = UUID.randomUUID();
+        }
     }
 
     @PreUpdate
