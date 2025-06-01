@@ -96,11 +96,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new RuntimeException("Review not found with ID: " + reviewId));
 
         if (!review.getUserId().equals(userId)) {
-<<<<<<< HEAD
-            throw new IllegalArgumentException("You are not authorized to delete this review");
-=======
             throw new RuntimeException("You are not authorized to delete this review.");
->>>>>>> acec46aba9db650f0e0b09ad9a94e5ec35a2c6a9
         }
 
         reviewRepository.delete(review);
