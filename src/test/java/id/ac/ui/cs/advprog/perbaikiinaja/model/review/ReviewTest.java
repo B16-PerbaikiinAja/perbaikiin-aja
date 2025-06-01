@@ -2,11 +2,7 @@ package id.ac.ui.cs.advprog.perbaikiinaja.model.review;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-<<<<<<< HEAD
-
-=======
 import java.time.LocalDateTime;
->>>>>>> acec46aba9db650f0e0b09ad9a94e5ec35a2c6a9
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -53,8 +49,6 @@ class ReviewTest {
         assertNotNull(review.getUpdatedAt());
         assertEquals(review.getCreatedAt(), review.getUpdatedAt());
     }
-<<<<<<< HEAD
-=======
 
     @Test
     void testReviewCreation_withNoArgsConstructor_andSetters() {
@@ -184,5 +178,4 @@ class ReviewTest {
         assertNotNull(builtReview.getUpdatedAt());
         assertEquals(now, builtReview.getUpdatedAt());
     }
->>>>>>> acec46aba9db650f0e0b09ad9a94e5ec35a2c6a9
 }
